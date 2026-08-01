@@ -1,0 +1,41 @@
+.venv/
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+
+# Root-anchored: an unanchored "data/" also matches src/nutrivision/data/,
+# which would silently exclude the dataset loader source.
+/data/
+/artifacts/
+!/artifacts/.gitkeep
+*.pt
+*.pth
+*.onnx
+*.safetensors
+*.npy
+*.npz
+*.faiss
+
+.env
+.env.*
+!.env.example
+
+# Service account keys grant full admin access and bypass all Security Rules.
+# Matched by filename as well, in case the JSON is ever saved into the repo.
+*service-account*.json
+*serviceaccount*.json
+*firebase-adminsdk*.json
+gcp-*.json
+
+node_modules/
+.next/
+out/
+.vercel/
+*.tsbuildinfo
+
+.DS_Store
+.idea/
+.vscode/
