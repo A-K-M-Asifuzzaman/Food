@@ -6,9 +6,8 @@ theme lives in ink, dots, panels and kinetic motion. That keeps it legally clean
 public portfolio piece and, more importantly, makes it look designed rather than
 merchandised.
 
-**Explicitly rejected** (user instruction, §2.1 of `prompt.md`): the common gradient-mesh
-SaaS look. No purple-to-blue blurs, no glassmorphism, no floating rounded cards on a soft
-gradient.
+**Explicitly rejected:** the common gradient-mesh SaaS look. No purple-to-blue blurs, no
+glassmorphism, no floating rounded cards on a soft gradient.
 
 ---
 

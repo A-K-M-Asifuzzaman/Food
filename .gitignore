@@ -39,3 +39,6 @@ out/
 .DS_Store
 .idea/
 .vscode/
+
+# Working notes, kept local only
+prompt.md
