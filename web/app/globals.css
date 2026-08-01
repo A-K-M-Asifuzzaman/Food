@@ -1,26 +1,187 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* FoodGenome AI — comic-print design system.
+   Implements docs/design-system.md. Ink on newsprint, not glow on dark.
+   Dark mode is a night-panel inversion, not a grey wash. */
+
+@theme {
+  --color-ink: #0b0b0f;
+  --color-newsprint: #f4f1e8;
+  --color-red: #e62429;
+  --color-red-deep: #a4161a;
+  --color-blue: #1b4ce0;
+  --color-blue-deep: #0a2a66;
+  --color-cyan: #22d3ee;
+  --color-amber: #f5a524;
+  --color-green: #16a34a;
+
+  --font-display: var(--font-anton), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-source-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains), ui-monospace, monospace;
+
+  --ease-snap: cubic-bezier(0.2, 0.9, 0.1, 1);
+  --ease-overshoot: cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+:root {
+  /* Semantic surface tokens. Everything downstream reads these, so the night
+     inversion below only has to reassign a handful of values. */
+  --page: #f4f1e8;
+  --panel: #ffffff;
+  --line: #0b0b0f;
+  --text: #0b0b0f;
+  --text-dim: #4b4b55;
+  --halftone: rgba(11, 11, 15, 0.14);
+
+  --dur-instant: 90ms;
+  --dur-snap: 180ms;
+  --dur-panel: 320ms;
+
+  color-scheme: light;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --page: #0b0b0f;
+    --panel: #14141b;
+    --line: #f4f1e8;
+    --text: #f4f1e8;
+    --text-dim: #9a9aa8;
+    --halftone: rgba(244, 241, 232, 0.12);
+    color-scheme: dark;
   }
 }
 
+/* An explicit theme choice must win over the media query in both directions. */
+:root[data-theme="light"] {
+  --page: #f4f1e8;
+  --panel: #ffffff;
+  --line: #0b0b0f;
+  --text: #0b0b0f;
+  --text-dim: #4b4b55;
+  --halftone: rgba(11, 11, 15, 0.14);
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  --page: #0b0b0f;
+  --panel: #14141b;
+  --line: #f4f1e8;
+  --text: #f4f1e8;
+  --text-dim: #9a9aa8;
+  --halftone: rgba(244, 241, 232, 0.12);
+  color-scheme: dark;
+}
+
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--page);
+  color: var(--text);
+  font-family: var(--font-sans);
+  /* Ben-Day dots as page texture, 6px grid — never applied over body copy. */
+  background-image: radial-gradient(var(--halftone) 1px, transparent 1px);
+  background-size: 6px 6px;
+}
+
+/* ── Panels ─────────────────────────────────────────────────────────────
+   Comic panels have weight and edge: hard borders, offset shadow, no blur. */
+
+@utility panel {
+  background: var(--panel);
+  border: 3px solid var(--line);
+  border-radius: 2px;
+  box-shadow: 6px 6px 0 var(--line);
+}
+
+@utility panel-tight {
+  background: var(--panel);
+  border: 2px solid var(--line);
+  border-radius: 2px;
+  box-shadow: 3px 3px 0 var(--line);
+}
+
+@utility panel-flat {
+  background: var(--panel);
+  border: 2px solid var(--line);
+  border-radius: 2px;
+}
+
+/* Halftone fill for emphasis blocks. */
+@utility halftone {
+  background-image: radial-gradient(var(--halftone) 1.5px, transparent 1.5px);
+  background-size: 4px 4px;
+}
+
+/* Tabular figures are mandatory wherever nutrition numbers align. */
+@utility figures {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+@utility sfx {
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+/* ── Motion ─────────────────────────────────────────────────────────────
+   Snappy and staged, never floaty. Overshoot on entry. */
+
+@keyframes panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes impact {
+  0% {
+    transform: scale(0.7) rotate(-6deg);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.08) rotate(-2deg);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1) rotate(-2deg);
+    opacity: 1;
+  }
+}
+
+@keyframes strand {
+  to {
+    stroke-dashoffset: -240;
+  }
+}
+
+@utility animate-panel-in {
+  animation: panel-in var(--dur-panel) var(--ease-snap) both;
+}
+
+@utility animate-impact {
+  animation: impact 420ms var(--ease-overshoot) both;
+}
+
+/* Focus rings are styled as panel outlines, never suppressed. */
+:where(a, button, [tabindex], input, summary):focus-visible {
+  outline: 3px solid var(--color-red);
+  outline-offset: 3px;
+}
+
+/* Motion sensitivity is a real accessibility need. Reduced mode keeps opacity
+   fades and drops every transform, parallax and auto-motion. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
