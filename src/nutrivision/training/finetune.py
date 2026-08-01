@@ -13,6 +13,7 @@ closed lid is not an acceptable failure mode.
 from __future__ import annotations
 
 import argparse
+import gc
 import json
 import math
 import signal
@@ -25,6 +26,7 @@ import timm
 import torch
 import torch.nn as nn
 from timm.data import Mixup, create_transform, resolve_data_config
+from timm.layers import resample_abs_pos_embed
 from timm.loss import SoftTargetCrossEntropy
 from timm.utils import ModelEmaV3
 from torch.utils.data import DataLoader
@@ -276,16 +278,58 @@ def run_stage(
     return state
 
 
+def resize_state_dict(sd: dict, model) -> dict:
+    """Match a state dict to a model that may use a different input resolution.
+
+    Only the position embedding depends on resolution; everything else transfers
+    verbatim. Building each stage at its own `img_size` rather than interpolating every
+    forward pass keeps the resize out of the autograd graph — its antialiased backward
+    is not implemented on MPS, and paying for it per step would be wasteful anyway.
+    """
+    out = {k: v for k, v in sd.items()}
+    key = "pos_embed"
+    if key in out and out[key].shape != model.pos_embed.shape:
+        out[key] = resample_abs_pos_embed(
+            out[key].float(),
+            new_size=list(model.patch_embed.grid_size),
+            num_prefix_tokens=model.num_prefix_tokens,
+            verbose=False,
+        )
+    return out
+
+
+def build_model(cfg: FinetuneConfig, size: int, weights: dict | None, grad_ckpt: bool):
+    model = timm.create_model(
+        cfg.backbone,
+        pretrained=weights is None,
+        num_classes=NUM_CLASSES,
+        drop_path_rate=cfg.drop_path,
+        img_size=size,
+    )
+    if weights is not None:
+        model.load_state_dict(resize_state_dict(weights, model))
+    model = model.to(DEVICE)
+    if grad_ckpt:
+        # Recomputing activations in the backward pass is what brings a 304M-parameter
+        # model at 448 inside 18 GB of unified memory; it costs roughly 20% throughput.
+        model.set_grad_checkpointing(True)
+    return model
+
+
 def main() -> None:
     p = argparse.ArgumentParser(description="Fine-tune a backbone on Food-101")
     p.add_argument("--backbone", default=FinetuneConfig.backbone)
     p.add_argument("--out-name", default=FinetuneConfig.out_name)
+    # Batch sizes are set from measured peak memory on an 18 GB M3 Pro: bs 24 at 224
+    # needed 22.6 GB and died. With gradient checkpointing, 16 at 224 peaks at 7.2 GB
+    # and 4 at 448 at 9.1 GB, both of which leave room for the rest of the machine.
     p.add_argument("--stage1-size", type=int, default=224)
     p.add_argument("--stage1-epochs", type=int, default=6)
-    p.add_argument("--stage1-bs", type=int, default=24)
+    p.add_argument("--stage1-bs", type=int, default=16)
     p.add_argument("--stage2-size", type=int, default=448)
     p.add_argument("--stage2-epochs", type=int, default=3)
-    p.add_argument("--stage2-bs", type=int, default=6)
+    p.add_argument("--stage2-bs", type=int, default=4)
+    p.add_argument("--no-grad-checkpointing", action="store_true")
     p.add_argument("--lr", type=float, default=1e-4)
     p.add_argument("--stage2-lr", type=float, default=2e-5)
     p.add_argument("--grad-accum", type=int, default=4)
@@ -307,42 +351,47 @@ def main() -> None:
         drop_path=args.drop_path,
     )
 
-    model = timm.create_model(
-        cfg.backbone,
-        pretrained=True,
-        num_classes=NUM_CLASSES,
-        drop_path_rate=cfg.drop_path,
-    ).to(DEVICE)
-    ema = ModelEmaV3(model, decay=cfg.ema_decay, device=DEVICE)
-
     state: dict = {}
     ckpt_path = CHECKPOINT_DIR / f"{cfg.out_name}_last.pt"
     if args.resume and ckpt_path.exists():
-        state = torch.load(ckpt_path, map_location=DEVICE, weights_only=False)
-        model.load_state_dict(state["model"])
-        ema.module.load_state_dict(state["ema"])
+        state = torch.load(ckpt_path, map_location="cpu", weights_only=False)
         print(f"loaded checkpoint from {ckpt_path} (stage={state.get('stage')}, epoch={state.get('epoch')})")
-
-    params = sum(p.numel() for p in model.parameters()) / 1e6
-    print(f"{cfg.backbone}  {params:.1f}M params  device={DEVICE}")
 
     stages = [
         ("stage1", args.stage1_size, args.stage1_epochs, args.stage1_bs, args.lr),
         ("stage2", args.stage2_size, args.stage2_epochs, args.stage2_bs, args.stage2_lr),
     ]
     done = state.get("stage")
-    skip = done == "stage2"
+    weights = state.get("model")
+    ema_weights = state.get("ema")
 
     for name, size, epochs, bs, lr in stages:
         if epochs <= 0:
             continue
-        if skip and name == "stage1":
-            continue
         if done == "stage2" and name == "stage1":
             continue
+
+        model = build_model(cfg, size, weights, not args.no_grad_checkpointing)
+        ema = ModelEmaV3(model, decay=cfg.ema_decay, device=DEVICE)
+        if ema_weights is not None:
+            ema.module.load_state_dict(resize_state_dict(ema_weights, model))
+        params = sum(p.numel() for p in model.parameters()) / 1e6
+        print(f"{cfg.backbone}  {params:.1f}M params  {size}px  bs={bs}  device={DEVICE}")
+
         cfg.batch_size = bs
         cfg.image_size = size
-        state = run_stage(model, ema, cfg, size, epochs, lr, name, state if state.get("stage") == name else {"best_acc": state.get("best_acc", 0.0), "history": state.get("history", [])})
+        carried = state if state.get("stage") == name else {
+            "best_acc": state.get("best_acc", 0.0),
+            "history": state.get("history", []),
+        }
+        state = run_stage(model, ema, cfg, size, epochs, lr, name, carried)
+
+        weights = {k: v.detach().cpu() for k, v in model.state_dict().items()}
+        ema_weights = {k: v.detach().cpu() for k, v in ema.module.state_dict().items()}
+        del model, ema
+        gc.collect()
+        if DEVICE.type == "mps":
+            torch.mps.empty_cache()
 
     print(f"best validation top-1: {state.get('best_acc', 0) * 100:.2f}")
 
