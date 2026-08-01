@@ -1,0 +1,581 @@
+"""Curated Food-101 to USDA SR Legacy mapping.
+
+Naive text matching of the 101 class names against SR Legacy fails badly and,
+worse, fails *confidently*: it resolves beef carpaccio to "Soup, stock, beef" at
+13 kcal per 100 g, chicken wings to "Soup, stock, chicken" at 36 kcal, filet
+mignon to a salmon product, and chocolate cake to a snack cake explicitly
+labelled "not chocolate". Roughly a quarter of the classes match no meaningful
+record at all. A nutrition app that ships those numbers is worse than one that
+ships nothing, so every class here is curated by hand.
+
+Two kinds of entry:
+
+*Direct* - SR Legacy contains the dish. The query is tuned with `require` and
+`avoid` terms until it resolves to the intended generic, prepared record rather
+than a baby food, a dry mix, or a branded restaurant item.
+
+*Composite* - SR Legacy has no entry for the dish, which is true of roughly
+thirty of these classes (tiramisu, bibimbap, takoyaki, poutine, pho...). The
+dish is instead declared as a weighted ingredient list and its profile is
+computed as the mass-weighted mean of the ingredient records. Component weights
+are grams per 100 g of *finished* dish, so they should sum to about 100. This is
+auditable in a way a wrong single match is not, and it produces the
+dish-to-ingredient edges the GraphRAG stage needs.
+
+Serving sizes are typical single servings as plated, used to convert the per-100 g
+USDA basis into the per-serving figures a user actually wants.
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+
+
+@dataclass(frozen=True)
+class Component:
+    """One ingredient, in grams per 100 g of finished dish."""
+
+    query: str
+    grams: float
+    require: tuple[str, ...] = ()
+    avoid: tuple[str, ...] = ()
+    fdc_id: int | None = None
+
+
+@dataclass(frozen=True)
+class ClassSpec:
+    cls: str
+    title: str
+    cuisine: str
+    serving_g: float
+    serving_label: str
+    query: str | None = None
+    require: tuple[str, ...] = ()
+    avoid: tuple[str, ...] = ()
+    fdc_id: int | None = None
+    recipe: tuple[Component, ...] = ()
+    tags: tuple[str, ...] = ()
+    note: str = ""
+
+    @property
+    def is_composite(self) -> bool:
+        return bool(self.recipe)
+
+
+def C(query: str, grams: float, require: tuple = (), avoid: tuple = ()) -> Component:
+    return Component(query=query, grams=grams, require=require, avoid=avoid)
+
+
+# Ingredient shorthands reused across composites. Defined once so that a fix to
+# how "flour" or "egg" resolves propagates to every dish that contains it.
+FLOUR = lambda g: C("wheat flour white all-purpose enriched", g, ("flour",), ("self-rising", "cake"))  # noqa: E731
+SUGAR = lambda g: C("sugars granulated", g, ("sugars",), ("brown", "powdered"))  # noqa: E731
+BUTTER = lambda g: C("butter salted", g, ("butter",), ("oil", "peanut", "whipped"))  # noqa: E731
+EGG = lambda g: C("egg whole raw fresh", g, ("egg", "raw"), ("white", "yolk", "dried"))  # noqa: E731
+MILK = lambda g: C("milk whole 3.25% milkfat", g, ("milk",), ("dry", "condensed", "evaporated", "goat"))  # noqa: E731
+CREAM = lambda g: C("cream fluid heavy whipping", g, ("cream", "whipping"), ("sour", "whipped topping"))  # noqa: E731
+OLIVE_OIL = lambda g: C("oil olive salad or cooking", g, ("olive",), ())  # noqa: E731
+VEG_OIL = lambda g: C("oil soybean salad or cooking", g, ("soybean",), ("hydrogenated",))  # noqa: E731
+TOMATO = lambda g: C("tomatoes red ripe raw year round average", g, ("tomatoes", "raw"), ("sun-dried", "green"))  # noqa: E731
+ONION = lambda g: C("onions raw", g, ("onions", "raw"), ("dehydrated", "young green"))  # noqa: E731
+GARLIC = lambda g: C("garlic raw", g, ("garlic", "raw"), ("powder",))  # noqa: E731
+RICE = lambda g: C("rice white long-grain regular enriched cooked", g, ("rice", "cooked"), ("brown", "wild"))  # noqa: E731
+PASTA = lambda g: C("pasta cooked enriched", g, ("pasta", "cooked"), ("whole-wheat", "spinach", "corn"))  # noqa: E731
+BREAD = lambda g: C("bread white commercially prepared", g, ("bread", "white"), ("crumbs", "reduced"))  # noqa: E731
+MOZZARELLA = lambda g: C("cheese mozzarella whole milk", g, ("mozzarella",), ("low moisture", "part skim"))  # noqa: E731
+PARMESAN = lambda g: C("cheese parmesan grated", g, ("parmesan",), ("low sodium",))  # noqa: E731
+CHEDDAR = lambda g: C("cheese cheddar", g, ("cheddar",), ("low fat", "nonfat", "sauce"))  # noqa: E731
+CREAM_CHEESE = lambda g: C("cheese cream", g, ("cheese", "cream"), ("low fat", "fat free"))  # noqa: E731
+RICOTTA = lambda g: C("cheese ricotta whole milk", g, ("ricotta",), ("part skim",))  # noqa: E731
+GROUND_BEEF = lambda g: C(  # noqa: E731
+    "beef ground 85% lean meat 15% fat cooked pan-browned", g, ("beef", "ground", "cooked"), ("raw",)
+)
+CHICKEN = lambda g: C(  # noqa: E731
+    "chicken broilers or fryers breast meat only cooked roasted", g, ("chicken", "cooked"), ("raw", "soup", "stock")
+)
+BACON = lambda g: C("pork cured bacon cooked", g, ("bacon", "cooked"), ("raw", "turkey", "canadian"))  # noqa: E731
+SHRIMP = lambda g: C("crustaceans shrimp cooked", g, ("shrimp", "cooked"), ("raw", "breaded", "imitation"))  # noqa: E731
+POTATO = lambda g: C("potatoes flesh and skin raw", g, ("potatoes", "raw"), ("sweet",))  # noqa: E731
+MAYO = lambda g: C("salad dressing mayonnaise regular", g, ("mayonnaise",), ("light", "low calorie", "imitation"))  # noqa: E731
+SOY_SAUCE = lambda g: C("soy sauce made from soy and wheat shoyu", g, ("soy sauce",), ("low sodium",))  # noqa: E731
+SESAME_OIL = lambda g: C("oil sesame salad or cooking", g, ("sesame",), ())  # noqa: E731
+# "water" alone matches "Watermelon, raw" on a substring, which silently put
+# watermelon into miso soup, churros and takoyaki. Pin the tap-water record.
+WATER = lambda g: C("beverages water tap drinking", g, ("water", "tap"), ("melon",))  # noqa: E731
+FRIES = lambda g: C(  # noqa: E731
+    "potatoes french fried all types salt added in processing frozen oven-heated",
+    g, ("french fried",), ("toast",),
+)
+
+
+SPECS: tuple[ClassSpec, ...] = (
+    # ---------------------------------------------------------------- desserts
+    ClassSpec("apple_pie", "Apple Pie", "American", 125, "1 slice (125 g)",
+              query="pie apple prepared from recipe", require=("pie", "apple"),
+              avoid=("fried", "snack", "baby"), tags=("dessert", "baked")),
+    ClassSpec("baklava", "Baklava", "Middle Eastern", 60, "1 piece (60 g)",
+              recipe=(C("phyllo dough", 30, ("phyllo",)), C("nuts walnuts english", 28, ("walnuts",)),
+                      BUTTER(20), C("honey", 22, ("honey",))),
+              tags=("dessert", "pastry"),
+              note="SR Legacy has no baklava record; composed from phyllo, walnuts, butter and honey."),
+    ClassSpec("beignets", "Beignets", "French", 70, "2 pieces (70 g)",
+              recipe=(FLOUR(40), MILK(20), EGG(8), SUGAR(12), VEG_OIL(15), C("sugars powdered", 5, ("powdered",))),
+              tags=("dessert", "fried")),
+    ClassSpec("bread_pudding", "Bread Pudding", "British", 150, "1 serving (150 g)",
+              recipe=(BREAD(35), MILK(35), EGG(15), SUGAR(10), BUTTER(5)),
+              tags=("dessert", "baked")),
+    ClassSpec("cannoli", "Cannoli", "Italian", 90, "1 piece (90 g)",
+              recipe=(RICOTTA(45), SUGAR(15), FLOUR(20), VEG_OIL(10),
+                      C("candies sweet chocolate", 10, ("chocolate",), ("milk", "white"))),
+              tags=("dessert", "pastry")),
+    ClassSpec("carrot_cake", "Carrot Cake", "American", 110, "1 slice (110 g)",
+              recipe=(FLOUR(22), C("carrots raw", 20, ("carrots", "raw")), SUGAR(20), VEG_OIL(15),
+                      EGG(10), CREAM_CHEESE(13)),
+              tags=("dessert", "baked")),
+    ClassSpec("cheesecake", "Cheesecake", "American", 125, "1 slice (125 g)",
+              query="cake cheesecake commercially prepared", require=("cheesecake",),
+              tags=("dessert", "baked")),
+    ClassSpec("chocolate_cake", "Chocolate Cake", "American", 110, "1 slice (110 g)",
+              query="cake chocolate prepared from recipe without frosting",
+              require=("cake", "chocolate"),
+              avoid=("not chocolate", "snack", "dry mix", "pudding"),
+              tags=("dessert", "baked"),
+              note="The 'avoid' terms are load-bearing: the naive match returned a snack cake "
+                   "labelled 'not chocolate'."),
+    ClassSpec("chocolate_mousse", "Chocolate Mousse", "French", 120, "1 serving (120 g)",
+              query="desserts mousse chocolate prepared-from-recipe", require=("mousse",),
+              tags=("dessert",)),
+    ClassSpec("churros", "Churros", "Spanish", 90, "3 pieces (90 g)",
+              recipe=(FLOUR(35), WATER(25), EGG(10), VEG_OIL(20), SUGAR(10)),
+              tags=("dessert", "fried")),
+    ClassSpec("creme_brulee", "Crème Brûlée", "French", 130, "1 ramekin (130 g)",
+              recipe=(CREAM(55), C("egg yolk raw fresh", 18, ("yolk", "raw")), SUGAR(18), MILK(9)),
+              tags=("dessert", "custard")),
+    ClassSpec("cup_cakes", "Cupcakes", "American", 60, "1 cupcake (60 g)",
+              recipe=(FLOUR(26), SUGAR(24), BUTTER(16), EGG(12), MILK(12),
+                      C("frosting creamy vanilla ready-to-eat", 10, ("frosting",))),
+              tags=("dessert", "baked")),
+    ClassSpec("donuts", "Donuts", "American", 60, "1 donut (60 g)",
+              query="doughnuts cake-type plain sugared or glazed", require=("doughnuts",),
+              avoid=("french", "filled"), tags=("dessert", "fried")),
+    ClassSpec("frozen_yogurt", "Frozen Yogurt", "American", 150, "1 serving (150 g)",
+              query="frozen yogurts vanilla", require=("frozen yogurt",),
+              tags=("dessert", "frozen")),
+    ClassSpec("ice_cream", "Ice Cream", "American", 100, "2 scoops (100 g)",
+              query="ice creams vanilla", require=("ice creams",),
+              avoid=("sandwich", "cone", "bar", "soft serve"), tags=("dessert", "frozen")),
+    ClassSpec("macarons", "Macarons", "French", 40, "2 pieces (40 g)",
+              recipe=(C("nuts almonds", 30, ("almonds",), ("oil", "butter", "milk")),
+                      C("sugars powdered", 32, ("powdered",)),
+                      C("egg white raw fresh", 20, ("white", "raw")), BUTTER(18)),
+              tags=("dessert", "baked")),
+    ClassSpec("panna_cotta", "Panna Cotta", "Italian", 130, "1 serving (130 g)",
+              recipe=(CREAM(60), MILK(25), SUGAR(13), C("gelatins dry powder unsweetened", 2, ("gelatins",))),
+              tags=("dessert",)),
+    ClassSpec("red_velvet_cake", "Red Velvet Cake", "American", 110, "1 slice (110 g)",
+              recipe=(FLOUR(24), SUGAR(24), VEG_OIL(16), EGG(10),
+                      C("buttermilk fluid cultured lowfat", 12, ("buttermilk",)),
+                      C("cocoa dry powder unsweetened", 2, ("cocoa",)), CREAM_CHEESE(12)),
+              tags=("dessert", "baked")),
+    ClassSpec("strawberry_shortcake", "Strawberry Shortcake", "American", 150, "1 serving (150 g)",
+              recipe=(C("cake shortcake biscuit-type prepared from recipe", 45, ("shortcake",)),
+                      C("strawberries raw", 40, ("strawberries", "raw")),
+                      C("cream whipped cream topping pressurized", 15, ("whipped",))),
+              tags=("dessert",)),
+    ClassSpec("tiramisu", "Tiramisu", "Italian", 130, "1 serving (130 g)",
+              recipe=(CREAM_CHEESE(35), C("cookies ladyfingers", 22, ("ladyfingers",)),
+                      SUGAR(15), EGG(12), CREAM(12),
+                      C("beverages coffee brewed prepared with tap water", 3, ("coffee", "brewed")),
+                      C("cocoa dry powder unsweetened", 1, ("cocoa",))),
+              tags=("dessert",),
+              note="Mascarpone is absent from SR Legacy; cream cheese plus cream is the closest "
+                   "available fat/protein proxy."),
+    ClassSpec("waffles", "Waffles", "Belgian", 150, "2 waffles (150 g)",
+              query="waffles plain prepared from recipe", require=("waffles",),
+              avoid=("frozen", "buttermilk"), tags=("breakfast", "baked")),
+    ClassSpec("pancakes", "Pancakes", "American", 150, "3 pancakes (150 g)",
+              query="pancakes plain prepared from recipe", require=("pancakes",),
+              avoid=("dry mix", "frozen", "blueberry"), tags=("breakfast",)),
+    ClassSpec("french_toast", "French Toast", "French", 160, "2 slices (160 g)",
+              query="french toast prepared from recipe made with low fat milk",
+              require=("french toast",), avoid=("frozen", "sticks"), tags=("breakfast",)),
+
+    # ------------------------------------------------------------------ salads
+    ClassSpec("beet_salad", "Beet Salad", "European", 150, "1 bowl (150 g)",
+              recipe=(C("beets cooked boiled drained", 65, ("beets", "cooked")), OLIVE_OIL(10),
+                      C("cheese goat soft type", 15, ("goat",)),
+                      C("nuts walnuts english", 8, ("walnuts",)),
+                      C("vinegar balsamic", 2, ("vinegar",))),
+              tags=("salad", "vegetarian")),
+    ClassSpec("caesar_salad", "Caesar Salad", "American", 200, "1 bowl (200 g)",
+              recipe=(C("lettuce cos or romaine raw", 55, ("romaine",)),
+                      C("salad dressing caesar dressing regular", 18, ("caesar",), ("fat-free", "low calorie")),
+                      PARMESAN(9), C("croutons plain", 18, ("croutons",))),
+              tags=("salad",)),
+    ClassSpec("caprese_salad", "Caprese Salad", "Italian", 180, "1 plate (180 g)",
+              recipe=(TOMATO(50), MOZZARELLA(35), OLIVE_OIL(12),
+                      C("basil fresh", 3, ("basil",), ("dried",))),
+              tags=("salad", "vegetarian")),
+    ClassSpec("greek_salad", "Greek Salad", "Greek", 200, "1 bowl (200 g)",
+              recipe=(C("cucumber with peel raw", 30, ("cucumber", "raw")), TOMATO(30),
+                      C("cheese feta", 15, ("feta",)),
+                      C("olives ripe canned small-extra large", 10, ("olives",)),
+                      ONION(5), OLIVE_OIL(10)),
+              tags=("salad", "vegetarian")),
+    ClassSpec("seaweed_salad", "Seaweed Salad", "Japanese", 100, "1 serving (100 g)",
+              recipe=(C("seaweed wakame raw", 75, ("wakame",)), SESAME_OIL(8), SUGAR(6),
+                      C("vinegar rice", 6, ("vinegar",)), SOY_SAUCE(5)),
+              tags=("salad", "vegetarian")),
+
+    # ------------------------------------------------------------------- soups
+    ClassSpec("clam_chowder", "Clam Chowder", "American", 250, "1 bowl (250 g)",
+              query="soup clam chowder new england canned ready-to-serve",
+              require=("clam chowder",), avoid=("manhattan", "condensed", "dry"),
+              tags=("soup",)),
+    ClassSpec("french_onion_soup", "French Onion Soup", "French", 300, "1 bowl (300 g)",
+              recipe=(C("soup beef broth or bouillon canned ready-to-serve", 60, ("broth",), ("dry", "cube")),
+                      ONION(22), BREAD(8), C("cheese gruyere", 7, ("gruyere",)), BUTTER(3)),
+              tags=("soup",)),
+    ClassSpec("hot_and_sour_soup", "Hot and Sour Soup", "Chinese", 250, "1 bowl (250 g)",
+              query="soup hot and sour chinese restaurant", require=("hot and sour",),
+              tags=("soup",)),
+    ClassSpec("lobster_bisque", "Lobster Bisque", "French", 250, "1 bowl (250 g)",
+              recipe=(C("crustaceans lobster northern cooked moist heat", 20, ("lobster", "cooked"), ("raw",)),
+                      CREAM(25), MILK(35),
+                      C("soup beef broth or bouillon canned ready-to-serve", 12, ("broth",), ("dry",)),
+                      BUTTER(5), FLOUR(3)),
+              tags=("soup", "seafood")),
+    ClassSpec("miso_soup", "Miso Soup", "Japanese", 240, "1 bowl (240 g)",
+              recipe=(WATER(82), C("miso", 8, ("miso",)),
+                      C("tofu soft prepared with calcium sulfate", 8, ("tofu",)),
+                      C("seaweed wakame raw", 2, ("wakame",))),
+              tags=("soup", "vegetarian")),
+    ClassSpec("pho", "Pho", "Vietnamese", 500, "1 large bowl (500 g)",
+              recipe=(C("soup beef broth or bouillon canned ready-to-serve", 55, ("broth",), ("dry",)),
+                      C("rice noodles cooked", 25, ("rice noodles",)),
+                      C("beef round eye of round roast separable lean only cooked roasted", 14,
+                        ("beef", "cooked"), ("ground", "raw")),
+                      ONION(3), C("basil fresh", 1, ("basil",), ("dried",)),
+                      C("spices ginger ground", 1, ("ginger",))),
+              tags=("soup", "noodles"),
+              note="SR Legacy has no pho record; the broth-dominant composition is what drives its "
+                   "low energy density."),
+
+    # ------------------------------------------------------------- meat mains
+    ClassSpec("baby_back_ribs", "Baby Back Ribs", "American", 250, "3 ribs (250 g)",
+              query="pork fresh backribs separable lean and fat cooked roasted",
+              require=("backribs",), avoid=("raw",), tags=("meat", "grilled")),
+    ClassSpec("beef_carpaccio", "Beef Carpaccio", "Italian", 85, "1 plate (85 g)",
+              query="beef round top round separable lean only raw",
+              require=("beef", "raw"), avoid=("soup", "stock", "ground", "corned"),
+              tags=("meat", "raw"),
+              note="Naive matching returned 'Soup, stock, beef' at 13 kcal here."),
+    ClassSpec("beef_tartare", "Beef Tartare", "French", 100, "1 plate (100 g)",
+              query="beef ground 90% lean meat 10% fat raw",
+              require=("beef", "ground", "raw"), avoid=("soup", "stock", "cooked"),
+              tags=("meat", "raw")),
+    ClassSpec("filet_mignon", "Filet Mignon", "French", 200, "1 steak (200 g)",
+              query="beef tenderloin separable lean only cooked broiled",
+              require=("tenderloin", "cooked"), avoid=("raw", "salmon", "pork"),
+              tags=("meat", "grilled"),
+              note="Naive matching returned a salmon product here."),
+    ClassSpec("filet_mignon_placeholder", "", "", 0, "", note="unused"),
+    ClassSpec("foie_gras", "Foie Gras", "French", 60, "1 serving (60 g)",
+              query="pate de foie gras canned goose liver pate smoked",
+              require=("foie gras",), tags=("meat",)),
+    ClassSpec("peking_duck", "Peking Duck", "Chinese", 200, "1 serving (200 g)",
+              query="duck domesticated meat and skin cooked roasted",
+              require=("duck", "roasted"), avoid=("liver", "raw", "wild", "breast"),
+              tags=("meat", "roasted")),
+    ClassSpec("pork_chop", "Pork Chop", "American", 180, "1 chop (180 g)",
+              query="pork fresh loin center rib chops bone-in separable lean only cooked broiled",
+              require=("pork", "chops", "cooked"), avoid=("raw", "breaded"),
+              tags=("meat", "grilled")),
+    ClassSpec("prime_rib", "Prime Rib", "American", 250, "1 serving (250 g)",
+              query="beef rib whole ribs 6-12 separable lean and fat cooked roasted",
+              require=("beef", "rib", "roasted"), avoid=("raw", "short"),
+              tags=("meat", "roasted")),
+    ClassSpec("steak", "Steak", "American", 220, "1 steak (220 g)",
+              query="beef loin top loin steak boneless separable lean only cooked grilled",
+              require=("beef", "cooked"), avoid=("sauce", "raw", "ground"),
+              tags=("meat", "grilled"),
+              note="Naive matching returned 'Sauce, steak, tomato based'."),
+    ClassSpec("chicken_wings", "Chicken Wings", "American", 200, "6 wings (200 g)",
+              query="chicken broilers or fryers wing meat and skin cooked roasted",
+              require=("chicken", "wing", "cooked"), avoid=("soup", "stock", "raw", "canned"),
+              tags=("meat", "fried"),
+              note="Naive matching returned 'Soup, stock, chicken' at 36 kcal."),
+    ClassSpec("chicken_curry", "Chicken Curry", "Indian", 350, "1 bowl (350 g)",
+              recipe=(CHICKEN(35), C("nuts coconut milk canned", 25, ("coconut milk",)),
+                      ONION(12), TOMATO(12), VEG_OIL(8),
+                      C("spices curry powder", 2, ("curry powder",)), GARLIC(2)),
+              tags=("meat", "curry")),
+
+    # ---------------------------------------------------------------- seafood
+    ClassSpec("ceviche", "Ceviche", "Peruvian", 150, "1 serving (150 g)",
+              recipe=(C("fish tilapia raw", 60, ("tilapia", "raw")),
+                      C("lime juice raw", 15, ("lime juice",)), ONION(10), TOMATO(10),
+                      C("coriander cilantro leaves raw", 3, ("cilantro",))),
+              tags=("seafood", "raw")),
+    ClassSpec("fish_and_chips", "Fish and Chips", "British", 350, "1 plate (350 g)",
+              recipe=(C("fish cod atlantic cooked dry heat", 30, ("cod", "cooked"), ("raw",)),
+                      FLOUR(8), VEG_OIL(10), FRIES(52)),
+              tags=("seafood", "fried")),
+    ClassSpec("fried_calamari", "Fried Calamari", "Italian", 150, "1 plate (150 g)",
+              query="mollusks squid mixed species cooked fried", require=("squid", "fried"),
+              tags=("seafood", "fried")),
+    ClassSpec("grilled_salmon", "Grilled Salmon", "Nordic", 170, "1 fillet (170 g)",
+              query="fish salmon atlantic farmed cooked dry heat",
+              require=("salmon", "cooked"), avoid=("smoked", "canned", "raw", "salmonberries"),
+              tags=("seafood", "grilled"),
+              note="Naive matching returned 'Salmonberries, raw'."),
+    ClassSpec("lobster_roll_sandwich", "Lobster Roll", "American", 200, "1 roll (200 g)",
+              recipe=(C("crustaceans lobster northern cooked moist heat", 45, ("lobster", "cooked"), ("raw",)),
+                      MAYO(15), C("rolls hamburger or hot dog plain", 35, ("rolls",)), BUTTER(5)),
+              tags=("seafood", "sandwich")),
+    ClassSpec("mussels", "Mussels", "Belgian", 150, "1 bowl (150 g)",
+              query="mollusks mussel blue cooked moist heat", require=("mussel",),
+              avoid=("raw",), tags=("seafood",)),
+    ClassSpec("oysters", "Oysters", "French", 85, "6 oysters (85 g)",
+              query="mollusks oyster eastern wild raw", require=("oyster",),
+              avoid=("breaded", "canned", "pacific", "cooked"), tags=("seafood", "raw")),
+    ClassSpec("sashimi", "Sashimi", "Japanese", 100, "1 plate (100 g)",
+              query="fish salmon atlantic farmed raw", require=("salmon", "raw"),
+              avoid=("smoked", "canned", "cooked", "salmonberries"), tags=("seafood", "raw")),
+    ClassSpec("scallops", "Scallops", "French", 140, "1 plate (140 g)",
+              query="mollusks scallop mixed species cooked breaded and fried",
+              require=("scallop",), avoid=("raw", "imitation"), tags=("seafood",)),
+    ClassSpec("shrimp_and_grits", "Shrimp and Grits", "American", 300, "1 plate (300 g)",
+              recipe=(SHRIMP(28),
+                      C("cereals corn grits white regular and quick enriched cooked with water", 45,
+                        ("grits", "cooked")),
+                      CHEDDAR(10), BUTTER(8), BACON(5), ONION(4)),
+              tags=("seafood",)),
+    ClassSpec("tuna_tartare", "Tuna Tartare", "Japanese", 120, "1 plate (120 g)",
+              query="fish tuna yellowfin fresh raw", require=("tuna", "raw"),
+              avoid=("canned", "salad", "cooked", "light"), tags=("seafood", "raw")),
+    ClassSpec("crab_cakes", "Crab Cakes", "American", 120, "2 cakes (120 g)",
+              query="crustaceans crab blue crab cakes home recipe", require=("crab cakes",),
+              tags=("seafood", "fried")),
+    ClassSpec("escargots", "Escargots", "French", 85, "6 pieces (85 g)",
+              recipe=(C("mollusks snail raw", 55, ("snail",)), BUTTER(32), GARLIC(8),
+                      C("parsley fresh", 3, ("parsley",), ("dried",))),
+              tags=("seafood",)),
+
+    # ------------------------------------------------------------- sandwiches
+    ClassSpec("club_sandwich", "Club Sandwich", "American", 250, "1 sandwich (250 g)",
+              recipe=(BREAD(35),
+                      C("turkey breast meat only cooked roasted", 25, ("turkey", "cooked"), ("raw",)),
+                      BACON(10), C("lettuce iceberg includes crisphead types raw", 6, ("lettuce", "raw")),
+                      TOMATO(10), MAYO(14)),
+              tags=("sandwich",)),
+    ClassSpec("grilled_cheese_sandwich", "Grilled Cheese Sandwich", "American", 120, "1 sandwich (120 g)",
+              recipe=(BREAD(50), CHEDDAR(35), BUTTER(15)),
+              tags=("sandwich", "vegetarian")),
+    ClassSpec("hamburger", "Hamburger", "American", 220, "1 burger (220 g)",
+              recipe=(GROUND_BEEF(40), C("rolls hamburger or hot dog plain", 38, ("rolls",)),
+                      C("lettuce iceberg includes crisphead types raw", 5, ("lettuce", "raw")),
+                      TOMATO(9), C("catsup", 4, ("catsup",)), ONION(4)),
+              tags=("sandwich",)),
+    ClassSpec("hot_dog", "Hot Dog", "American", 110, "1 hot dog (110 g)",
+              recipe=(C("frankfurter beef", 45, ("frankfurter",), ("chicken", "turkey", "low fat")),
+                      C("rolls hamburger or hot dog plain", 45, ("rolls",)),
+                      C("catsup", 5, ("catsup",)), C("mustard prepared yellow", 5, ("mustard",))),
+              tags=("sandwich",),
+              note="Naive matching returned 'Pickle relish, hot dog'."),
+    ClassSpec("pulled_pork_sandwich", "Pulled Pork Sandwich", "American", 250, "1 sandwich (250 g)",
+              recipe=(C("pork fresh shoulder blade boston butt separable lean only cooked roasted", 42,
+                        ("pork", "cooked"), ("raw",)),
+                      C("sauce barbecue", 18, ("barbecue",)),
+                      C("rolls hamburger or hot dog plain", 40, ("rolls",))),
+              tags=("sandwich",)),
+    ClassSpec("croque_madame", "Croque Madame", "French", 250, "1 serving (250 g)",
+              recipe=(BREAD(30), C("cheese gruyere", 20, ("gruyere",)),
+                      C("ham sliced pre-packaged deli meat", 20, ("ham",), ("canned",)),
+                      EGG(15), MILK(10), BUTTER(5)),
+              tags=("sandwich",)),
+    ClassSpec("breakfast_burrito", "Breakfast Burrito", "Mexican", 240, "1 burrito (240 g)",
+              query="fast foods breakfast burrito with egg cheese and sausage",
+              require=("burrito",), tags=("breakfast", "mexican")),
+
+    # ---------------------------------------------------------- pasta & grains
+    ClassSpec("lasagna", "Lasagna", "Italian", 250, "1 slice (250 g)",
+              recipe=(PASTA(30), GROUND_BEEF(20), C("sauce tomato canned", 22, ("sauce", "tomato")),
+                      RICOTTA(14), MOZZARELLA(12), PARMESAN(2)),
+              tags=("pasta",),
+              note="Naive matching returned a frozen *vegetable* lasagna."),
+    ClassSpec("macaroni_and_cheese", "Macaroni and Cheese", "American", 220, "1 bowl (220 g)",
+              recipe=(PASTA(50), CHEDDAR(25), MILK(15), BUTTER(8), FLOUR(2)),
+              tags=("pasta", "vegetarian"),
+              note="The SR Legacy canned entry reports 82 kcal/100 g, far below a made-from-scratch dish."),
+    ClassSpec("ravioli", "Ravioli", "Italian", 250, "1 plate (250 g)",
+              recipe=(FLOUR(30), EGG(10), RICOTTA(22), C("sauce tomato canned", 33, ("sauce", "tomato")),
+                      PARMESAN(5)),
+              tags=("pasta",)),
+    ClassSpec("gnocchi", "Gnocchi", "Italian", 250, "1 plate (250 g)",
+              recipe=(POTATO(55), FLOUR(22), EGG(6), BUTTER(7), PARMESAN(5),
+                      C("sauce tomato canned", 5, ("sauce", "tomato"))),
+              tags=("pasta",)),
+    ClassSpec("spaghetti_bolognese", "Spaghetti Bolognese", "Italian", 350, "1 plate (350 g)",
+              recipe=(PASTA(48), GROUND_BEEF(22), C("sauce tomato canned", 22, ("sauce", "tomato")),
+                      OLIVE_OIL(4), ONION(3), PARMESAN(1)),
+              tags=("pasta",),
+              note="Naive matching returned 'Spaghetti, spinach, dry' for both spaghetti classes."),
+    ClassSpec("spaghetti_carbonara", "Spaghetti Carbonara", "Italian", 320, "1 plate (320 g)",
+              recipe=(PASTA(58), BACON(15), EGG(14), PARMESAN(10), OLIVE_OIL(3)),
+              tags=("pasta",)),
+    ClassSpec("risotto", "Risotto", "Italian", 250, "1 plate (250 g)",
+              recipe=(RICE(60), C("soup chicken broth canned ready-to-serve", 18, ("broth",), ("dry",)),
+                      BUTTER(8), PARMESAN(8), ONION(4), C("wine table white", 2, ("wine",))),
+              tags=("rice", "vegetarian")),
+    ClassSpec("fried_rice", "Fried Rice", "Chinese", 250, "1 plate (250 g)",
+              recipe=(RICE(62), EGG(10), VEG_OIL(8),
+                      C("peas green frozen cooked boiled drained", 6, ("peas",)),
+                      C("carrots cooked boiled drained", 6, ("carrots", "cooked")),
+                      SOY_SAUCE(4), ONION(4)),
+              tags=("rice",)),
+    ClassSpec("paella", "Paella", "Spanish", 350, "1 plate (350 g)",
+              recipe=(RICE(45), CHICKEN(15), SHRIMP(12),
+                      C("mollusks mussel blue cooked moist heat", 8, ("mussel",), ("raw",)),
+                      C("peas green frozen cooked boiled drained", 6, ("peas",)),
+                      TOMATO(6), OLIVE_OIL(6), ONION(2)),
+              tags=("rice", "seafood")),
+    ClassSpec("bibimbap", "Bibimbap", "Korean", 400, "1 bowl (400 g)",
+              recipe=(RICE(50), C("beef round eye of round roast separable lean only cooked roasted", 12,
+                                   ("beef", "cooked"), ("ground", "raw")),
+                      EGG(10), C("spinach cooked boiled drained", 8, ("spinach", "cooked")),
+                      C("carrots raw", 6, ("carrots", "raw")),
+                      C("mushrooms shiitake cooked", 6, ("shiitake",)),
+                      SESAME_OIL(4), C("peppers hot chili sauce", 4, ("chili sauce",))),
+              tags=("rice", "korean")),
+    ClassSpec("pad_thai", "Pad Thai", "Thai", 350, "1 plate (350 g)",
+              recipe=(C("rice noodles cooked", 52, ("rice noodles",)), SHRIMP(12), EGG(9),
+                      C("nuts peanuts all types dry-roasted", 6, ("peanuts",)),
+                      VEG_OIL(6), C("beansprouts mung mature seeds sprouted raw", 8, ("sprouted", "raw")),
+                      SOY_SAUCE(4), SUGAR(3)),
+              tags=("noodles", "thai"),
+              note="Naive matching returned 'Papad'."),
+    ClassSpec("ramen", "Ramen", "Japanese", 500, "1 bowl (500 g)",
+              recipe=(C("noodles chinese chow mein", 28, ("noodles",), ("dry",)),
+                      C("soup chicken broth canned ready-to-serve", 50, ("broth",), ("dry",)),
+                      C("pork fresh loin center rib chops boneless separable lean only cooked broiled", 10,
+                        ("pork", "cooked"), ("raw",)),
+                      EGG(7), C("onions spring or scallions raw", 3, ("scallions",)),
+                      C("seaweed wakame raw", 2, ("wakame",))),
+              tags=("noodles", "soup")),
+
+    # ------------------------------------------------------------ small plates
+    ClassSpec("bruschetta", "Bruschetta", "Italian", 90, "2 slices (90 g)",
+              recipe=(C("bread italian", 48, ("bread", "italian")), TOMATO(32), OLIVE_OIL(14),
+                      GARLIC(3), C("basil fresh", 3, ("basil",), ("dried",))),
+              tags=("appetizer", "vegetarian")),
+    ClassSpec("cheese_plate", "Cheese Plate", "French", 100, "1 plate (100 g)",
+              recipe=(CHEDDAR(30), C("cheese brie", 25, ("brie",)),
+                      C("cheese blue", 15, ("blue",)),
+                      C("crackers standard snack-type regular", 20, ("crackers",)),
+                      C("grapes red or green european type raw", 10, ("grapes", "raw"))),
+              tags=("appetizer", "vegetarian")),
+    ClassSpec("deviled_eggs", "Deviled Eggs", "American", 60, "2 halves (60 g)",
+              recipe=(C("egg whole cooked hard-boiled", 82, ("egg", "hard-boiled")), MAYO(14),
+                      C("mustard prepared yellow", 4, ("mustard",))),
+              tags=("appetizer",)),
+    ClassSpec("edamame", "Edamame", "Japanese", 100, "1 bowl (100 g)",
+              query="edamame frozen prepared", require=("edamame",), tags=("appetizer", "vegetarian")),
+    ClassSpec("falafel", "Falafel", "Middle Eastern", 100, "4 balls (100 g)",
+              query="falafel home-prepared", require=("falafel",), tags=("appetizer", "vegetarian")),
+    ClassSpec("hummus", "Hummus", "Middle Eastern", 60, "1 serving (60 g)",
+              query="hummus commercial", require=("hummus",), tags=("appetizer", "vegetarian")),
+    ClassSpec("guacamole", "Guacamole", "Mexican", 60, "1 serving (60 g)",
+              recipe=(C("avocados raw all commercial varieties", 80, ("avocados", "raw")),
+                      ONION(8), TOMATO(7), C("lime juice raw", 4, ("lime juice",)),
+                      C("coriander cilantro leaves raw", 1, ("cilantro",))),
+              tags=("appetizer", "vegetarian")),
+    ClassSpec("garlic_bread", "Garlic Bread", "Italian", 60, "1 slice (60 g)",
+              query="garlic bread frozen", require=("garlic bread",),
+              tags=("appetizer", "vegetarian")),
+    ClassSpec("french_fries", "French Fries", "Belgian", 120, "1 serving (120 g)",
+              query="potatoes french fried all types salt added in processing frozen oven-heated",
+              require=("french fried",), avoid=("toast", "baby"),
+              tags=("side", "fried"),
+              note="Naive matching returned 'French toast'."),
+    ClassSpec("onion_rings", "Onion Rings", "American", 100, "1 serving (100 g)",
+              query="onion rings breaded par fried frozen prepared heated in oven",
+              require=("onion rings",), tags=("side", "fried")),
+    ClassSpec("nachos", "Nachos", "Mexican", 200, "1 plate (200 g)",
+              query="fast foods nachos with cheese", require=("nachos",),
+              tags=("appetizer", "mexican")),
+    ClassSpec("poutine", "Poutine", "Canadian", 300, "1 plate (300 g)",
+              recipe=(FRIES(60), C("cheese mozzarella whole milk", 20, ("mozzarella",), ("part skim",)),
+                      C("gravy beef canned ready-to-serve", 20, ("gravy",))),
+              tags=("side", "fried"),
+              note="Cheese curds are absent from SR Legacy; whole-milk mozzarella is the standard proxy."),
+    ClassSpec("samosa", "Samosa", "Indian", 120, "2 pieces (120 g)",
+              recipe=(FLOUR(32), POTATO(35),
+                      C("peas green frozen cooked boiled drained", 10, ("peas",)),
+                      VEG_OIL(18), ONION(4),
+                      C("spices cumin seed", 1, ("cumin",))),
+              tags=("appetizer", "fried")),
+    ClassSpec("spring_rolls", "Spring Rolls", "Chinese", 120, "2 rolls (120 g)",
+              recipe=(FLOUR(28), C("cabbage raw", 30, ("cabbage", "raw")),
+                      C("carrots raw", 12, ("carrots", "raw")), VEG_OIL(16),
+                      C("beansprouts mung mature seeds sprouted raw", 12, ("sprouted", "raw")),
+                      SOY_SAUCE(2)),
+              tags=("appetizer", "fried")),
+    ClassSpec("dumplings", "Dumplings", "Chinese", 150, "5 pieces (150 g)",
+              recipe=(FLOUR(38), C("pork fresh ground cooked", 30, ("pork", "ground", "cooked"), ("raw",)),
+                      C("cabbage raw", 20, ("cabbage", "raw")), SESAME_OIL(6), SOY_SAUCE(3),
+                      C("onions spring or scallions raw", 3, ("scallions",))),
+              tags=("appetizer", "chinese")),
+    ClassSpec("gyoza", "Gyoza", "Japanese", 130, "5 pieces (130 g)",
+              recipe=(FLOUR(36), C("pork fresh ground cooked", 28, ("pork", "ground", "cooked"), ("raw",)),
+                      C("cabbage raw", 20, ("cabbage", "raw")), VEG_OIL(8), SESAME_OIL(3),
+                      GARLIC(2), SOY_SAUCE(3)),
+              tags=("appetizer", "japanese")),
+    ClassSpec("takoyaki", "Takoyaki", "Japanese", 150, "6 pieces (150 g)",
+              recipe=(FLOUR(28), WATER(34),
+                      C("mollusks octopus common cooked moist heat", 18, ("octopus",), ("raw",)),
+                      EGG(8), MAYO(6), C("sauce worcestershire", 4, ("worcestershire",)),
+                      C("onions spring or scallions raw", 2, ("scallions",))),
+              tags=("appetizer", "japanese")),
+    ClassSpec("sushi", "Sushi", "Japanese", 170, "6 pieces (170 g)",
+              recipe=(RICE(60), C("fish salmon atlantic farmed raw", 25, ("salmon", "raw"),
+                                  ("smoked", "cooked", "canned")),
+                      C("seaweed laver raw", 3, ("laver",)),
+                      C("vinegar rice", 6, ("vinegar",)), SUGAR(3),
+                      C("cucumber with peel raw", 3, ("cucumber", "raw"))),
+              tags=("seafood", "japanese")),
+    ClassSpec("tacos", "Tacos", "Mexican", 170, "2 tacos (170 g)",
+              recipe=(C("tortillas ready-to-bake or -fry corn", 30, ("tortillas", "corn")),
+                      GROUND_BEEF(30), C("lettuce iceberg includes crisphead types raw", 8, ("lettuce", "raw")),
+                      TOMATO(10), CHEDDAR(12), ONION(4),
+                      C("sour cream cultured", 6, ("sour cream",))),
+              tags=("mexican",)),
+    ClassSpec("chicken_quesadilla", "Chicken Quesadilla", "Mexican", 230, "1 quesadilla (230 g)",
+              query="fast foods quesadilla with chicken", require=("quesadilla",),
+              tags=("mexican",)),
+    ClassSpec("huevos_rancheros", "Huevos Rancheros", "Mexican", 300, "1 plate (300 g)",
+              recipe=(EGG(32), C("tortillas ready-to-bake or -fry corn", 22, ("tortillas", "corn")),
+                      C("sauce salsa ready-to-serve", 20, ("salsa",)),
+                      C("beans pinto mature seeds cooked boiled", 16, ("pinto", "cooked")),
+                      CHEDDAR(7), VEG_OIL(3)),
+              tags=("breakfast", "mexican")),
+    ClassSpec("eggs_benedict", "Eggs Benedict", "American", 250, "1 plate (250 g)",
+              recipe=(C("muffins english plain enriched", 28, ("english",)),
+                      C("egg whole cooked poached", 32, ("egg", "poached")),
+                      C("ham sliced pre-packaged deli meat", 18, ("ham",), ("canned",)),
+                      BUTTER(12), C("egg yolk raw fresh", 8, ("yolk", "raw")),
+                      C("lemon juice raw", 2, ("lemon juice",))),
+              tags=("breakfast",)),
+    ClassSpec("omelette", "Omelette", "French", 180, "1 omelette (180 g)",
+              query="egg whole cooked omelet", require=("omelet",),
+              avoid=("frozen", "substitute"), tags=("breakfast",)),
+    ClassSpec("pizza", "Pizza", "Italian", 220, "2 slices (220 g)",
+              query="pizza cheese topping regular crust frozen cooked",
+              require=("pizza",), avoid=("baby", "sauce", "roll"), tags=("italian",)),
+)
+
+
+# The placeholder above keeps the tuple readable while editing; drop it.
+SPECS = tuple(s for s in SPECS if s.title)
+
+BY_CLASS: dict[str, ClassSpec] = {s.cls: s for s in SPECS}
