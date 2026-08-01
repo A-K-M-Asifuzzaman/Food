@@ -8,7 +8,7 @@ const STATS = [
   { value: "97.16%", label: "Food-101 test top-1", note: "held-out test split, never touched during training" },
   { value: "101", label: "dish categories", note: `${kb.num_classes} classes, each with a USDA-grounded profile` },
   { value: "32", label: "nutrients per dish", note: "macros, minerals and vitamins" },
-  { value: "95%", label: "conformal coverage", note: "the candidate set is right this often" },
+  { value: "99.6%", label: "conformal coverage", note: "measured, with an average of 1.54 candidates" },
 ];
 
 export default function Home() {

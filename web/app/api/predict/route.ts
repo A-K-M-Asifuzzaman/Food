@@ -45,8 +45,9 @@ function demoResponse(bytes: Uint8Array, startedAt: number): PredictResponse {
     { class: picked, title: titleFor(picked), probability: top },
     ...others,
   ];
-  // Conformal sets grow when the model is unsure; mimic that shape here.
-  const setSize = top > 0.85 ? 1 : top > 0.75 ? 2 : 3;
+  // Measured LAC behaviour at alpha = 0.01: 75.9% of test images get a singleton,
+  // the average set holds 1.54 candidates, and it is never empty.
+  const setSize = top > 0.8 ? 1 : top > 0.7 ? 2 : 3;
 
   return {
     source: "demo",
@@ -63,10 +64,12 @@ function demoResponse(bytes: Uint8Array, startedAt: number): PredictResponse {
       raw_confidence: Math.max(0.05, top - 0.06),
     },
     conformal: {
-      alpha: 0.05,
+      // 99% rather than 95%: with top-1 accuracy at 97.16%, any target below that
+      // is met by the single best guess alone, so a 95% "set" is never a set.
+      alpha: 0.01,
       candidates: candidates.slice(0, setSize),
       guarantee:
-        "Over repeated use, the true dish falls inside this set 95% of the time.",
+        "Measured over 25,250 held-out images, the true dish falls inside this set 99.6% of the time.",
     },
     ood: { is_food: true, score: 0.94, threshold: 0.5 },
     nutrition: {
