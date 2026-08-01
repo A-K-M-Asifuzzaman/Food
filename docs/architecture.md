@@ -11,47 +11,39 @@ The whole product in one view: a photograph enters on the left, a grounded nutri
 answer leaves on the right, and every gate in between exists because a wrong answer in a
 nutrition app is worse than no answer.
 
+**Legend** — 🔵 client (Vercel) · 🔴 backend (HF Spaces) · 🟢 knowledge (local, zero cost) ·
+🟠 external services
+
 ```mermaid
-%%{init: {'theme':'base','themeVariables':{'fontFamily':'ui-sans-serif, system-ui, -apple-system, sans-serif','primaryColor':'#F4F1E8','primaryTextColor':'#0B0B0F','primaryBorderColor':'#0B0B0F','lineColor':'#0B0B0F','clusterBkg':'#ECE7D9','clusterBorder':'#0B0B0F','edgeLabelBackground':'#F4F1E8'}}}%%
-flowchart TB
-    subgraph client[" CLIENT — Next.js on Vercel "]
-        UP["Photo upload"]
-        UI["Result panels<br/>3D depth · helix · web"]
-        ADM["Admin console"]
-    end
+%%{init: {'theme':'base','themeVariables':{'fontFamily':'ui-sans-serif, system-ui, -apple-system, sans-serif','primaryColor':'#F4F1E8','primaryTextColor':'#0B0B0F','primaryBorderColor':'#0B0B0F','lineColor':'#0B0B0F','clusterBkg':'#ECE7D9','clusterBorder':'#0B0B0F','edgeLabelBackground':'#F4F1E8'},'flowchart':{'padding':16,'nodeSpacing':45,'rankSpacing':55,'curve':'basis','htmlLabels':true},'themeCSS':'.nodeLabel{padding:2px 6px}'}}%%
+flowchart LR
+    UP["Photo upload<br/><small>Next.js · Vercel</small>"]
+    MW["Middleware<br/><small>trace ID · latency · cost</small>"]
+    VIS["Vision service<br/><small>ONNX ensemble</small>"]
+    REL["Reliability gate<br/><small>calibrate → conformal → OOD</small>"]
+    RAG["RAG service<br/><small>FastAPI · HF Spaces</small>"]
+    UI["Result panels<br/><small>3D depth · helix · web</small>"]
+    ADM["Admin console<br/><small>RBAC gated</small>"]
 
-    subgraph api[" BACKEND — FastAPI on HF Spaces "]
-        MW["Middleware<br/>trace ID · latency · cost"]
-        VIS["Vision service<br/>ONNX ensemble"]
-        REL["Reliability gate<br/>calibrate → conformal → OOD"]
-        RAG["RAG service"]
-    end
+    KB[("Nutrition KB<br/><small>101 classes · 32 nutrients</small>")]
+    COR[("Corpus<br/><small>577 documents</small>")]
+    GR[("Graph<br/><small>dish → ingredient → nutrient</small>")]
 
-    subgraph know[" KNOWLEDGE — local, zero cost "]
-        KB[("Nutrition KB<br/>101 classes · 32 nutrients")]
-        COR[("Corpus<br/>577 documents")]
-        GR[("Knowledge graph<br/>dish → ingredient → nutrient")]
-    end
-
-    subgraph obs[" OBSERVABILITY "]
-        PROM["Prometheus /metrics<br/>→ Grafana Cloud"]
-        FB[("Firebase<br/>Auth · Firestore · Storage")]
-    end
-
-    OAI["OpenAI — last resort only"]
+    PROM["Prometheus<br/><small>→ Grafana Cloud</small>"]
+    FB[("Firestore<br/><small>predictions · cost · feedback</small>")]
+    OAI["OpenAI<br/><small>last resort only</small>"]
 
     UP --> MW --> VIS --> REL
     REL -->|"accepted"| RAG
-    REL -->|"rejected · not food"| UI
+    REL -->|"rejected"| UI
     RAG --> KB
     RAG --> COR
     RAG --> GR
-    RAG -.->|"~15% of queries"| OAI
+    RAG -.->|"~15%"| OAI
     RAG --> UI
     MW --> PROM
     MW --> FB
     ADM --> FB
-    ADM --> PROM
 
     classDef c fill:#1B4CE0,stroke:#0B0B0F,stroke-width:2px,color:#fff
     classDef a fill:#E62429,stroke:#0B0B0F,stroke-width:2px,color:#fff
@@ -60,7 +52,7 @@ flowchart TB
     class UP,UI,ADM c
     class MW,VIS,REL,RAG a
     class KB,COR,GR k
-    class FB,OAI e
+    class FB,OAI,PROM e
 ```
 
 ---
@@ -72,59 +64,54 @@ caching pooled embeddings converts every downstream experiment from hours into s
 which is what makes rigorous ablation affordable on a laptop.
 
 ```mermaid
-%%{init: {'theme':'base','themeVariables':{'fontFamily':'ui-sans-serif, system-ui, -apple-system, sans-serif','primaryColor':'#F4F1E8','primaryTextColor':'#0B0B0F','primaryBorderColor':'#0B0B0F','lineColor':'#0B0B0F','clusterBkg':'#ECE7D9','clusterBorder':'#0B0B0F','edgeLabelBackground':'#F4F1E8','pie1':'#16A34A','pie2':'#E62429','pie3':'#1B4CE0','pie4':'#F5A524'}}}%%
-flowchart TD
-    F101[("Food-101<br/>101,000 images<br/>75,750 train · 25,250 test")]
+%%{init: {'theme':'base','themeVariables':{'fontFamily':'ui-sans-serif, system-ui, -apple-system, sans-serif','primaryColor':'#F4F1E8','primaryTextColor':'#0B0B0F','primaryBorderColor':'#0B0B0F','lineColor':'#0B0B0F','clusterBkg':'#ECE7D9','clusterBorder':'#0B0B0F','edgeLabelBackground':'#F4F1E8','pie1':'#16A34A','pie2':'#E62429','pie3':'#1B4CE0','pie4':'#F5A524'},'flowchart':{'padding':16,'nodeSpacing':45,'rankSpacing':55,'curve':'basis','htmlLabels':true}}}%%
+flowchart LR
+    F101[("Food-101<br/><small>101,000 images<br/>75,750 train · 25,250 test</small>")]
 
-    subgraph extract["Stage 1 · extract once  (~20 h total, one-time)"]
-        direction LR
-        B1["SigLIP-SO400M<br/>384px · 428M<br/>5.16 img/s"]
-        B2["EVA-02-L<br/>448px · 304M<br/>4.04 img/s"]
-        B3["DINOv2-L<br/>518px · 304M<br/>3.6 img/s"]
-    end
+    B1["SigLIP-SO400M<br/><small>384px · 428M · 5.16 img/s</small>"]
+    B2["EVA-02-L<br/><small>448px · 304M · 4.04 img/s</small>"]
+    B3["DINOv2-L<br/><small>518px · 304M · 3.6 img/s</small>"]
 
-    subgraph cache["Frozen feature bank  (on disk, fp16)"]
-        direction LR
-        C1[("siglip<br/>101k × 1152")]
-        C2[("eva02<br/>101k × 1024")]
-        C3[("dinov2<br/>101k × 1024")]
-    end
+    C1[("siglip cache<br/><small>101k × 1152</small>")]
+    C2[("eva02 cache<br/><small>101k × 1024</small>")]
+    C3[("dinov2 cache<br/><small>101k × 1024</small>")]
 
-    subgraph heads["Stage 2 · train heads  (seconds to minutes)"]
-        direction LR
-        H1["MLP probe<br/>96.83%"]
-        H2["MLP probe<br/>95.53%"]
-        H3["MLP probe<br/>planned"]
-        HF["Gated fusion<br/>96.97%"]
-    end
+    H1["probe<br/><small>96.83%</small>"]
+    H2["probe<br/><small>95.53%</small>"]
+    H3["probe<br/><small>pending</small>"]
+    HF["gated fusion<br/><small>96.97%</small>"]
 
-    AVG["Probability average<br/>0 params · 97.16%"]
-    FT["Stage 3 · EVA-02-L 448 fine-tune<br/>layer decay · mixup · CutMix · EMA"]
-    ENS["Stage 4 · final ensemble + TTA"]
+    AVG["probability average<br/><small>0 params · 97.16%</small>"]
+    FT["EVA-02-L 448 fine-tune<br/><small>layer decay · mixup · EMA</small>"]
+    ENS["final ensemble + TTA"]
 
-    F101 --> B1 & B2 & B3
-    B1 --> C1 --> H1
-    B2 --> C2 --> H2
-    B3 --> C3 --> H3
-    C1 & C2 & C3 --> HF
-    H1 & H2 --> AVG
+    F101 --> B1 --> C1 --> H1 --> AVG
+    F101 --> B2 --> C2 --> H2 --> AVG
+    F101 --> B3 --> C3 --> H3
+    C1 --> HF
+    C2 --> HF
+    C3 --> HF
     F101 --> FT
-    AVG & HF & FT --> ENS
+    AVG --> ENS
+    HF --> ENS
+    FT --> ENS
 
-    classDef d fill:#0B0B0F,stroke:#0B0B0F,color:#F4F1E8
-    classDef x fill:#1B4CE0,stroke:#0A2A66,color:#fff
-    classDef s fill:#22D3EE,stroke:#0e7490,color:#0B0B0F
-    classDef w fill:#16A34A,stroke:#0f6b32,color:#fff
+    classDef d fill:#0B0B0F,stroke:#0B0B0F,stroke-width:2px,color:#F4F1E8
+    classDef x fill:#1B4CE0,stroke:#0B0B0F,stroke-width:2px,color:#fff
+    classDef s fill:#22D3EE,stroke:#0B0B0F,stroke-width:2px,color:#0B0B0F
+    classDef w fill:#16A34A,stroke:#0B0B0F,stroke-width:2px,color:#fff
+    classDef p fill:#F4F1E8,stroke:#0B0B0F,stroke-width:2px,color:#0B0B0F
     class F101 d
     class B1,B2,B3 x
     class C1,C2,C3 s
     class AVG,ENS w
+    class H1,H2,H3,HF,FT p
 ```
 
 ### Measured results
 
 ```mermaid
-%%{init: {'theme':'base','themeVariables':{'fontFamily':'ui-sans-serif, system-ui, -apple-system, sans-serif','primaryColor':'#F4F1E8','primaryTextColor':'#0B0B0F','primaryBorderColor':'#0B0B0F','lineColor':'#0B0B0F','clusterBkg':'#ECE7D9','clusterBorder':'#0B0B0F','edgeLabelBackground':'#F4F1E8','pie1':'#16A34A','pie2':'#E62429','pie3':'#1B4CE0','pie4':'#F5A524'}}}%%
+%%{init: {'theme':'base','themeVariables':{'fontFamily':'ui-sans-serif, system-ui, -apple-system, sans-serif','primaryColor':'#F4F1E8','primaryTextColor':'#0B0B0F','primaryBorderColor':'#0B0B0F','lineColor':'#0B0B0F','clusterBkg':'#ECE7D9','clusterBorder':'#0B0B0F','edgeLabelBackground':'#F4F1E8','pie1':'#16A34A','pie2':'#E62429','pie3':'#1B4CE0','pie4':'#F5A524'},'flowchart':{'padding':16,'nodeSpacing':45,'rankSpacing':55,'curve':'basis','htmlLabels':true}}}%%
 xychart-beta
     title "Food-101 test top-1 accuracy (%)"
     x-axis ["EVA-02 probe", "SigLIP probe", "Gated fusion", "Prob average"]
@@ -142,7 +129,7 @@ head failed to beat its own best input.
 ## 3. Why the ensemble gains are small
 
 ```mermaid
-%%{init: {'theme':'base','themeVariables':{'fontFamily':'ui-sans-serif, system-ui, -apple-system, sans-serif','primaryColor':'#F4F1E8','primaryTextColor':'#0B0B0F','primaryBorderColor':'#0B0B0F','lineColor':'#0B0B0F','clusterBkg':'#ECE7D9','clusterBorder':'#0B0B0F','edgeLabelBackground':'#F4F1E8','pie1':'#16A34A','pie2':'#E62429','pie3':'#1B4CE0','pie4':'#F5A524'}}}%%
+%%{init: {'theme':'base','themeVariables':{'fontFamily':'ui-sans-serif, system-ui, -apple-system, sans-serif','primaryColor':'#F4F1E8','primaryTextColor':'#0B0B0F','primaryBorderColor':'#0B0B0F','lineColor':'#0B0B0F','clusterBkg':'#ECE7D9','clusterBorder':'#0B0B0F','edgeLabelBackground':'#F4F1E8','pie1':'#16A34A','pie2':'#E62429','pie3':'#1B4CE0','pie4':'#F5A524'},'flowchart':{'padding':16,'nodeSpacing':45,'rankSpacing':55,'curve':'basis','htmlLabels':true}}}%%
 pie showData
     title "SigLIP vs EVA-02 agreement on 25,250 test images"
     "Both correct" : 23842
@@ -165,7 +152,7 @@ mode: beef carpaccio → "Soup, stock, beef" at 13 kcal, chicken wings → "Soup
 chicken" at 36 kcal.
 
 ```mermaid
-%%{init: {'theme':'base','themeVariables':{'fontFamily':'ui-sans-serif, system-ui, -apple-system, sans-serif','primaryColor':'#F4F1E8','primaryTextColor':'#0B0B0F','primaryBorderColor':'#0B0B0F','lineColor':'#0B0B0F','clusterBkg':'#ECE7D9','clusterBorder':'#0B0B0F','edgeLabelBackground':'#F4F1E8','pie1':'#16A34A','pie2':'#E62429','pie3':'#1B4CE0','pie4':'#F5A524'}}}%%
+%%{init: {'theme':'base','themeVariables':{'fontFamily':'ui-sans-serif, system-ui, -apple-system, sans-serif','primaryColor':'#F4F1E8','primaryTextColor':'#0B0B0F','primaryBorderColor':'#0B0B0F','lineColor':'#0B0B0F','clusterBkg':'#ECE7D9','clusterBorder':'#0B0B0F','edgeLabelBackground':'#F4F1E8','pie1':'#16A34A','pie2':'#E62429','pie3':'#1B4CE0','pie4':'#F5A524'},'flowchart':{'padding':16,'nodeSpacing':45,'rankSpacing':55,'curve':'basis','htmlLabels':true}}}%%
 flowchart TD
     CLS["101 Food-101 class names"]
     USDA[("USDA SR Legacy<br/>generic unbranded foods")]
@@ -213,7 +200,7 @@ an LLM for numeric facts, because a model reading "310 kcal" from context can tr
 wrong and a lookup cannot.
 
 ```mermaid
-%%{init: {'theme':'base','themeVariables':{'fontFamily':'ui-sans-serif, system-ui, -apple-system, sans-serif','primaryColor':'#F4F1E8','primaryTextColor':'#0B0B0F','primaryBorderColor':'#0B0B0F','lineColor':'#0B0B0F','clusterBkg':'#ECE7D9','clusterBorder':'#0B0B0F','edgeLabelBackground':'#F4F1E8','pie1':'#16A34A','pie2':'#E62429','pie3':'#1B4CE0','pie4':'#F5A524'}}}%%
+%%{init: {'theme':'base','themeVariables':{'fontFamily':'ui-sans-serif, system-ui, -apple-system, sans-serif','primaryColor':'#F4F1E8','primaryTextColor':'#0B0B0F','primaryBorderColor':'#0B0B0F','lineColor':'#0B0B0F','clusterBkg':'#ECE7D9','clusterBorder':'#0B0B0F','edgeLabelBackground':'#F4F1E8','pie1':'#16A34A','pie2':'#E62429','pie3':'#1B4CE0','pie4':'#F5A524'},'flowchart':{'padding':16,'nodeSpacing':45,'rankSpacing':55,'curve':'basis','htmlLabels':true}}}%%
 flowchart TD
     Q["User question"] --> RT{"Intent router<br/>local embeddings + rules<br/>no API call"}
 
@@ -226,7 +213,7 @@ flowchart TD
     CACHE -->|"hit"| ANS
     CACHE -->|"miss"| HYB
 
-    subgraph retrieval["Hybrid retrieval"]
+    subgraph retrieval["HYBRID RETRIEVAL  "]
         direction TB
         HYB["Query"] --> BM["BM25 sparse"]
         HYB --> DEN["Dense bi-encoder"]
@@ -271,7 +258,7 @@ Accuracy alone is an insufficient goal. This is the decision flow between a raw 
 and anything shown to a user.
 
 ```mermaid
-%%{init: {'theme':'base','themeVariables':{'fontFamily':'ui-sans-serif, system-ui, -apple-system, sans-serif','primaryColor':'#F4F1E8','primaryTextColor':'#0B0B0F','primaryBorderColor':'#0B0B0F','lineColor':'#0B0B0F','clusterBkg':'#ECE7D9','clusterBorder':'#0B0B0F','edgeLabelBackground':'#F4F1E8','pie1':'#16A34A','pie2':'#E62429','pie3':'#1B4CE0','pie4':'#F5A524'}}}%%
+%%{init: {'theme':'base','themeVariables':{'fontFamily':'ui-sans-serif, system-ui, -apple-system, sans-serif','primaryColor':'#F4F1E8','primaryTextColor':'#0B0B0F','primaryBorderColor':'#0B0B0F','lineColor':'#0B0B0F','clusterBkg':'#ECE7D9','clusterBorder':'#0B0B0F','edgeLabelBackground':'#F4F1E8','pie1':'#16A34A','pie2':'#E62429','pie3':'#1B4CE0','pie4':'#F5A524'},'flowchart':{'padding':16,'nodeSpacing':45,'rankSpacing':55,'curve':'basis','htmlLabels':true}}}%%
 stateDiagram-v2
     [*] --> Logits
     Logits --> Calibrated : temperature scaling<br/>T = 0.834
@@ -306,7 +293,7 @@ the opposite of the textbook result, traced to stacking label smoothing with mix
 ## 7. Request lifecycle
 
 ```mermaid
-%%{init: {'theme':'base','themeVariables':{'fontFamily':'ui-sans-serif, system-ui, -apple-system, sans-serif','primaryColor':'#F4F1E8','primaryTextColor':'#0B0B0F','primaryBorderColor':'#0B0B0F','lineColor':'#0B0B0F','clusterBkg':'#ECE7D9','clusterBorder':'#0B0B0F','edgeLabelBackground':'#F4F1E8','pie1':'#16A34A','pie2':'#E62429','pie3':'#1B4CE0','pie4':'#F5A524'}}}%%
+%%{init: {'theme':'base','themeVariables':{'fontFamily':'ui-sans-serif, system-ui, -apple-system, sans-serif','primaryColor':'#F4F1E8','primaryTextColor':'#0B0B0F','primaryBorderColor':'#0B0B0F','lineColor':'#0B0B0F','clusterBkg':'#ECE7D9','clusterBorder':'#0B0B0F','edgeLabelBackground':'#F4F1E8','pie1':'#16A34A','pie2':'#E62429','pie3':'#1B4CE0','pie4':'#F5A524'},'flowchart':{'padding':16,'nodeSpacing':45,'rankSpacing':55,'curve':'basis','htmlLabels':true}}}%%
 sequenceDiagram
     autonumber
     participant U as User
@@ -360,7 +347,7 @@ dashboard reading raw rows would exhaust that in minutes, so metrics are written
 pre-aggregated rollups updated with atomic increments.
 
 ```mermaid
-%%{init: {'theme':'base','themeVariables':{'fontFamily':'ui-sans-serif, system-ui, -apple-system, sans-serif','primaryColor':'#F4F1E8','primaryTextColor':'#0B0B0F','primaryBorderColor':'#0B0B0F','lineColor':'#0B0B0F','clusterBkg':'#ECE7D9','clusterBorder':'#0B0B0F','edgeLabelBackground':'#F4F1E8','pie1':'#16A34A','pie2':'#E62429','pie3':'#1B4CE0','pie4':'#F5A524'}}}%%
+%%{init: {'theme':'base','themeVariables':{'fontFamily':'ui-sans-serif, system-ui, -apple-system, sans-serif','primaryColor':'#F4F1E8','primaryTextColor':'#0B0B0F','primaryBorderColor':'#0B0B0F','lineColor':'#0B0B0F','clusterBkg':'#ECE7D9','clusterBorder':'#0B0B0F','edgeLabelBackground':'#F4F1E8','pie1':'#16A34A','pie2':'#E62429','pie3':'#1B4CE0','pie4':'#F5A524'},'flowchart':{'padding':16,'nodeSpacing':45,'rankSpacing':55,'curve':'basis','htmlLabels':true}}}%%
 erDiagram
     USERS ||--o{ MEALS : logs
     MEALS ||--|| PREDICTIONS : from
@@ -422,19 +409,19 @@ than tens of thousands.
 ## 9. Deployment topology
 
 ```mermaid
-%%{init: {'theme':'base','themeVariables':{'fontFamily':'ui-sans-serif, system-ui, -apple-system, sans-serif','primaryColor':'#F4F1E8','primaryTextColor':'#0B0B0F','primaryBorderColor':'#0B0B0F','lineColor':'#0B0B0F','clusterBkg':'#ECE7D9','clusterBorder':'#0B0B0F','edgeLabelBackground':'#F4F1E8','pie1':'#16A34A','pie2':'#E62429','pie3':'#1B4CE0','pie4':'#F5A524'}}}%%
+%%{init: {'theme':'base','themeVariables':{'fontFamily':'ui-sans-serif, system-ui, -apple-system, sans-serif','primaryColor':'#F4F1E8','primaryTextColor':'#0B0B0F','primaryBorderColor':'#0B0B0F','lineColor':'#0B0B0F','clusterBkg':'#ECE7D9','clusterBorder':'#0B0B0F','edgeLabelBackground':'#F4F1E8','pie1':'#16A34A','pie2':'#E62429','pie3':'#1B4CE0','pie4':'#F5A524'},'flowchart':{'padding':16,'nodeSpacing':45,'rankSpacing':55,'curve':'basis','htmlLabels':true}}}%%
 flowchart TB
-    subgraph vercel["Vercel"]
+    subgraph vercel["VERCEL  "]
         APP["User app<br/>anonymous-first"]
         ADMIN["Admin console<br/>RBAC gated"]
     end
 
-    subgraph hf["Hugging Face"]
+    subgraph hf["HUGGING FACE  "]
         SPACE["Space · Docker<br/>FastAPI + ONNX Runtime"]
         HUB[("Model Hub<br/>ONNX artifacts")]
     end
 
-    subgraph gcp["Firebase"]
+    subgraph gcp["FIREBASE  "]
         AUTH["Auth"]
         FS[("Firestore")]
         ST[("Storage")]
@@ -467,7 +454,7 @@ flowchart TB
 ## 10. Delivery plan
 
 ```mermaid
-%%{init: {'theme':'base','themeVariables':{'fontFamily':'ui-sans-serif, system-ui, -apple-system, sans-serif','primaryColor':'#F4F1E8','primaryTextColor':'#0B0B0F','primaryBorderColor':'#0B0B0F','lineColor':'#0B0B0F','clusterBkg':'#ECE7D9','clusterBorder':'#0B0B0F','edgeLabelBackground':'#F4F1E8','pie1':'#16A34A','pie2':'#E62429','pie3':'#1B4CE0','pie4':'#F5A524'}}}%%
+%%{init: {'theme':'base','themeVariables':{'fontFamily':'ui-sans-serif, system-ui, -apple-system, sans-serif','primaryColor':'#F4F1E8','primaryTextColor':'#0B0B0F','primaryBorderColor':'#0B0B0F','lineColor':'#0B0B0F','clusterBkg':'#ECE7D9','clusterBorder':'#0B0B0F','edgeLabelBackground':'#F4F1E8','pie1':'#16A34A','pie2':'#E62429','pie3':'#1B4CE0','pie4':'#F5A524'},'flowchart':{'padding':16,'nodeSpacing':45,'rankSpacing':55,'curve':'basis','htmlLabels':true}}}%%
 gantt
     title FoodGenome AI — stage plan
     dateFormat YYYY-MM-DD
