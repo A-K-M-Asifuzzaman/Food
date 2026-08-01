@@ -118,14 +118,43 @@ def summarise(logits: torch.Tensor, y: torch.Tensor, bins: int) -> dict:
     }
 
 
+def load_ensemble(members: list[str], split: str) -> tuple[torch.Tensor, torch.Tensor]:
+    """Surrogate logits for a probability-averaged ensemble.
+
+    The ensemble is a mean of softmaxes, so it has no logits of its own to divide.
+    Taking the log of the averaged probability recovers a quantity that softmaxes
+    back to exactly that average, which is what temperature scaling needs to act
+    on. The additive constant a log leaves free is irrelevant — softmax is shift
+    invariant.
+    """
+    probs = None
+    y = None
+    for name in members:
+        logits, y = load(name, split)
+        p = logits.softmax(dim=-1)
+        probs = p if probs is None else probs + p
+    assert probs is not None and y is not None
+    return (probs / len(members)).clamp_min(1e-12).log(), y
+
+
 def main() -> None:
-    ap = argparse.ArgumentParser(description="Calibrate a trained head")
-    ap.add_argument("--name", required=True, help="head name, e.g. siglip_so400m")
+    ap = argparse.ArgumentParser(description="Calibrate a trained head or ensemble")
+    ap.add_argument("--name", required=True, help="head name, or a label for --members")
+    ap.add_argument(
+        "--members",
+        nargs="+",
+        default=None,
+        help="calibrate the probability average of these heads instead of one head",
+    )
     ap.add_argument("--bins", type=int, default=15)
     args = ap.parse_args()
 
-    val_logits, val_y = load(args.name, "val")
-    test_logits, test_y = load(args.name, "test")
+    if args.members:
+        val_logits, val_y = load_ensemble(args.members, "val")
+        test_logits, test_y = load_ensemble(args.members, "test")
+    else:
+        val_logits, val_y = load(args.name, "val")
+        test_logits, test_y = load(args.name, "test")
 
     temperature = fit_temperature(val_logits, val_y)
 
@@ -134,6 +163,7 @@ def main() -> None:
 
     result = {
         "name": args.name,
+        "members": args.members,
         "temperature": round(temperature, 4),
         "val_samples": int(len(val_y)),
         "test_samples": int(len(test_y)),
