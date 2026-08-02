@@ -92,13 +92,22 @@ class Config:
 
     # Progressive resize. Stage 1 does the bulk of the learning cheaply at 224;
     # stage 2 adapts to the resolution the checkpoint was actually trained for.
+    #
+    # Epoch counts are sized to finish inside one 12 h Kaggle session, measured
+    # on T4 x2: 52 min per epoch at 224, 3 h 32 m at 448. The original 6+3 costs
+    # 16 h and cannot complete. 4+2 costs about 11 h including the download and
+    # the final evaluation.
+    #
+    # Stage 1 was already flattening when it was cut - 91.39, 92.18, 92.31 over
+    # its last three epochs - so the epochs given up there are the cheapest in
+    # the schedule, and stage 2 has the resolution advantage to recover them.
     stage1_size: int = 224
-    stage1_epochs: int = 6
+    stage1_epochs: int = 4
     stage1_bs: int = 32
     stage1_lr: float = 1e-4
 
     stage2_size: int = 448
-    stage2_epochs: int = 3
+    stage2_epochs: int = 2
     stage2_bs: int = 12
     stage2_lr: float = 2e-5
 
@@ -128,8 +137,9 @@ class Config:
     data_parallel: bool = True
     grad_checkpointing: bool = True   # needed for 448 on a 14.6 GB card
     # Kaggle kills the session at 12 h. Stop early and checkpoint instead of
-    # losing an epoch to the wall.
-    max_hours: float = 11.0
+    # losing an epoch to the wall. 11.5 leaves room for the final evaluation
+    # after the last epoch lands at roughly 10.8 h.
+    max_hours: float = 11.5
 
 cfg = Config()
 DATA = "/kaggle/working/food101"

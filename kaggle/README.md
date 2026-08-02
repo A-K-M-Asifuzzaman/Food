@@ -1,7 +1,14 @@
 # Running stage 3 on Kaggle — step by step
 
-Fine-tuning EVA-02-L locally measured **124 hours**. On a Kaggle T4 the same schedule takes
-roughly **7 hours** and fits inside a single session.
+Fine-tuning EVA-02-L locally measured **124 hours**. On Kaggle's 2x T4 the schedule below
+takes about **11 hours** and fits inside a single 12 h session.
+
+> **Set Persistence to `Variables and Files` before you start.** With persistence off,
+> `/kaggle/working` is wiped when the session ends and every checkpoint goes with it.
+>
+> **Use Save Version -> Save & Run All (Commit), not an interactive run.** An interactive
+> session dies when the browser disconnects or idles, which is the most common way a long
+> run is lost. A committed run executes headless and keeps its full time budget.
 
 ---
 
@@ -40,7 +47,7 @@ Local path of the file to upload:
 |---|---|---|
 | **Accelerator** | `GPU T4 x2` (or `GPU P100`) | Both T4s are used via DataParallel — roughly 1.6× the throughput of one |
 | **Internet** | `On` | Required — the dataset and pretrained weights are downloaded at runtime |
-| **Persistence** | `Files only` | Keeps `/kaggle/working` between runs, so a re-run can resume |
+| **Persistence** | `Variables and Files` | **Required.** With this off, `/kaggle/working` is wiped at session end and all checkpoints are lost |
 | **Environment** | Latest | timm ≥ 1.0.11 is installed by cell 1 regardless |
 
 > Without **Internet → On**, cell 3 fails immediately. It is the most common setup mistake.
@@ -66,10 +73,14 @@ it you get `continuing anonymously` and everything still works, just slower.
 | Cell 1 — install timm/datasets | ~1 min | ~1 min |
 | Cell 3 — download and export Food-101 | 10–15 min | 10–15 min |
 | Cell 4 — verify the split | seconds | seconds |
-| Stage 1 — 6 epochs at 224px | ~2.5 h | ~1.6 h |
-| Stage 2 — 3 epochs at 448px | ~4.5 h | ~2.8 h |
-| Cell 8 — test evaluation and logit export | ~10 min | ~6 min |
-| **Total** | **~7 h** | **~4.5 h** |
+| Stage 1 — 4 epochs at 224px | ~7 h | **3.5 h** |
+| Stage 2 — 2 epochs at 448px | ~14 h | **7.1 h** |
+| Cell 8 — test evaluation and logit export | ~20 min | ~12 min |
+| **Total** | does not fit | **~11 h** |
+
+Those 2× T4 figures are measured, not estimated: 52 min per epoch at 224 and
+3 h 32 m at 448. The original 6+3 schedule costs 16 h and cannot complete inside
+Kaggle's 12 h cap, so the defaults are now 4+2.
 
 Cell 6 prints `using 2 GPU(s)` when both cards are found. Batch sizes in the config are
 **per GPU** and are multiplied by the device count at run time, so `stage1_bs = 32` becomes
@@ -110,8 +121,10 @@ The checkpoint is ~1.2 GB, so it lands comfortably inside Kaggle's 20 GB Output 
 
 ## 5. If it does not finish in one session
 
-Kaggle caps GPU sessions at 12 h; the notebook stops itself at 11 h (`cfg.max_hours`) and
-checkpoints rather than losing an epoch to the wall.
+Kaggle caps GPU sessions at 12 h; the notebook stops itself at 11.5 h (`cfg.max_hours`) and
+checkpoints rather than losing an epoch to the wall. Weights are also snapshotted every 300
+batches to `eva02_large_448_partial.pt`, so an unexpected disconnect costs at most one
+interval - roughly 20 minutes at 448px - instead of a whole 3.5 h epoch.
 
 1. **Save Version** → *Save & Run All*, and let it commit
 2. Open the finished version → **Output** tab → **New Dataset**, name it e.g.
@@ -119,8 +132,9 @@ checkpoints rather than losing an epoch to the wall.
 3. Back in the notebook: **Add Input** → *Datasets* → attach `foodgenome-ckpt`
 4. **Run All** again
 
-Cell 7 searches `/kaggle/input/**/eva02_large_448_last.pt` and resumes from the exact epoch
-it stopped at — no config change needed.
+Cell 7 searches `/kaggle/working` and `/kaggle/input/**` for both the epoch-boundary
+checkpoint and the mid-epoch snapshot, ranks every candidate by stage, epoch and batches
+completed, and resumes from whichever is furthest along - no config change needed.
 
 ## 6. Bringing the results home
 
