@@ -47,7 +47,7 @@ def check_present() -> dict:
         print("Expected files, not found:")
         for name in missing:
             print(f"  {name:<12} -> {expected[name]}")
-        fail("copy the Kaggle outputs into artifacts/ first (see kaggle/README.md section 6)")
+        fail("copy the Kaggle outputs into artifacts/ first (see notebooks/kaggle/README.md section 6)")
 
     for name, path in optional.items():
         print(f"  {'found' if path.exists() else 'absent':<7} {name}: {path.name}")

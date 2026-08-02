@@ -629,7 +629,7 @@ nb = {
     "nbformat_minor": 5,
 }
 
-out = pathlib.Path("/Volumes/ssd(mac)2/Food/kaggle/foodgenome_finetune.ipynb")
+out = pathlib.Path("/Volumes/ssd(mac)2/Food/notebooks/kaggle/foodgenome_finetune.ipynb")
 out.parent.mkdir(parents=True, exist_ok=True)
 out.write_text(json.dumps(nb, indent=1))
 print("wrote", out, len(cells), "cells")

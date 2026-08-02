@@ -1,0 +1,15 @@
+{
+  "id": "asifxzaman/foodgenome-eva02-finetune",
+  "title": "FoodGenome EVA-02-L Fine-tune",
+  "code_file": "foodgenome_finetune.ipynb",
+  "language": "python",
+  "kernel_type": "notebook",
+  "is_private": true,
+  "enable_gpu": true,
+  "enable_tpu": false,
+  "enable_internet": true,
+  "dataset_sources": [],
+  "competition_sources": [],
+  "kernel_sources": [],
+  "model_sources": []
+}

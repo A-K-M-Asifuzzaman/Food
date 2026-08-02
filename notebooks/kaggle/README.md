@@ -33,12 +33,12 @@ So for the first run: **upload nothing, just the notebook.**
 ## 1. Create the notebook
 
 1. Go to <https://www.kaggle.com/code> → **New Notebook**
-2. **File → Import Notebook** → upload `kaggle/foodgenome_finetune.ipynb` from this repo
+2. **File → Import Notebook** → upload `notebooks/kaggle/foodgenome_finetune.ipynb` from this repo
 
 Local path of the file to upload:
 
 ```
-/Volumes/ssd(mac)2/Food/kaggle/foodgenome_finetune.ipynb
+/Volumes/ssd(mac)2/Food/notebooks/kaggle/foodgenome_finetune.ipynb
 ```
 
 ## 2. Settings (right-hand panel)

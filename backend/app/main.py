@@ -17,6 +17,7 @@ import numpy as np
 from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from PIL import Image, UnidentifiedImageError
+from pydantic import BaseModel, Field
 
 from .config import CONSTANTS, KB_PATH, MEMBERS
 from .inference import CLASSIFIER, conformal_set
@@ -59,6 +60,28 @@ assert len(CLASS_ORDER) == 101, f"expected 101 classes, got {len(CLASS_ORDER)}"
 def title_for(name: str) -> str:
     entry = ENTRIES.get(name)
     return entry["title"] if entry else name.replace("_", " ").title()
+
+
+class AskRequest(BaseModel):
+    question: str = Field(min_length=2, max_length=400)
+    # Supplied by the client after a prediction. The vision model has already
+    # named the dish, so the question does not have to; see rag/retrieve.py.
+    food_class: str | None = None
+
+
+@app.post("/ask")
+def ask(request: AskRequest) -> dict:
+    if request.food_class and request.food_class not in ENTRIES:
+        raise HTTPException(400, f"Unknown food class: {request.food_class}")
+
+    from nutrivision.rag.generate import answer
+
+    result = answer(request.question, food_class=request.food_class)
+    payload = result.as_dict()
+    # The retrieved documents are large and only useful for debugging; the
+    # citations carry everything the interface needs to attribute a claim.
+    payload.pop("retrieved", None)
+    return payload
 
 
 @app.get("/health")
