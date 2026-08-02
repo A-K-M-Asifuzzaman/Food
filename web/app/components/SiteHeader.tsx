@@ -27,7 +27,7 @@ export function SiteHeader({ searchIndex }: { searchIndex: SearchItem[] }) {
   return (
     <header className="sticky top-0 z-50 border-b-3 border-[var(--line)] bg-[var(--page)]">
       <div className="mx-auto max-w-6xl px-5 py-3 flex items-center justify-between gap-4">
-        <Link href="/" className="font-display text-xl tracking-tight shrink-0">
+        <Link href="/" className="font-display text-xl tracking-tight shrink-0 py-1.5">
           FOODGENOME<span style={{ color: "var(--color-red)" }}>·</span>AI
         </Link>
 
@@ -36,7 +36,7 @@ export function SiteHeader({ searchIndex }: { searchIndex: SearchItem[] }) {
           <ThemeToggle />
         </div>
 
-        <nav className="hidden md:flex items-center gap-1" aria-label="Main">
+        <nav className="hidden lg:flex items-center gap-1" aria-label="Main">
           {NAV.map((item) => (
             <Link
               key={item.href}
@@ -68,7 +68,7 @@ export function SiteHeader({ searchIndex }: { searchIndex: SearchItem[] }) {
         <button
           type="button"
           onClick={() => setOpen((v) => !v)}
-          className="md:hidden ink-edge px-3 py-1.5 text-sm font-display uppercase"
+          className="lg:hidden ink-edge px-4 py-2 text-sm font-display uppercase"
           aria-expanded={open}
           aria-controls="mobile-nav"
         >
@@ -79,7 +79,7 @@ export function SiteHeader({ searchIndex }: { searchIndex: SearchItem[] }) {
       {open && (
         <nav
           id="mobile-nav"
-          className="md:hidden border-t-2 border-[var(--line)] px-5 py-3 flex flex-col gap-1"
+          className="lg:hidden border-t-2 border-[var(--line)] px-5 py-2 flex flex-col"
           aria-label="Main"
         >
           {[...NAV, { href: "/admin", label: "Admin" }].map((item) => (
@@ -87,7 +87,7 @@ export function SiteHeader({ searchIndex }: { searchIndex: SearchItem[] }) {
               key={item.href}
               href={item.href}
               onClick={() => setOpen(false)}
-              className="py-2 uppercase tracking-widest text-sm"
+              className="py-3 uppercase tracking-widest text-sm"
               style={isActive(item.href) ? { color: "var(--color-red)" } : undefined}
             >
               {item.label}

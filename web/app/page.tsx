@@ -161,7 +161,7 @@ export default function Home() {
               <p className="mt-2 text-sm text-[var(--text-dim)] flex-1">{c.b}</p>
               <Link
                 href={c.link}
-                className="mt-4 text-sm font-semibold underline"
+                className="mt-4 inline-block py-1.5 text-sm font-semibold underline"
                 style={{ color: "var(--color-blue)" }}
               >
                 {c.cta} →

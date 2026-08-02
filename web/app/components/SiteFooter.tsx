@@ -44,10 +44,10 @@ export function SiteFooter() {
         {COLUMNS.map((col) => (
           <nav key={col.heading} aria-label={col.heading}>
             <p className="font-display text-sm uppercase tracking-widest">{col.heading}</p>
-            <ul className="mt-3 space-y-1.5 text-sm">
+            <ul className="mt-2 text-sm">
               {col.links.map((l) => (
                 <li key={l.href}>
-                  <Link href={l.href} className="text-[var(--text-dim)] hover:underline">
+                  <Link href={l.href} className="block py-1.5 text-[var(--text-dim)] hover:underline">
                     {l.label}
                   </Link>
                 </li>
