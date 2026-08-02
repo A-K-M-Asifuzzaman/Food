@@ -48,6 +48,12 @@ Ask in natural language. The question is rewritten to name the dish the vision m
 
 The dish → ingredient graph rendered as an actual web: 181 nodes and 323 weighted edges, all derived from real USDA composite recipes. Search by name, click to pin a node, read its neighbours with their gram weights. This answers questions no single document contains — *which dishes contain walnuts* is an inversion of sixty separate ingredient lists.
 
+### Search anything
+
+![Command palette](docs/images/command-palette.png)
+
+`⌘K` from any page. Matching is subsequence-based, so `chkn` finds Chicken Curry — a substring search would not, and a fuzzy-search library would be a dependency for thirty lines of scoring.
+
 ### Browse all 101 dishes
 
 ![Dish browser](docs/images/dishes.png)
