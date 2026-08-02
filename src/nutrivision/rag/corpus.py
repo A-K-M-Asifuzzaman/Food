@@ -220,13 +220,30 @@ def macro_doc(entry: dict) -> Document:
 def micro_docs(entry: dict) -> Iterable[Document]:
     title = entry["title"]
     n = entry["nutrients_per_100g"]
+    per_serving = entry.get("nutrients_per_serving", {})
+    serving_label = entry.get("serving_label", "1 serving")
+
     for group, keys in MICRO_GROUPS:
         present = [(k, n[k]) for k in keys if k in n and n[k] > 0]
         if not present:
             continue
-        parts = [f"{LABELS[k][0]} {_fmt(v, 2)} {LABELS[k][1]}" for k, v in present]
+        # Both bases are stated explicitly. Giving only per-100 g forces a reader
+        # — or a language model answering from these documents — to multiply by
+        # the serving ratio, and a derived figure is one that cannot be verified
+        # against any source. Writing both means every number a grounded answer
+        # needs is already present verbatim.
+        parts = [
+            f"{LABELS[k][0]} {_fmt(v, 2)} {LABELS[k][1]} per 100 g"
+            + (
+                f" ({_fmt(per_serving[k], 2)} {LABELS[k][1]} per serving)"
+                if k in per_serving
+                else ""
+            )
+            for k, v in present
+        ]
         text = (
-            f"{group.capitalize()} in {title}, per 100 g: " + "; ".join(parts) + ". "
+            f"{group.capitalize()} in {title}, per 100 g and per serving of "
+            f"{serving_label}: " + "; ".join(parts) + ". "
             f"These figures are sourced from USDA SR Legacy."
         )
         yield Document(
