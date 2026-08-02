@@ -279,7 +279,13 @@ def loaders(size, bs):
                     train_labels[~is_val], train_tf)
     va = FoodSubset([p for p, v in zip(train_items, is_val) if v],
                     train_labels[is_val], eval_tf)
-    kw = dict(num_workers=cfg.workers, pin_memory=True, persistent_workers=cfg.workers > 0)
+    # persistent_workers is deliberately off. Keeping workers alive across the
+    # stage boundary means the previous stage's loaders are finalised while their
+    # workers still exist, and DataLoader.__del__ then trips
+    # "AssertionError: can only test a child process". It is ignored by Python
+    # and harmless, but it prints a wall of traceback mid-run that reads like a
+    # crash. The cost is a few seconds of worker startup per epoch.
+    kw = dict(num_workers=cfg.workers, pin_memory=True, persistent_workers=False)
     return (DataLoader(tr, batch_size=bs, shuffle=True, drop_last=True, **kw),
             DataLoader(va, batch_size=bs * 2, shuffle=False, **kw))
 

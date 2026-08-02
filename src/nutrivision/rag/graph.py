@@ -281,16 +281,59 @@ class NutritionGraph:
             )
         return docs
 
+    def layout(self, seed: int = 1337, iterations: int = 220) -> dict[str, list[float]]:
+        """Force-directed positions in 3D, computed here rather than in the browser.
+
+        Running the simulation client-side means the first seconds of the most
+        visually important view are spent watching nodes settle, on whatever
+        device the viewer happens to have. Baking the layout makes the scene
+        correct on the first frame and deterministic across reloads, which also
+        means a screenshot in the paper matches what a reader sees.
+        """
+        import networkx as nx
+        import numpy as np
+
+        g = nx.Graph()
+        for e in self.edges:
+            if e.relation == "CONTAINS":
+                g.add_edge(e.source, e.target, weight=max(e.weight, 1.0))
+        if not g:
+            return {}
+        pos = nx.spring_layout(g, dim=3, seed=seed, iterations=iterations, weight="weight")
+
+        # Scale to a fixed radius so the camera framing never depends on how the
+        # simulation happened to converge.
+        span = float(max(np.abs(np.array(list(pos.values()))).max(), 1e-6))
+        return {
+            k: [round(float(v[i]) / span * 10, 3) for i in range(3)]
+            for k, v in pos.items()
+        }
+
     def export(self, path=None) -> dict:
         """Node/link JSON for the frontend's 3D graph view."""
+        positions = self.layout()
+
         nodes = [
-            {"id": c, "label": e["title"], "type": "dish", "group": e["cuisine"]}
+            {
+                "id": c,
+                "label": e["title"],
+                "type": "dish",
+                "group": e["cuisine"],
+                "degree": len(self.dish_ingredients[c]),
+                "kcal": e["nutrients_per_100g"].get("energy_kcal"),
+                "pos": positions.get(c, [0, 0, 0]),
+            }
             for c, e in self.entries.items()
             if c in self.dish_ingredients
         ]
         nodes += [
-            {"id": k, "label": self.ingredient_titles[k], "type": "ingredient",
-             "degree": len(v)}
+            {
+                "id": k,
+                "label": self.ingredient_titles[k],
+                "type": "ingredient",
+                "degree": len(v),
+                "pos": positions.get(k, [0, 0, 0]),
+            }
             for k, v in self.ingredient_dishes.items()
         ]
         links = [
@@ -299,7 +342,15 @@ class NutritionGraph:
             for e in self.edges
             if e.relation == "CONTAINS"
         ]
-        payload = {"nodes": nodes, "links": links}
+        payload = {
+            "nodes": nodes,
+            "links": links,
+            "stats": {
+                "dishes": len(self.dish_ingredients),
+                "ingredients": len(self.ingredient_dishes),
+                "shared": sum(1 for v in self.ingredient_dishes.values() if len(v) > 1),
+            },
+        }
         if path:
             path.write_text(json.dumps(payload))
         return payload
