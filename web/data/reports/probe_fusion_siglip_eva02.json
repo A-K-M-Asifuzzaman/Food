@@ -1,0 +1,17 @@
+{
+  "name": "fusion_siglip_eva02",
+  "backbones": [
+    "siglip_so400m",
+    "eva02_large"
+  ],
+  "arch": "gated_fusion",
+  "params": 3973479,
+  "train_samples": 72720,
+  "val_top1": 95.776,
+  "val_top5": 99.076,
+  "test_top1": 96.966,
+  "test_top5": 99.481,
+  "best_epoch": 18,
+  "minutes": 21.87,
+  "num_classes": 101
+}

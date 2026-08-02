@@ -1,0 +1,218 @@
+/* ============================================================================
+   FoodGenome AI — comic print language, extended.
+   Loaded after globals.css. Everything here is print behaviour, not decoration:
+   misregistration, dot gain, panel gutters and ink weight are what make a page
+   read as printed rather than as a website with red borders on it.
+   ========================================================================== */
+
+/* ── Chromatic misregistration ──────────────────────────────────────────
+   Four-colour presses drift, and the cyan/magenta plates land a hair off the
+   black. That offset is the single strongest signal of "comic print", and it is
+   why a flat border never reads the same. Applied to display type only — on body
+   copy it destroys legibility, and this is a nutrition app. */
+
+@utility ink-split {
+  /* Offsetting two coloured copies with text-shadow rather than duplicated
+     elements: absolutely-positioned copies re-wrap independently once the
+     heading breaks across lines, which stacks the text instead of overlaying
+     it. A shadow cannot come apart, and it leaves one node for a screen
+     reader. */
+  text-shadow:
+    -0.045em 0.03em 0 #00b7c3,
+    0.04em -0.025em 0 var(--color-red);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ink-split {
+    text-shadow: none;
+  }
+}
+
+/* ── Ben-Day dot gain ───────────────────────────────────────────────────
+   Real halftones vary dot *size* across a gradient; a uniform dot field is a
+   texture, a graded one is shading. Two offset layers give the rosette that a
+   single grid cannot. */
+
+@utility halftone-shade {
+  background-image:
+    radial-gradient(var(--halftone) 22%, transparent 23%),
+    radial-gradient(var(--halftone) 12%, transparent 13%);
+  background-size: 7px 7px, 7px 7px;
+  background-position: 0 0, 3.5px 3.5px;
+}
+
+@utility halftone-fade {
+  position: relative;
+  isolation: isolate;
+}
+
+.halftone-fade::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background-image: radial-gradient(var(--halftone) 30%, transparent 31%);
+  background-size: 6px 6px;
+  -webkit-mask-image: linear-gradient(to bottom, #000, transparent 78%);
+  mask-image: linear-gradient(to bottom, #000, transparent 78%);
+}
+
+/* ── Panels ─────────────────────────────────────────────────────────────
+   A comic page is not a uniform grid. Panels tilt a degree, break their gutter,
+   and overlap. The tilt is tiny on purpose: past about 1.5deg it reads as a
+   mistake rather than as energy. */
+
+@utility panel-tilt-l {
+  transform: rotate(-0.7deg);
+}
+@utility panel-tilt-r {
+  transform: rotate(0.6deg);
+}
+
+@utility panel-raised {
+  background: var(--panel);
+  border: 3px solid var(--line);
+  border-radius: 2px;
+  box-shadow:
+    7px 7px 0 var(--line),
+    7px 7px 0 3px var(--panel),
+    10px 10px 0 3px var(--line);
+}
+
+/* The classic diagonal page cut between sections. */
+@utility panel-cut-top {
+  clip-path: polygon(0 2.2rem, 100% 0, 100% 100%, 0 100%);
+}
+@utility panel-cut-bottom {
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 2.2rem), 0 100%);
+}
+
+/* ── Webbing ────────────────────────────────────────────────────────────
+   Corner webs are drawn with radial + conic gradients rather than an image, so
+   they inherit the ink colour and cost nothing to load. */
+
+@utility web-corner {
+  position: relative;
+}
+
+.web-corner::before {
+  content: "";
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  width: 84px;
+  height: 84px;
+  pointer-events: none;
+  opacity: 0.55;
+  background:
+    repeating-conic-gradient(from 0deg at 0 0, var(--line) 0 0.6deg, transparent 0.6deg 11deg),
+    repeating-radial-gradient(circle at 0 0, transparent 0 13px, var(--line) 13px 14px);
+  -webkit-mask-image: radial-gradient(circle at 0 0, #000 0 84px, transparent 84px);
+  mask-image: radial-gradient(circle at 0 0, #000 0 84px, transparent 84px);
+}
+
+/* ── Motion lines ───────────────────────────────────────────────────────
+   Speed lines behind an element that is meant to read as arriving fast. */
+
+@utility speed-lines {
+  position: relative;
+}
+
+.speed-lines::before {
+  content: "";
+  position: absolute;
+  inset: -8% -30%;
+  z-index: -1;
+  background: repeating-linear-gradient(
+    -18deg,
+    var(--line) 0 1.5px,
+    transparent 1.5px 13px
+  );
+  opacity: 0.14;
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 35%, transparent);
+  mask-image: linear-gradient(to right, transparent, #000 35%, transparent);
+}
+
+/* ── Kinetic display type ───────────────────────────────────────────────
+   Outlined-and-filled SFX lettering, the way a letterer inks a sound word. */
+
+@utility sfx-burst {
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+  color: var(--color-red);
+  -webkit-text-stroke: 3px var(--line);
+  paint-order: stroke fill;
+  text-shadow:
+    4px 4px 0 var(--line),
+    -1px -1px 0 var(--color-amber);
+  transform: rotate(-3deg);
+  display: inline-block;
+}
+
+/* ── Caption boxes ──────────────────────────────────────────────────────
+   The yellow narration box, which is where a comic puts the voice that is not
+   dialogue. Used for methodology asides. */
+
+@utility caption-box {
+  background: var(--color-amber);
+  color: #0b0b0f;
+  border: 3px solid var(--line);
+  box-shadow: 4px 4px 0 var(--line);
+  font-weight: 600;
+}
+
+/* ── Gutter rule ────────────────────────────────────────────────────────
+   The black bar between panels, used as a section divider. */
+
+@utility gutter-rule {
+  height: 6px;
+  background: var(--line);
+  box-shadow: 0 4px 0 var(--line);
+}
+
+/* ── Focus, elevated ────────────────────────────────────────────────────
+   A focus ring styled as a panel outline, matching the print language rather
+   than the browser default. */
+
+:where(a, button, [tabindex], input, summary, select):focus-visible {
+  outline: 3px solid var(--color-red);
+  outline-offset: 3px;
+  box-shadow: 4px 4px 0 var(--line);
+}
+
+/* ── Entrance ───────────────────────────────────────────────────────────
+   A panel snapping into place: overshoot, tiny counter-rotation, settle. */
+
+@keyframes panel-snap {
+  0% {
+    opacity: 0;
+    transform: translateY(22px) rotate(-2.5deg) scale(0.94);
+  }
+  65% {
+    opacity: 1;
+    transform: translateY(-4px) rotate(0.6deg) scale(1.02);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@utility animate-snap {
+  animation: panel-snap 460ms var(--ease-overshoot) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-snap {
+    animation: none;
+    opacity: 1;
+  }
+  .ink-split > .ink-split-c,
+  .ink-split > .ink-split-m {
+    display: none;
+  }
+  .speed-lines::before {
+    display: none;
+  }
+}

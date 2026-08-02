@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Anton, JetBrains_Mono, Source_Sans_3 } from "next/font/google";
 import "./globals.css";
+import { SiteFooter } from "./components/SiteFooter";
+import { SiteHeader } from "./components/SiteHeader";
 
 // Display is heavy and condensed for headings and SFX; body is a humanist sans
 // because this is a nutrition app and figures must read unambiguously; mono
@@ -25,7 +27,11 @@ export default function RootLayout({
       lang="en"
       className={`${anton.variable} ${sourceSans.variable} ${jetbrains.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        <SiteHeader />
+        {children}
+        <SiteFooter />
+      </body>
     </html>
   );
 }

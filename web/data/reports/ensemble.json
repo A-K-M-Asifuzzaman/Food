@@ -1,0 +1,264 @@
+{
+  "members": [
+    "siglip_so400m",
+    "eva02_large",
+    "dinov2_large"
+  ],
+  "n_test": 25250,
+  "n_val": 3030,
+  "results": [
+    {
+      "members": [
+        "siglip_so400m",
+        "eva02_large"
+      ],
+      "method": "prob average (uniform)",
+      "weights": [
+        0.5,
+        0.5
+      ],
+      "test_top1": 97.156,
+      "test_top5": 99.644
+    },
+    {
+      "members": [
+        "siglip_so400m",
+        "eva02_large"
+      ],
+      "method": "prob average (val-tuned)",
+      "weights": [
+        0.65,
+        0.35
+      ],
+      "val_top1": 95.908,
+      "test_top1": 97.141,
+      "test_top5": 99.659
+    },
+    {
+      "members": [
+        "siglip_so400m",
+        "eva02_large"
+      ],
+      "method": "logit average (uniform)",
+      "weights": [
+        0.5,
+        0.5
+      ],
+      "test_top1": 97.105,
+      "test_top5": 99.64
+    },
+    {
+      "members": [
+        "siglip_so400m",
+        "eva02_large",
+        "dinov2_large"
+      ],
+      "method": "prob average (uniform)",
+      "weights": [
+        0.333,
+        0.333,
+        0.333
+      ],
+      "test_top1": 97.093,
+      "test_top5": 99.675
+    },
+    {
+      "members": [
+        "siglip_so400m",
+        "eva02_large",
+        "dinov2_large"
+      ],
+      "method": "prob average (val-tuned)",
+      "weights": [
+        0.7,
+        0.2,
+        0.1
+      ],
+      "val_top1": 95.974,
+      "test_top1": 97.081,
+      "test_top5": 99.671
+    },
+    {
+      "members": [
+        "siglip_so400m",
+        "eva02_large",
+        "dinov2_large"
+      ],
+      "method": "logit average (uniform)",
+      "weights": [
+        0.333,
+        0.333,
+        0.333
+      ],
+      "test_top1": 97.065,
+      "test_top5": 99.707
+    },
+    {
+      "members": [
+        "siglip_so400m",
+        "dinov2_large"
+      ],
+      "method": "prob average (val-tuned)",
+      "weights": [
+        0.7,
+        0.3
+      ],
+      "val_top1": 95.842,
+      "test_top1": 97.018,
+      "test_top5": 99.655
+    },
+    {
+      "members": [
+        "siglip_so400m",
+        "dinov2_large"
+      ],
+      "method": "logit average (uniform)",
+      "weights": [
+        0.5,
+        0.5
+      ],
+      "test_top1": 96.947,
+      "test_top5": 99.651
+    },
+    {
+      "members": [
+        "siglip_so400m",
+        "dinov2_large"
+      ],
+      "method": "prob average (uniform)",
+      "weights": [
+        0.5,
+        0.5
+      ],
+      "test_top1": 96.907,
+      "test_top5": 99.659
+    },
+    {
+      "members": [
+        "siglip_so400m"
+      ],
+      "method": "solo",
+      "weights": [
+        1.0
+      ],
+      "test_top1": 96.828,
+      "test_top5": 99.533
+    },
+    {
+      "members": [
+        "eva02_large",
+        "dinov2_large"
+      ],
+      "method": "prob average (uniform)",
+      "weights": [
+        0.5,
+        0.5
+      ],
+      "test_top1": 96.222,
+      "test_top5": 99.497
+    },
+    {
+      "members": [
+        "eva02_large",
+        "dinov2_large"
+      ],
+      "method": "logit average (uniform)",
+      "weights": [
+        0.5,
+        0.5
+      ],
+      "test_top1": 96.222,
+      "test_top5": 99.537
+    },
+    {
+      "members": [
+        "eva02_large",
+        "dinov2_large"
+      ],
+      "method": "prob average (val-tuned)",
+      "weights": [
+        0.4,
+        0.6
+      ],
+      "val_top1": 94.29,
+      "test_top1": 96.04,
+      "test_top5": 99.489
+    },
+    {
+      "members": [
+        "eva02_large"
+      ],
+      "method": "solo",
+      "weights": [
+        1.0
+      ],
+      "test_top1": 95.529,
+      "test_top5": 99.295
+    },
+    {
+      "members": [
+        "dinov2_large"
+      ],
+      "method": "solo",
+      "weights": [
+        1.0
+      ],
+      "test_top1": 94.871,
+      "test_top5": 99.196
+    }
+  ],
+  "best": {
+    "members": [
+      "siglip_so400m",
+      "eva02_large"
+    ],
+    "method": "prob average (uniform)",
+    "weights": [
+      0.5,
+      0.5
+    ],
+    "test_top1": 97.156,
+    "test_top5": 99.644
+  },
+  "mcnemar": {
+    "prob average (uniform) siglip_so400m+eva02_large vs best solo siglip_so400m": {
+      "a_only": 198,
+      "b_only": 115,
+      "p": 3e-06,
+      "significant": true
+    },
+    "prob average vs logit average (all members)": {
+      "a_only": 53,
+      "b_only": 46,
+      "p": 0.546713,
+      "significant": false
+    }
+  },
+  "agreement": {
+    "oracle_top1": 98.301,
+    "all_wrong": 1.699,
+    "pairs": {
+      "siglip_so400m vs eva02_large": {
+        "both_correct": 94.424,
+        "only_first": 2.404,
+        "only_second": 1.105,
+        "both_wrong": 2.067,
+        "shared_error_rate": 65.169
+      },
+      "siglip_so400m vs dinov2_large": {
+        "both_correct": 93.802,
+        "only_first": 3.026,
+        "only_second": 1.069,
+        "both_wrong": 2.103,
+        "shared_error_rate": 66.292
+      },
+      "eva02_large vs dinov2_large": {
+        "both_correct": 93.065,
+        "only_first": 2.463,
+        "only_second": 1.806,
+        "both_wrong": 2.665,
+        "shared_error_rate": 59.61
+      }
+    }
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "name": "eva02_large",
+  "backbones": [
+    "eva02_large"
+  ],
+  "arch": "mlp",
+  "params": 1734757,
+  "train_samples": 72720,
+  "val_top1": 93.135,
+  "val_top5": 98.284,
+  "test_top1": 95.529,
+  "test_top5": 99.295,
+  "best_epoch": 23,
+  "minutes": 6.9,
+  "num_classes": 101
+}

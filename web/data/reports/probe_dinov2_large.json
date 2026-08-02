@@ -1,0 +1,16 @@
+{
+  "name": "dinov2_large",
+  "backbones": [
+    "dinov2_large"
+  ],
+  "arch": "mlp",
+  "params": 1734757,
+  "train_samples": 72720,
+  "val_top1": 92.64,
+  "val_top5": 98.581,
+  "test_top1": 94.871,
+  "test_top5": 99.196,
+  "best_epoch": 32,
+  "minutes": 0.75,
+  "num_classes": 101
+}

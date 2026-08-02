@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "./comic.css";
 
 /* FoodGenome AI — comic-print design system.
    Implements docs/design-system.md. Ink on newsprint, not glow on dark.

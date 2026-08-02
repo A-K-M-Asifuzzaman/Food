@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 
@@ -7,7 +6,7 @@ import { GraphSection } from "../components/GraphSection";
 import type { GraphData } from "../components/three/GraphWeb";
 
 export const metadata: Metadata = {
-  title: "The web — FoodGenome AI",
+  title: "The knowledge web — FoodGenome AI",
   description:
     "The dish, ingredient and nutrient graph behind the retrieval system, rendered as an interactive 3D web.",
 };
@@ -22,19 +21,6 @@ export default async function WebPage() {
 
   return (
     <main className="flex-1 w-full">
-      <header className="border-b-3 border-[var(--line)]">
-        <div className="mx-auto max-w-6xl px-5 py-3 flex items-center justify-between gap-4">
-          <Link href="/" className="font-display text-xl tracking-tight">
-            FOODGENOME AI
-          </Link>
-          <nav className="flex gap-4 text-sm uppercase tracking-widest">
-            <Link href="/" className="hover:underline">
-              Analyse
-            </Link>
-            <span style={{ color: "var(--color-red)" }}>The web</span>
-          </nav>
-        </div>
-      </header>
 
       <section className="mx-auto max-w-6xl px-5 pt-10 pb-6">
         <p className="text-xs uppercase tracking-[0.2em] text-[var(--text-dim)]">

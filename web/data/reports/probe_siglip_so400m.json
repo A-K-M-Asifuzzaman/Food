@@ -1,0 +1,16 @@
+{
+  "name": "siglip_so400m",
+  "backbones": [
+    "siglip_so400m"
+  ],
+  "arch": "mlp",
+  "params": 1931621,
+  "train_samples": 72720,
+  "val_top1": 95.644,
+  "val_top5": 99.076,
+  "test_top1": 96.828,
+  "test_top5": 99.533,
+  "best_epoch": 34,
+  "minutes": 3.75,
+  "num_classes": 101
+}
