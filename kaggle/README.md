@@ -38,7 +38,7 @@ Local path of the file to upload:
 
 | Setting | Value | Why |
 |---|---|---|
-| **Accelerator** | `GPU T4 x2` (or `GPU P100`) | The notebook uses one GPU; T4 x2 just makes it easier to get a slot |
+| **Accelerator** | `GPU T4 x2` (or `GPU P100`) | Both T4s are used via DataParallel — roughly 1.6× the throughput of one |
 | **Internet** | `On` | Required — the dataset and pretrained weights are downloaded at runtime |
 | **Persistence** | `Files only` | Keeps `/kaggle/working` between runs, so a re-run can resume |
 | **Environment** | Latest | timm ≥ 1.0.11 is installed by cell 1 regardless |
@@ -59,16 +59,21 @@ it you get `continuing anonymously` and everything still works, just slower.
 
 ## 3. Run it
 
-**Run All.** Expected timings on a T4:
+**Run All.** Expected timings:
 
-| Phase | Duration |
-|---|---|
-| Cell 1 — install timm/datasets | ~1 min |
-| Cell 3 — download and export Food-101 | 10–15 min |
-| Cell 4 — verify the split | seconds |
-| Stage 1 — 6 epochs at 224px | ~2.5 h |
-| Stage 2 — 3 epochs at 448px | ~4.5 h |
-| Cell 8 — test evaluation and logit export | ~10 min |
+| Phase | 1× T4 | 2× T4 |
+|---|---|---|
+| Cell 1 — install timm/datasets | ~1 min | ~1 min |
+| Cell 3 — download and export Food-101 | 10–15 min | 10–15 min |
+| Cell 4 — verify the split | seconds | seconds |
+| Stage 1 — 6 epochs at 224px | ~2.5 h | ~1.6 h |
+| Stage 2 — 3 epochs at 448px | ~4.5 h | ~2.8 h |
+| Cell 8 — test evaluation and logit export | ~10 min | ~6 min |
+| **Total** | **~7 h** | **~4.5 h** |
+
+Cell 6 prints `using 2 GPU(s)` when both cards are found. Batch sizes in the config are
+**per GPU** and are multiplied by the device count at run time, so `stage1_bs = 32` becomes
+an effective batch of 64 across two cards while per-card memory stays where it was tuned.
 
 **Cell 4 is the gate.** It asserts the validation split matches the local one:
 
@@ -156,8 +161,9 @@ real or inside the noise. Both scripts run in seconds against cached logits.
 
 | Symptom | Fix |
 |---|---|
-| CUDA OOM in stage 2 | `cfg.stage2_bs = 8`, `cfg.grad_accum = 3` — effective batch is `bs × grad_accum`, and only the product affects the result |
+| CUDA OOM in stage 2 | `cfg.stage2_bs = 8`, `cfg.grad_accum = 3` — batch sizes are per GPU, and only `bs × grad_accum × n_gpu` affects the result |
 | CUDA OOM in stage 1 | `cfg.stage1_bs = 16`, `cfg.grad_accum = 4` |
+| Only one GPU used | Check cell 6 printed `using 2 GPU(s)`. If not, the accelerator is set to a single card — change it in Settings and restart |
 | Too slow to finish | `cfg.stage1_epochs = 3` — stage 1 is the cheap phase, but 448px is where EVA-02's advantage lives, so cut stage 1 before stage 2 |
 | Want it faster, accept less | `cfg.grad_checkpointing = False` — roughly 20% faster, but needs more memory |
 
