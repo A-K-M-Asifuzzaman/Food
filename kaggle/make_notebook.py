@@ -114,6 +114,13 @@ class Config:
     ema_decay: float = 0.9998
     workers: int = 4
 
+    # A stage-2 epoch runs about 3.5 h. Checkpointing only at epoch boundaries
+    # means a disconnect can cost all of it, which is exactly what happened at
+    # 83% of one. Snapshot weights periodically instead: a resume replays the
+    # current epoch from its start but keeps the learning, so the worst case
+    # drops from one whole epoch to one interval.
+    save_every_batches: int = 300
+
     # Kaggle's T4 x2 gives two 14.6 GB cards. DataParallel splits each batch
     # across them, so per-GPU memory matches the single-card tuning while
     # throughput roughly doubles. Batch sizes below are per GPU and are scaled
@@ -341,15 +348,29 @@ from timm.loss import SoftTargetCrossEntropy
 from tqdm.auto import tqdm
 
 CKPT = Path(OUT) / "eva02_large_448_last.pt"
-RESUME_DIRS = [Path("/kaggle/input")]
+PARTIAL = Path(OUT) / "eva02_large_448_partial.pt"
 
 def find_resume():
-    if CKPT.exists():
-        return CKPT
-    for root in RESUME_DIRS:
-        for p in root.rglob("eva02_large_448_last.pt"):
-            return p
-    return None
+    # Prefer whichever is further along. A mid-epoch snapshot of the epoch after
+    # the last completed one carries strictly more training than that boundary.
+    def rank(p):
+        try:
+            s = torch.load(p, map_location="cpu", weights_only=False)
+        except Exception:
+            return None
+        stage_i = 1 if s.get("stage") == "stage2" else 0
+        return (stage_i, s.get("epoch", 0), s.get("batches_done", 10**9)), p
+
+    found = [r for r in (rank(p) for p in [CKPT, PARTIAL] if p.exists()) if r]
+    for root in [Path("/kaggle/input")]:
+        for name in ("eva02_large_448_last.pt", "eva02_large_448_partial.pt"):
+            for p in root.rglob(name):
+                r = rank(p)
+                if r:
+                    found.append(r)
+    if not found:
+        return None
+    return max(found, key=lambda r: r[0])[1]
 
 @torch.no_grad()
 def evaluate(model, loader, desc="val"):
@@ -418,6 +439,17 @@ def run_stage(model, ema, name, size, bs_per_gpu, epochs, lr, state, deadline):
             if seen % 20 == 0:
                 pbar.set_postfix(loss=f"{running/seen:.3f}",
                                  ips=f"{seen*bs/(time.time()-t0):.1f}")
+
+            # Mid-epoch snapshot. Written to a separate file so a crash during
+            # the write cannot corrupt the last good epoch-boundary checkpoint.
+            if cfg.save_every_batches and seen % cfg.save_every_batches == 0:
+                torch.save({"stage": name, "epoch": epoch, "partial": True,
+                            "batches_done": seen, "history": history,
+                            "best_acc": state.get("best_acc", 0.0),
+                            "model": {k: v.cpu() for k, v in model.state_dict().items()},
+                            "ema": {k: v.cpu() for k, v in ema.module.state_dict().items()}},
+                           PARTIAL)
+                pbar.write(f"  snapshot at batch {seen} -> {PARTIAL.name}")
 
         acc1, acc5 = evaluate(runner, val_loader, "val")
         ema1, ema5 = evaluate(ema_runner, val_loader, "val ema")
