@@ -7,6 +7,7 @@ import type { PredictResponse } from "@/lib/types";
 import { AskPanel } from "./AskPanel";
 import { ExplainPanel } from "./ExplainPanel";
 import { ResultPanels } from "./ResultPanels";
+import { WebLoader } from "./WebLoader";
 
 type State =
   | { phase: "idle" }
@@ -130,20 +131,10 @@ export function Analyzer() {
 
           {state.phase === "working" && (
             <div className="panel p-8 h-full grid place-items-center">
-              <div className="text-center">
-                <svg viewBox="0 0 120 60" className="w-40 h-20 mx-auto" aria-hidden="true">
-                  <path
-                    d="M0,30 Q30,0 60,30 T120,30"
-                    fill="none"
-                    stroke="var(--color-red)"
-                    strokeWidth="4"
-                    strokeDasharray="12 10"
-                    style={{ animation: "strand 1.1s linear infinite" }}
-                  />
-                </svg>
-                <p className="font-display text-xl mt-2">Spinning the strand</p>
-                <p className="text-sm text-[var(--text-dim)]">Reading the genome of your plate…</p>
-              </div>
+              <WebLoader
+                label="Spinning the strand"
+                sub="Reading the genome of your plate…"
+              />
             </div>
           )}
 

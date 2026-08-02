@@ -4,6 +4,7 @@ import dynamic from "next/dynamic";
 import { useEffect, useRef, useState } from "react";
 
 import type { GraphData } from "./three/GraphWeb";
+import { WebLoader } from "./WebLoader";
 
 // The 3D bundle is large and the design system forbids it blocking anything on
 // the upload -> result path, so it is code-split and only requested once the
@@ -11,8 +12,8 @@ import type { GraphData } from "./three/GraphWeb";
 const GraphWeb = dynamic(() => import("./three/GraphWeb"), {
   ssr: false,
   loading: () => (
-    <div className="w-full aspect-[4/3] sm:aspect-[16/10] ink-edge halftone grid place-items-center">
-      <p className="font-display text-lg opacity-60">spinning the web…</p>
+    <div className="w-full aspect-[4/3] sm:aspect-[16/10] ink-edge halftone-shade grid place-items-center">
+      <WebLoader label="Spinning the web" sub="181 nodes · 323 strands" />
     </div>
   ),
 });

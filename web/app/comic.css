@@ -216,3 +216,83 @@
     display: none;
   }
 }
+
+/* ── Web loader ─────────────────────────────────────────────────────────
+   Spokes draw outward, then the spiral walks across them, then the whole web
+   breathes. The order is the point: it reads as a web being built rather than
+   a graphic being rotated. */
+
+.web-loader .web-spoke {
+  stroke: var(--line);
+  stroke-width: 1.1;
+  stroke-linecap: round;
+  opacity: 0.85;
+  stroke-dasharray: 46;
+  stroke-dashoffset: 46;
+  animation: web-draw 0.5s var(--ease-snap) forwards;
+}
+
+.web-loader .web-ring {
+  fill: none;
+  stroke: var(--color-red);
+  stroke-width: 1.4;
+  stroke-linejoin: round;
+  /* Generously over-length: each ring polygon has a different perimeter and a
+     single dasharray has to cover the largest of them. */
+  stroke-dasharray: 320;
+  stroke-dashoffset: 320;
+  animation: web-draw 0.62s var(--ease-snap) forwards;
+}
+
+.web-loader .web-hub {
+  fill: var(--color-red);
+  stroke: var(--line);
+  stroke-width: 1.4;
+  transform-origin: 50% 50%;
+  animation: web-pulse 1.5s ease-in-out infinite;
+}
+
+.web-loader-spin {
+  transform-origin: 50% 50%;
+  animation: web-turn 14s linear infinite;
+}
+
+@keyframes web-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes web-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.45);
+    opacity: 0.65;
+  }
+}
+
+@keyframes web-turn {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* The web still draws under reduced motion — it is the loading signal — but it
+   stops turning and stops pulsing, which are the parts that cause trouble. */
+@media (prefers-reduced-motion: reduce) {
+  .web-loader-spin {
+    animation: none;
+  }
+  .web-loader .web-hub {
+    animation: none;
+  }
+  .web-loader .web-spoke,
+  .web-loader .web-ring {
+    animation-duration: 0.01ms;
+    stroke-dashoffset: 0;
+  }
+}
