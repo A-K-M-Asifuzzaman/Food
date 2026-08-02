@@ -4,12 +4,14 @@ import { useCallback, useRef, useState } from "react";
 
 import type { PredictResponse } from "@/lib/types";
 
+import { AskPanel } from "./AskPanel";
+import { ExplainPanel } from "./ExplainPanel";
 import { ResultPanels } from "./ResultPanels";
 
 type State =
   | { phase: "idle" }
   | { phase: "working"; preview: string }
-  | { phase: "done"; preview: string; result: PredictResponse }
+  | { phase: "done"; preview: string; result: PredictResponse; file: File }
   | { phase: "error"; preview?: string; message: string };
 
 export function Analyzer() {
@@ -31,7 +33,7 @@ export function Analyzer() {
         setState({ phase: "error", preview, message: payload.error ?? "Request failed." });
         return;
       }
-      setState({ phase: "done", preview, result: payload as PredictResponse });
+      setState({ phase: "done", preview, result: payload as PredictResponse, file });
     } catch {
       setState({
         phase: "error",
@@ -177,8 +179,19 @@ export function Analyzer() {
       </div>
 
       {state.phase === "done" && (
-        <div className="mt-6">
+        <div className="mt-6 space-y-6">
           <ResultPanels result={state.result} />
+          {/* Only offered when the prediction came from the real model. There is
+              nothing to explain about, or ask of, a demo response. */}
+          {state.result.source === "model" && state.result.ood.is_food && (
+            <div className="grid gap-6 lg:grid-cols-2">
+              <ExplainPanel file={state.file} foodClass={state.result.prediction.class} />
+              <AskPanel
+                foodClass={state.result.prediction.class}
+                title={state.result.prediction.title}
+              />
+            </div>
+          )}
         </div>
       )}
     </div>
