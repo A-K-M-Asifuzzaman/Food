@@ -31,6 +31,8 @@ type PanelProps = {
   raised?: boolean;
   web?: boolean;
   as?: "div" | "section" | "article" | "aside";
+  /** Anchor target, so in-page links can address a specific panel. */
+  id?: string;
 };
 
 export function Panel({
@@ -40,10 +42,12 @@ export function Panel({
   raised = false,
   web = false,
   as: Tag = "div",
+  id,
 }: PanelProps) {
   const tilts = { left: "panel-tilt-l", right: "panel-tilt-r", none: "" };
   return (
     <Tag
+      id={id}
       className={[
         raised ? "panel-raised" : "panel",
         tilts[tilt],

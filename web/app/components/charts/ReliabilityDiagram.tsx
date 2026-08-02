@@ -84,7 +84,15 @@ export function ReliabilityDiagram({
           strokeWidth={1.5}
           strokeDasharray="5 4"
         />
-        <text x={scaleX(0.72)} y={scaleY(0.78)} fontSize="10" fill="var(--text-dim)" transform={`rotate(-38 ${scaleX(0.72)} ${scaleY(0.78)})`}>
+        {/* Placed below the diagonal: both series run above it here, so the
+            space underneath is the only region guaranteed to be empty. */}
+        <text
+          x={scaleX(0.5)}
+          y={scaleY(0.36)}
+          fontSize="10"
+          fill="var(--text-dim)"
+          transform={`rotate(-33 ${scaleX(0.5)} ${scaleY(0.36)})`}
+        >
           perfectly calibrated
         </text>
 
