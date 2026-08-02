@@ -4,6 +4,10 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 
+import type { SearchItem } from "@/lib/search";
+
+import { CommandPalette } from "./CommandPalette";
+
 const NAV = [
   { href: "/analyze", label: "Analyse" },
   { href: "/dishes", label: "Dishes" },
@@ -12,7 +16,7 @@ const NAV = [
   { href: "/methods", label: "Method" },
 ];
 
-export function SiteHeader() {
+export function SiteHeader({ searchIndex }: { searchIndex: SearchItem[] }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
 
@@ -25,6 +29,10 @@ export function SiteHeader() {
         <Link href="/" className="font-display text-xl tracking-tight shrink-0">
           FOODGENOME<span style={{ color: "var(--color-red)" }}>·</span>AI
         </Link>
+
+        <div className="flex items-center gap-3">
+          <CommandPalette index={searchIndex} />
+        </div>
 
         <nav className="hidden md:flex items-center gap-1" aria-label="Main">
           {NAV.map((item) => (
