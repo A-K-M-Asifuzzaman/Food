@@ -45,6 +45,18 @@ Local path of the file to upload:
 
 > Without **Internet → On**, cell 3 fails immediately. It is the most common setup mistake.
 
+### Optional: an HF token
+
+Anonymous downloads work, but Hugging Face rate-limits them — noticeable when pulling 6 GB
+of Food-101 plus 1.2 GB of weights. To avoid the warning and the throttling:
+
+1. Get a token at <https://huggingface.co/settings/tokens> → **New token**, type **Read**
+2. In the notebook: **Add-ons → Secrets → Add secret**, label it exactly `HF_TOKEN`, paste
+   the value, and tick **Attach to notebook**
+
+Cell 1 picks it up automatically and prints `HF_TOKEN loaded from Kaggle Secrets`. Without
+it you get `continuing anonymously` and everything still works, just slower.
+
 ## 3. Run it
 
 **Run All.** Expected timings on a T4:
