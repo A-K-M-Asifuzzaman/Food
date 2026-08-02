@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="FoodGenome AI">
+  <!-- A web anchored in one corner, which is both the brand motif and the one
+       shape that stays legible at 16px. A full radial web turns to mush at
+       favicon size; a corner web keeps three readable strands. -->
+  <rect width="64" height="64" fill="#0b0b0f"/>
+  <g fill="none" stroke="#f4f1e8" stroke-width="2.4" stroke-linecap="round">
+    <path d="M4 4 L60 32"/>
+    <path d="M4 4 L46 46"/>
+    <path d="M4 4 L32 60"/>
+    <path d="M4 4 L58 12"/>
+    <path d="M4 4 L12 58"/>
+  </g>
+  <g fill="none" stroke="#e62429" stroke-width="3" stroke-linejoin="round">
+    <path d="M22 6 L20 20 L6 22"/>
+    <path d="M40 10 L34 34 L10 40"/>
+    <path d="M57 15 L48 48 L15 57"/>
+  </g>
+  <circle cx="4" cy="4" r="5" fill="#e62429"/>
+</svg>

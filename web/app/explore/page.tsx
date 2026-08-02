@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 
-import { GraphSection } from "../components/GraphSection";
+import { GraphExplorer } from "../components/GraphExplorer";
 import type { GraphData } from "../components/three/GraphWeb";
 
 export const metadata: Metadata = {
@@ -38,7 +38,7 @@ export default async function WebPage() {
       </section>
 
       <section className="mx-auto max-w-6xl px-5 pb-10">
-        <GraphSection data={data} />
+        <GraphExplorer data={data} />
       </section>
 
       <section className="mx-auto max-w-6xl px-5 pb-14 grid gap-6 md:grid-cols-3">

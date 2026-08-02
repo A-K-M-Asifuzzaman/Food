@@ -78,13 +78,17 @@ function Strands({
 function Node({
   node,
   active,
+  pinned,
   dimmed,
   onHover,
+  onSelect,
 }: {
   node: GraphNode;
   active: boolean;
+  pinned: boolean;
   dimmed: boolean;
   onHover: (id: string | null) => void;
+  onSelect: (id: string | null) => void;
 }) {
   const ref = useRef<THREE.Mesh>(null);
   // Radius encodes degree, so hub ingredients read as hubs. sqrt keeps a node
@@ -94,7 +98,7 @@ function Node({
 
   useFrame((_, delta) => {
     if (!ref.current) return;
-    const target = active ? 1.55 : 1;
+    const target = pinned ? 1.9 : active ? 1.55 : 1;
     ref.current.scale.lerp(new THREE.Vector3(target, target, target), delta * 9);
   });
 
@@ -107,6 +111,10 @@ function Node({
         onHover(node.id);
       }}
       onPointerOut={() => onHover(null)}
+      onClick={(e) => {
+        e.stopPropagation();
+        onSelect(node.id);
+      }}
     >
       <sphereGeometry args={[radius, 20, 20]} />
       <meshStandardMaterial
@@ -132,8 +140,19 @@ function Node({
   );
 }
 
-function Scene({ data }: { data: GraphData }) {
-  const [active, setActive] = useState<string | null>(null);
+function Scene({
+  data,
+  selected,
+  onSelect,
+}: {
+  data: GraphData;
+  selected: string | null;
+  onSelect: (id: string | null) => void;
+}) {
+  const [hovered, setHovered] = useState<string | null>(null);
+  // A click pins the focus; a hover only previews it. Without the distinction
+  // the panel empties the moment the pointer leaves the canvas.
+  const active = hovered ?? selected;
 
   const index = useMemo(
     () => new Map(data.nodes.map((n) => [n.id, n])),
@@ -168,8 +187,10 @@ function Scene({ data }: { data: GraphData }) {
             key={n.id}
             node={n}
             active={active === n.id}
+            pinned={selected === n.id}
             dimmed={active !== null && !neighbours.has(n.id)}
-            onHover={setActive}
+            onHover={setHovered}
+            onSelect={onSelect}
           />
         ))}
       </group>
@@ -184,35 +205,26 @@ function Scene({ data }: { data: GraphData }) {
   );
 }
 
-export default function GraphWeb({ data }: { data: GraphData }) {
+export default function GraphWeb({
+  data,
+  selected = null,
+  onSelect = () => {},
+}: {
+  data: GraphData;
+  selected?: string | null;
+  onSelect?: (id: string | null) => void;
+}) {
   return (
-    <div className="relative w-full aspect-[4/3] sm:aspect-[16/10] ink-edge overflow-hidden">
+    <div className="relative w-full h-full overflow-hidden">
       <Canvas
-        camera={{ position: [0, 0, 22], fov: 48 }}
+        camera={{ position: [0, 0, 26], fov: 46 }}
         dpr={[1, 1.8]}
         gl={{ antialias: true, powerPreference: "high-performance" }}
+        onPointerMissed={() => onSelect(null)}
       >
-        <Scene data={data} />
+        <Scene data={data} selected={selected} onSelect={onSelect} />
       </Canvas>
 
-      <div className="absolute left-3 bottom-3 flex gap-3 text-xs pointer-events-none">
-        {[
-          ["Dish", DISH],
-          ["Ingredient", INGREDIENT],
-        ].map(([label, colour]) => (
-          <span key={label} className="flex items-center gap-1.5 panel-tight px-2 py-1">
-            <span
-              className="w-2.5 h-2.5 rounded-full"
-              style={{ background: colour as string }}
-            />
-            {label}
-          </span>
-        ))}
-      </div>
-
-      <p className="absolute right-3 bottom-3 text-xs text-[var(--text-dim)] pointer-events-none">
-        drag to orbit · hover a node
-      </p>
     </div>
   );
 }
