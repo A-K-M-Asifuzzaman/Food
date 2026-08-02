@@ -80,6 +80,16 @@ def build(out_dir=INDEX_DIR, model_name: str = EMBED_MODEL) -> dict:
     docs = load_corpus()
     started = time.time()
 
+    # Graph facts are indexed alongside the per-dish documents rather than kept
+    # in a separate store. A question like "what else has walnuts in it" should
+    # not require the caller to know in advance that it is a graph question; the
+    # retriever ranks the inversion document against the flat ones and the best
+    # match wins on its merits.
+    from .graph import load_graph
+
+    graph_docs = [Document(**d) for d in load_graph().as_documents()]
+    docs.extend(graph_docs)
+
     bm25 = BM25Okapi([tokenize(d.text) for d in docs])
 
     model = SentenceTransformer(model_name)
