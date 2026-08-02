@@ -121,7 +121,11 @@
 .speed-lines::before {
   content: "";
   position: absolute;
-  inset: -8% -30%;
+  /* Vertical bleed only. Extending horizontally past the parent widened the
+     document by 105px on a 390px viewport and gave every page a horizontal
+     scrollbar — the lines are masked to nothing at the edges anyway, so the
+     overhang bought no visual difference and cost the mobile layout. */
+  inset: -14% 0;
   z-index: -1;
   background: repeating-linear-gradient(
     -18deg,

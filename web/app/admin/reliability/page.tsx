@@ -66,7 +66,7 @@ export default function ReliabilityPage() {
         is the whole point.
       </Caption>
 
-      <Panel className="p-0 overflow-x-auto">
+      <Panel className="p-0 overflow-x-auto max-w-full">
         <div className="p-5 pb-3">
           <h2 className="font-display text-lg">Conformal prediction sets</h2>
           <p className="text-xs text-[var(--text-dim)] mt-1">

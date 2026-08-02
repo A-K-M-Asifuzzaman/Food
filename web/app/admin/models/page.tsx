@@ -36,7 +36,7 @@ export default function ModelsPage() {
         />
       </Panel>
 
-      <Panel className="p-0 overflow-x-auto">
+      <Panel className="p-0 overflow-x-auto max-w-full">
         <div className="p-5 pb-3">
           <h2 className="font-display text-lg">Full ablation</h2>
           <p className="text-xs text-[var(--text-dim)] mt-1">

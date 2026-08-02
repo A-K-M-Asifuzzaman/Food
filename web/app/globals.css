@@ -106,6 +106,14 @@ body {
   border-radius: 2px;
 }
 
+/* The plain inked border, without a panel's offset shadow. Buttons, inputs and
+   badges wear this: they sit inside panels, and a second drop shadow nested in
+   one reads as clutter rather than depth. */
+@utility ink-edge {
+  border: 2px solid var(--line);
+  border-radius: 2px;
+}
+
 /* Halftone fill for emphasis blocks. */
 @utility halftone {
   background-image: radial-gradient(var(--halftone) 1.5px, transparent 1.5px);

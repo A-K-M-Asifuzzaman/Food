@@ -14,8 +14,8 @@ const SECTIONS = [
 export function AdminNav() {
   const pathname = usePathname();
   return (
-    <nav aria-label="Admin sections">
-      <ul className="flex lg:flex-col gap-2 overflow-x-auto lg:overflow-visible">
+    <nav aria-label="Admin sections" className="min-w-0">
+      <ul className="flex lg:flex-col gap-2 overflow-x-auto lg:overflow-visible -mx-1 px-1">
         {SECTIONS.map((s) => {
           const active = pathname === s.href;
           return (

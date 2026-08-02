@@ -55,7 +55,7 @@ export default function BenchmarksPage() {
       {/* ── Single models ─────────────────────────────────────────────── */}
       <section className="mx-auto max-w-6xl px-5 py-12">
         <Beat n="01" title="SINGLE HEADS" lede="Each probe trained on cached frozen features." />
-        <Panel className="mt-6 p-0 overflow-x-auto">
+        <Panel className="mt-6 p-0 overflow-x-auto max-w-full">
           <table className="w-full text-sm min-w-[38rem]">
             <thead>
               <tr className="border-b-3 border-[var(--line)]">
@@ -94,7 +94,7 @@ export default function BenchmarksPage() {
           title="THE ABLATION"
           lede="Every subset of members, in probability and logit space, plus weights tuned on validation only."
         />
-        <Panel className="mt-6 p-0 overflow-x-auto">
+        <Panel className="mt-6 p-0 overflow-x-auto max-w-full">
           <table className="w-full text-sm min-w-[42rem]">
             <thead>
               <tr className="border-b-3 border-[var(--line)]">
@@ -216,7 +216,7 @@ export default function BenchmarksPage() {
           title="RETRIEVAL AND ANSWERS"
           lede={`A ${ragReport.gold_cases}-case gold set whose ground truth is known before the system is asked, including questions it is supposed to refuse.`}
         />
-        <Panel className="mt-6 p-0 overflow-x-auto">
+        <Panel className="mt-6 p-0 overflow-x-auto max-w-full">
           <table className="w-full text-sm min-w-[40rem]">
             <thead>
               <tr className="border-b-3 border-[var(--line)]">
