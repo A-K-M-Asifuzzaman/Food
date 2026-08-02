@@ -120,26 +120,126 @@ Retrieval and answer quality by question category, plus cost control.
 
 ## How it works
 
+```mermaid
+%%{init: {'theme':'base','themeVariables':{
+  'fontFamily':'ui-sans-serif, system-ui, sans-serif','fontSize':'14px',
+  'primaryColor':'#ffffff','primaryTextColor':'#0b0b0f','primaryBorderColor':'#0b0b0f',
+  'lineColor':'#4b4b55'},
+  'flowchart':{'curve':'basis','padding':22,'nodeSpacing':34,'rankSpacing':60}}}%%
+flowchart LR
+    IMG(["photograph"])
+    S["SigLIP-SO400M · 96.83%"]
+    E["EVA-02-L · 95.53%"]
+    AVG{{"probability average · 97.16%"}}
+    CAL["temperature T = 0.7621"]
+    CONF["conformal set · 99.56% coverage"]
+    AB{"model confident?"}
+    NUT["USDA nutrition · 101 classes"]
+    OUT(["dish · confidence · candidates"])
+    LOST(["declines — the model is lost"])
+
+    IMG --> S & E
+    S & E --> AVG --> CAL --> CONF --> AB
+    AB -- "yes" --> NUT --> OUT
+    AB -- "no" --> LOST
+
+    classDef vision fill:#e62429,stroke:#0b0b0f,stroke-width:2px,color:#ffffff
+    classDef rel fill:#1b4ce0,stroke:#0b0b0f,stroke-width:2px,color:#ffffff
+    classDef know fill:#0e8fa3,stroke:#0b0b0f,stroke-width:2px,color:#ffffff
+    classDef gate fill:#f5a524,stroke:#0b0b0f,stroke-width:2px,color:#0b0b0f
+    classDef term fill:#ffffff,stroke:#0b0b0f,stroke-width:3px,color:#0b0b0f
+    classDef refuse fill:#0b0b0f,stroke:#0b0b0f,stroke-width:2px,color:#f4f1e8
+
+    class S,E,AVG vision
+    class CAL,CONF rel
+    class NUT know
+    class AB gate
+    class IMG,OUT term
+    class LOST refuse
 ```
-photograph
-   ├─ SigLIP-SO400M ─┐
-   │                 ├─ probability average → temperature → conformal set
-   └─ EVA-02-L ──────┘                            │
-                                                  ├─ abstain?  (max-prob OR set size)
-                                                  └─ dish identity
-                                                         │
-                          ┌──────────────────────────────┤
-                          │                              │
-                  nutrition lookup              hybrid retrieval
-                  (USDA, 101 classes)           BM25 + bi-encoder
-                          │                       → RRF fusion
-                          │                       → cross-encoder rerank
-                          │                       → CRAG relevance gate
-                          │                       → generation
-                          │                       → numeric grounding gate
-                          └──────────────────────────────┤
-                                                  answer + citations
+
+<sub>**red** vision · **blue** reliability · **teal** knowledge · **amber** a decision that can refuse</sub>
+
+Ask a question about the identified dish and a second pipeline runs, which can refuse in two more places:
+
+```mermaid
+%%{init: {'theme':'base','themeVariables':{
+  'fontFamily':'ui-sans-serif, system-ui, sans-serif','fontSize':'14px',
+  'primaryColor':'#ffffff','primaryTextColor':'#0b0b0f','primaryBorderColor':'#0b0b0f',
+  'lineColor':'#4b4b55'},
+  'flowchart':{'curve':'basis','padding':22,'nodeSpacing':34,'rankSpacing':58}}}%%
+flowchart LR
+    Q(["how much sodium is in this?"])
+    RW["rewrite to name the dish"]
+    HYB["BM25 + bi-encoder"]
+    RRF["reciprocal rank fusion"]
+    RR["cross-encoder rerank"]
+    CRAG{"evidence relevant?"}
+    GEN["generate from sources only"]
+    GATE{"every number in a source?"}
+    ANS(["answer with citations"])
+    TPL(["the record itself, verbatim"])
+    NONE(["outside the knowledge base"])
+
+    Q --> RW --> HYB --> RRF --> RR --> CRAG
+    CRAG -- "yes" --> GEN --> GATE
+    CRAG -- "no" --> NONE
+    GATE -- "yes" --> ANS
+    GATE -- "no" --> TPL
+
+    classDef prep fill:#0e8fa3,stroke:#0b0b0f,stroke-width:2px,color:#ffffff
+    classDef gate fill:#f5a524,stroke:#0b0b0f,stroke-width:2px,color:#0b0b0f
+    classDef term fill:#ffffff,stroke:#0b0b0f,stroke-width:3px,color:#0b0b0f
+    classDef refuse fill:#0b0b0f,stroke:#0b0b0f,stroke-width:2px,color:#f4f1e8
+
+    class RW,HYB,RRF,RR,GEN prep
+    class CRAG,GATE gate
+    class Q,ANS,TPL term
+    class NONE refuse
 ```
+
+A failed grounding check does not refuse — it serves the retrieved record verbatim, which is correct by construction and needs no verification.
+
+
+Two paths lead to a refusal, and that is deliberate. The abstention gate declines when the model is lost on the image; the CRAG gate declines when the knowledge base holds nothing relevant. A failed grounding check does not refuse — it falls back to the deterministic record, which is correct by construction.
+
+### Where the accuracy actually comes from
+
+```mermaid
+%%{init: {'theme':'base','themeVariables':{
+  'fontFamily':'ui-sans-serif, system-ui, sans-serif','fontSize':'13px',
+  'primaryColor':'#ffffff','primaryTextColor':'#0b0b0f','primaryBorderColor':'#0b0b0f',
+  'lineColor':'#4b4b55'},'flowchart':{'padding':12,'nodeSpacing':30}}}%%
+flowchart TD
+    A["DINOv2-L alone<br/><b>94.87%</b>"]
+    B["EVA-02-L alone<br/><b>95.53%</b>"]
+    C["SigLIP-SO400M alone<br/><b>96.83%</b>"]
+    D["gated fusion head<br/>3.97M params · 21.9 min<br/><b>96.97%</b>"]
+    F["SigLIP + EVA-02 averaged<br/>0 params · 0 seconds<br/><b>97.16%</b>"]
+    G["all three averaged<br/><b>97.09%</b>"]
+    H["oracle ceiling<br/><b>98.30%</b>"]
+
+    C --> D
+    B --> D
+    C --> F
+    B --> F
+    F --> G
+    A --> G
+    F -.->|"0.77 unexploited"| H
+
+    classDef solo fill:#ffffff,stroke:#4b4b55,stroke-width:1.5px
+    classDef lost fill:#f4f1e8,stroke:#4b4b55,stroke-width:1.5px,stroke-dasharray:4 3
+    classDef win fill:#16a34a,stroke:#0b0b0f,stroke-width:3px,color:#fff
+    classDef ceil fill:#f5a524,stroke:#0b0b0f,stroke-width:2px
+
+    class A,B,C solo
+    class D,G lost
+    class F win
+    class H ceil
+```
+
+The winner has no parameters. The trained fusion head and the three-way average both lost to it, and neither loss is explained by noise — the pairing beats its best single input at p = 0.000003.
+
 
 **Vision.** Three backbones were run once over all 101,000 images and their embeddings cached — about twenty hours, after which every downstream experiment finished in seconds. Lightweight MLP probes train on the cache; the shipped classifier averages two of them.
 
