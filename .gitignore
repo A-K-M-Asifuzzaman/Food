@@ -42,3 +42,8 @@ out/
 
 # Working notes, kept local only
 prompt.md
+
+# Reference material and local dev scaffolding, not part of the project
+*Sample*.pdf
+scripts/screenshot.mjs
+web/shot*.mjs
