@@ -190,7 +190,7 @@ def attention_pool_map(backbone, tensor: torch.Tensor) -> np.ndarray | None:
     return cam.cpu().numpy()
 
 
-def overlay(image: Image.Image, cam: np.ndarray, alpha: float = 0.7, gamma: float = 0.65) -> Image.Image:
+def overlay(image: Image.Image, cam: np.ndarray, alpha: float = 0.78, gamma: float = 1.8) -> Image.Image:
     """Composite a heatmap onto the image using the project's ink/red ramp.
 
     A perceptually ordered ramp matters here: the classic jet colormap is not
@@ -202,8 +202,10 @@ def overlay(image: Image.Image, cam: np.ndarray, alpha: float = 0.7, gamma: floa
         size, Image.BICUBIC
     )
     h = np.asarray(heat).astype(np.float32) / 255.0
-    # Gamma lifts the mid range. Without it the visible area is only the few
-    # patches near 1.0 and the overlay reads as blank over a normal photograph.
+    # Gamma above 1 suppresses the mid range. Percentile normalisation already
+    # rescued the map from invisibility; without this it over-corrects and half
+    # the frame reads as evidence. Tuning it further would only be dressing up
+    # an attribution that measures as weakly localised — see the module note.
     h = h ** gamma
 
     base = np.asarray(image.convert("RGB")).astype(np.float32)

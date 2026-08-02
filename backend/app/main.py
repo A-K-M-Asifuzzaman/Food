@@ -7,6 +7,7 @@ needs to switch from its demo responses to real predictions.
 
 from __future__ import annotations
 
+import base64
 import io
 import json
 import logging
@@ -60,6 +61,51 @@ assert len(CLASS_ORDER) == 101, f"expected 101 classes, got {len(CLASS_ORDER)}"
 def title_for(name: str) -> str:
     entry = ENTRIES.get(name)
     return entry["title"] if entry else name.replace("_", " ").title()
+
+
+@app.post("/explain")
+async def explain(image: UploadFile = File(...), food_class: str | None = None) -> dict:
+    """Grad-CAM overlay for an uploaded image, returned inline as a data URI.
+
+    The overlay is composited server-side rather than shipping a raw heatmap for
+    the browser to colour. The colour ramp encodes the finding — monotonic in
+    lightness so the hottest region reads as hottest — and duplicating that in
+    client code is how the two drift apart.
+    """
+    started = time.time()
+    raw = await image.read()
+    if len(raw) > MAX_BYTES:
+        raise HTTPException(413, "Image too large.")
+    try:
+        pil = Image.open(io.BytesIO(raw)).convert("RGB")
+    except (UnidentifiedImageError, OSError):
+        raise HTTPException(415, "Could not decode that file as an image.")
+
+    index = CLASS_ORDER.index(food_class) if food_class in ENTRIES else None
+    result = CLASSIFIER.explain(pil, class_index=index)
+
+    from nutrivision.explain.gradcam import overlay
+
+    display = pil.copy()
+    display.thumbnail((640, 640))
+    composed = overlay(display, result["cam"])
+
+    buffer = io.BytesIO()
+    composed.save(buffer, format="PNG", optimize=True)
+    encoded = base64.b64encode(buffer.getvalue()).decode()
+
+    return {
+        "overlay": f"data:image/png;base64,{encoded}",
+        "class": CLASS_ORDER[result["class_index"]],
+        "title": title_for(CLASS_ORDER[result["class_index"]]),
+        "backbone": result["backbone"],
+        "grid": result["grid"],
+        # Share of the map above half intensity. A map spread across the whole
+        # frame is not an explanation, and this is the number that admits it.
+        "peak_fraction": round(result["peak_fraction"], 4),
+        "method": "Grad-CAM on the final transformer block",
+        "latency_ms": int((time.time() - started) * 1000),
+    }
 
 
 class AskRequest(BaseModel):

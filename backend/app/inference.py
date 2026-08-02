@@ -107,6 +107,28 @@ class Classifier:
         return calibrated.squeeze(0).cpu().numpy(), mean.squeeze(0).cpu().numpy()
 
 
+    def explain(self, image: Image.Image, class_index: int | None = None) -> dict:
+        """Grad-CAM for the strongest single member.
+
+        Only SigLIP is attributed, not the ensemble. Averaging two heatmaps from
+        backbones with different patch grids (27x27 and 32x32) and different
+        pretraining would produce a picture that corresponds to no model anyone
+        can point at. SigLIP is the stronger member at 96.83% and its map is the
+        honest one to show.
+
+        This runs outside inference mode: Grad-CAM needs gradients, so it cannot
+        share the no_grad path used for prediction.
+        """
+        from nutrivision.explain.gradcam import explain as run_gradcam
+
+        self.load()
+        key = MEMBERS[0]
+        model, transform = self.backbones[key]
+        result = run_gradcam(image, model, transform, self.probes[key], class_index)
+        result["backbone"] = key
+        return result
+
+
 def conformal_set(probs: np.ndarray, k_max: int = 8) -> list[int]:
     """LAC with a forced top-1, the configuration measured at 99.56% coverage.
 
