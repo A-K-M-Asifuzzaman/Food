@@ -3,6 +3,7 @@ import { Anton, JetBrains_Mono, Source_Sans_3 } from "next/font/google";
 import "./globals.css";
 import { SiteFooter } from "./components/SiteFooter";
 import { SiteHeader } from "./components/SiteHeader";
+import { THEME_INIT_SCRIPT } from "./components/ThemeToggle";
 import { buildSearchIndex } from "@/lib/search";
 
 // Display is heavy and condensed for headings and SFX; body is a humanist sans
@@ -28,6 +29,11 @@ export default function RootLayout({
       lang="en"
       className={`${anton.variable} ${sourceSans.variable} ${jetbrains.variable} h-full antialiased`}
     >
+      {/* Applied before first paint. Running this in an effect instead would
+          show a dark-mode reader a full white frame on every navigation. */}
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+      </head>
       <body className="min-h-full flex flex-col">
         <SiteHeader searchIndex={buildSearchIndex()} />
         {children}

@@ -7,6 +7,7 @@ import { useState } from "react";
 import type { SearchItem } from "@/lib/search";
 
 import { CommandPalette } from "./CommandPalette";
+import { ThemeToggle } from "./ThemeToggle";
 
 const NAV = [
   { href: "/analyze", label: "Analyse" },
@@ -32,6 +33,7 @@ export function SiteHeader({ searchIndex }: { searchIndex: SearchItem[] }) {
 
         <div className="flex items-center gap-3">
           <CommandPalette index={searchIndex} />
+          <ThemeToggle />
         </div>
 
         <nav className="hidden md:flex items-center gap-1" aria-label="Main">

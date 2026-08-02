@@ -300,3 +300,33 @@
     stroke-dashoffset: 0;
   }
 }
+
+/* ── Theme toggle ───────────────────────────────────────────────────────
+   The spider travels the strand; the track colour crossfades under it. */
+
+.theme-toggle {
+  transition: background var(--dur-panel) var(--ease-snap);
+}
+
+.theme-toggle .theme-knob {
+  transition:
+    left var(--dur-panel) var(--ease-overshoot),
+    transform var(--dur-snap) var(--ease-snap);
+}
+
+.theme-toggle:hover .theme-knob {
+  transform: translate(-50%, -50%) scale(1.12);
+}
+
+.theme-toggle:active .theme-knob {
+  transform: translate(-50%, -50%) scale(0.94);
+}
+
+/* A spider scuttles; it does not glide. Under reduced motion it simply
+   arrives, because the travel is the part that causes trouble. */
+@media (prefers-reduced-motion: reduce) {
+  .theme-toggle,
+  .theme-toggle .theme-knob {
+    transition: none;
+  }
+}
