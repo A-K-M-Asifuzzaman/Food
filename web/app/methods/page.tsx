@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import { WebShot } from "../components/WebShot";
 import { Beat, Caption, GutterRule, Panel } from "../components/comic";
 import { calibration, ensembleReport } from "@/lib/reports";
 
@@ -66,6 +67,7 @@ export default function MethodsPage() {
   const cal = calibration.ensemble;
   return (
     <main className="flex-1 w-full">
+      <div className="relative">
       <section className="mx-auto max-w-6xl px-5 pt-10 pb-8">
         <Beat
           n="—"
@@ -74,6 +76,7 @@ export default function MethodsPage() {
         />
       </section>
 
+        <WebShot targetId="features" corner="tl" pose="crawl" top={-6} />
       <section className="mx-auto max-w-6xl px-5 pb-12 space-y-6">
         {STAGES.map((s, i) => (
           <Panel key={s.id} id={s.id} tilt={i % 3 === 1 ? "right" : "none"} className="p-6 scroll-mt-24">
@@ -89,6 +92,7 @@ export default function MethodsPage() {
           </Panel>
         ))}
       </section>
+      </div>
 
       <GutterRule />
 

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import { Beat } from "../components/comic";
+import { WebShot } from "../components/WebShot";
 import { DishBrowser } from "../components/DishBrowser";
 import { getKb } from "@/lib/kb";
 
@@ -31,6 +32,7 @@ export default function DishesPage() {
 
   return (
     <main className="flex-1 w-full">
+      <div className="relative">
       <section className="mx-auto max-w-6xl px-5 pt-10 pb-6">
         <Beat
           n="—"
@@ -39,9 +41,11 @@ export default function DishesPage() {
         />
       </section>
 
-      <section className="mx-auto max-w-6xl px-5 pb-16">
-        <DishBrowser dishes={dishes} />
-      </section>
+        <WebShot targetId="dish-browser" corner="tl" pose="crawl" top={-6} />
+        <section id="dish-browser" className="mx-auto max-w-6xl px-5 pb-16">
+          <DishBrowser dishes={dishes} />
+        </section>
+      </div>
     </main>
   );
 }

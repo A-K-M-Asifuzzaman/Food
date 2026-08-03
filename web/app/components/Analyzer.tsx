@@ -63,6 +63,7 @@ export function Analyzer() {
         {/* Dropzone */}
         <div className="lg:col-span-2">
           <div
+            id="dropzone"
             onDragOver={(e) => {
               e.preventDefault();
               setDragging(true);

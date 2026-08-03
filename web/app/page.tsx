@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { Beat, Caption, GutterRule, InkSplit, Panel, Sfx, StatPanel } from "./components/comic";
+import { WebShot } from "./components/WebShot";
 import { getKb } from "@/lib/kb";
 
 const kb = getKb();
@@ -13,6 +14,7 @@ export default function Home() {
           own frame, smaller panels crowding the edge. */}
       <section className="relative overflow-hidden border-b-3 border-[var(--line)]">
         <div className="absolute inset-0 halftone-shade opacity-60" aria-hidden="true" />
+        <WebShot targetId="hero-panel" corner="tr" pose="hang" top={-14} sfx="" />
 
         <div className="relative mx-auto max-w-6xl px-5 py-14 sm:py-20">
           <div className="grid gap-8 lg:grid-cols-12 items-start">
@@ -58,7 +60,7 @@ export default function Home() {
                 gives the off-axis comic feel without absolute positioning that
                 collides the moment the type reflows. */}
             <div className="lg:col-span-5 flex flex-col gap-5 lg:pl-6">
-              <Panel raised tilt="right" web className="p-6 pt-8">
+              <Panel id="hero-panel" raised tilt="right" web className="p-6 pt-8">
                 <p className="text-xs uppercase tracking-widest text-[var(--text-dim)] pl-14">
                   Food-101 test split
                 </p>

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 
+import { WebShot } from "../components/WebShot";
 import { GraphExplorer } from "../components/GraphExplorer";
 import type { GraphData } from "../components/three/GraphWeb";
 
@@ -22,6 +23,7 @@ export default async function WebPage() {
   return (
     <main className="flex-1 w-full">
 
+      <div className="relative">
       <section className="mx-auto max-w-6xl px-5 pt-10 pb-6">
         <p className="text-xs uppercase tracking-[0.2em] text-[var(--text-dim)]">
           GraphRAG · {data.stats.dishes} dishes · {data.stats.ingredients} ingredients
@@ -37,9 +39,11 @@ export default async function WebPage() {
         </p>
       </section>
 
-      <section className="mx-auto max-w-6xl px-5 pb-10">
-        <GraphExplorer data={data} />
-      </section>
+        <WebShot targetId="graph-panel" corner="tl" pose="perch" top={-6} />
+        <section id="graph-panel" className="mx-auto max-w-6xl px-5 pb-10">
+          <GraphExplorer data={data} />
+        </section>
+      </div>
 
       <section className="mx-auto max-w-6xl px-5 pb-14 grid gap-6 md:grid-cols-3">
         {[

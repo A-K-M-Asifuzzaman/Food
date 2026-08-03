@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 
+import { WebShot } from "../components/WebShot";
 import { Beat, Caption, GutterRule, Panel, StatPanel } from "../components/comic";
 import {
   conformalReport,
@@ -28,6 +29,7 @@ export default function BenchmarksPage() {
 
   return (
     <main className="flex-1 w-full">
+      <div className="relative">
       <section className="mx-auto max-w-6xl px-5 pt-10 pb-6">
         <Beat
           n="—"
@@ -36,7 +38,8 @@ export default function BenchmarksPage() {
         />
       </section>
 
-      <section className="mx-auto max-w-6xl px-5 pb-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        <WebShot targetId="headline-stats" corner="tl" pose="hang" top={-6} />
+      <section id="headline-stats" className="mx-auto max-w-6xl px-5 pb-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
         <StatPanel value={`${best.test_top1}%`} label="test top-1" note={best.method} tilt="left" />
         <StatPanel
           value={`${best.test_top5}%`}
@@ -57,6 +60,7 @@ export default function BenchmarksPage() {
           accent="var(--color-green)"
         />
       </section>
+      </div>
 
       <GutterRule />
 

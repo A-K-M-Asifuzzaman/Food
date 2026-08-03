@@ -355,3 +355,83 @@
     transform: translate(20px, 13px);
   }
 }
+
+/* ── Web shot ───────────────────────────────────────────────────────────
+   Spider-Man anchoring a strand to the upload panel. The strand is drawn
+   from the wrist outward, so the dash offset animates as the web travelling
+   rather than the corner reeling it in. */
+
+.webshot-line {
+  stroke-dasharray: 1400;
+  stroke-dashoffset: 1400;
+}
+
+.webshot-line-fired {
+  animation: webshot-fire 0.42s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes webshot-fire {
+  to { stroke-dashoffset: 0; }
+}
+
+.webshot-splat {
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.webshot-splat-fired {
+  animation: webshot-stick 0.3s ease-out 0.36s forwards;
+}
+
+@keyframes webshot-stick {
+  0%   { opacity: 0; scale: 0.3; }
+  60%  { opacity: 1; scale: 1.15; }
+  100% { opacity: 0.95; scale: 1; }
+}
+
+/* The sound effect fires with the web and does not repeat. A SFX that loops
+   stops reading as a sound and starts reading as decoration. */
+.webshot-thwip { opacity: 0; }
+
+.webshot-thwip-fired {
+  animation: webshot-thwip 1.5s ease-out 0.22s forwards;
+  transform-box: fill-box;
+  transform-origin: left center;
+}
+
+@keyframes webshot-thwip {
+  0%   { opacity: 0; scale: 0.5; rotate: -14deg; }
+  18%  { opacity: 1; scale: 1.1; rotate: -7deg; }
+  30%  { scale: 1; rotate: -9deg; }
+  75%  { opacity: 1; }
+  100% { opacity: 0; translate: 10px -8px; }
+}
+
+/* He settles once, then breathes. The sway is small on purpose: a figure
+   swinging across the header would compete with the copy it sits beside. */
+.webshot-hero {
+  transform-origin: 100% 0;
+  animation: webshot-drop 0.55s cubic-bezier(0.34, 1.4, 0.64, 1) both,
+             webshot-sway 5.5s ease-in-out 0.55s infinite;
+}
+
+@keyframes webshot-drop {
+  from { opacity: 0; translate: 14px -34px; }
+  to   { opacity: 1; translate: 0 0; }
+}
+
+@keyframes webshot-sway {
+  0%, 100% { rotate: -1.1deg; }
+  50%      { rotate: 1.1deg; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .webshot-line,
+  .webshot-line-fired { animation: none; stroke-dashoffset: 0; }
+  .webshot-splat,
+  .webshot-splat-fired { animation: none; opacity: 0.95; }
+  .webshot-thwip,
+  .webshot-thwip-fired { animation: none; opacity: 0; }
+  .webshot-hero { animation: none; }
+}
