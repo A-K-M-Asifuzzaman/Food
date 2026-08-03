@@ -172,9 +172,9 @@ export default function AdminUsers() {
         {data.daily.length === 0 ? (
           <p className="mt-2 text-sm text-[var(--text-dim)]">No predictions in this window.</p>
         ) : (
-          <div className="mt-4 flex items-end gap-1.5 h-40 overflow-x-auto">
+          <div className="mt-4 flex items-end justify-start gap-1.5 h-40 overflow-x-auto">
             {data.daily.map((d) => (
-              <div key={d.day} className="flex flex-col items-center gap-1 min-w-[2.2rem] flex-1">
+              <div key={d.day} className="flex flex-col items-center gap-1 min-w-[2.2rem] max-w-[4.5rem] flex-1">
                 <span className="figures text-[10px] text-[var(--text-dim)]">
                   {d.predictions}
                 </span>

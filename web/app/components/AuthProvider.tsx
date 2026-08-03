@@ -42,9 +42,20 @@ type AuthState = {
 
 const Ctx = createContext<AuthState | null>(null);
 
-/** Accounts the interface offers the console to. The server checks this again
- *  and is the authority — a client deciding it is an admin is not a check. */
-const ADMIN_EMAILS = ["zasif855@gmail.com"];
+/** Accounts the interface offers the console to.
+ *
+ *  Mirrors ADMIN_EMAILS on the model service, which is the authority: it checks
+ *  the same list against a verified token and answers 403 to everyone else. This
+ *  copy exists only so the console link is not dangled in front of people it
+ *  will refuse, and it is public by nature — the operator addresses ship in the
+ *  client bundle either way.
+ */
+const ADMIN_EMAILS = (
+  process.env.NEXT_PUBLIC_ADMIN_EMAILS ?? "zasif855@gmail.com"
+)
+  .split(",")
+  .map((e) => e.trim().toLowerCase())
+  .filter(Boolean);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);

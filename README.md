@@ -103,6 +103,8 @@ difference between a gate and an obstacle.
 
 ### Your own record
 
+![Your history](docs/images/history.png)
+
 Every dish you have analysed, every question you asked about one, and every
 correction you sent back — with a delete button that actually deletes. A record
 you cannot remove is not a record you agreed to keep, and "contact us to delete
@@ -121,6 +123,8 @@ Model, reliability, retrieval and knowledge-base health, each tile linking to it
 Those counters are in-process, so they cover the container currently running and reset when it restarts — which the panel says outright, because a dashboard implying a history the service does not keep is worse than one admitting its window.
 
 ### People
+
+![People](docs/images/admin-people.png)
 
 Every signed-in account and what it has been analysing: volume, mean confidence, how often the model declined, and the dishes each person photographs most. Rows are per account rather than per request on purpose — thirty predictions from one person is a different fact from thirty people trying it once, and a request count cannot tell them apart.
 

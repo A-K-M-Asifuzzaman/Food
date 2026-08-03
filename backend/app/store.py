@@ -101,15 +101,34 @@ class FirestoreBackend:
 
     def _read(self, collection: str, since: datetime | None = None,
               session: str | None = None, limit: int = SCAN_LIMIT) -> list[dict]:
+        """One filtered read.
+
+        Firestore will not combine an equality filter with an order_by on a
+        different field without a composite index, and a project that has to be
+        told to build three indexes before its history page works is a project
+        that does not work on a fresh clone. So the session query is sorted
+        here instead: it is capped at a hundred rows by the endpoint, and
+        sorting a hundred dictionaries costs nothing next to the round trip
+        that fetched them.
+
+        The time-range scan keeps its server-side sort — that one is a single
+        field, so it needs no index and can be limited before transfer.
+        """
         query = self.db.collection(collection)
         if session:
-            query = query.where("session", "==", session)
+            rows = [
+                doc.to_dict()
+                for doc in query.where("session", "==", session).limit(limit).stream()
+            ]
+            rows.sort(key=lambda r: r.get("at") or datetime.min.replace(tzinfo=timezone.utc),
+                      reverse=True)
+            return rows
         if since:
             query = query.where("at", ">=", since)
-        rows = []
-        for doc in query.order_by("at", direction="DESCENDING").limit(limit).stream():
-            rows.append(doc.to_dict())
-        return rows
+        return [
+            doc.to_dict()
+            for doc in query.order_by("at", direction="DESCENDING").limit(limit).stream()
+        ]
 
     def history(self, session: str, limit: int) -> tuple[list[dict], list[dict]]:
         return (
