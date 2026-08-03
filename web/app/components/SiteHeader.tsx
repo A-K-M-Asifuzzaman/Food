@@ -8,6 +8,8 @@ import type { SearchItem } from "@/lib/search";
 
 import { CommandPalette } from "./CommandPalette";
 import { ThemeToggle } from "./ThemeToggle";
+import { useAuth } from "./AuthProvider";
+import { UserMenu } from "./UserMenu";
 
 const NAV = [
   { href: "/analyze", label: "Analyse" },
@@ -20,6 +22,7 @@ const NAV = [
 export function SiteHeader({ searchIndex }: { searchIndex: SearchItem[] }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const { isAdmin } = useAuth();
 
   const isActive = (href: string) =>
     pathname === href || (href !== "/" && pathname.startsWith(href));
@@ -56,13 +59,18 @@ export function SiteHeader({ searchIndex }: { searchIndex: SearchItem[] }) {
               {item.label}
             </Link>
           ))}
-          <Link
-            href="/admin"
-            className="ml-2 px-3 py-1.5 text-sm uppercase tracking-widest ink-edge"
-            style={{ background: "var(--color-blue)", color: "#f4f1e8" }}
-          >
-            Admin
-          </Link>
+          {isAdmin && (
+            <Link
+              href="/admin"
+              className="ml-2 px-3 py-1.5 text-sm uppercase tracking-widest ink-edge"
+              style={{ background: "var(--color-blue)", color: "#f4f1e8" }}
+            >
+              Admin
+            </Link>
+          )}
+          <span className="ml-2">
+            <UserMenu compact />
+          </span>
         </nav>
 
         <button
@@ -82,7 +90,11 @@ export function SiteHeader({ searchIndex }: { searchIndex: SearchItem[] }) {
           className="lg:hidden border-t-2 border-[var(--line)] px-5 py-2 flex flex-col"
           aria-label="Main"
         >
-          {[...NAV, { href: "/admin", label: "Admin" }].map((item) => (
+          {[
+            ...NAV,
+            { href: "/history", label: "My predictions" },
+            ...(isAdmin ? [{ href: "/admin", label: "Admin" }] : []),
+          ].map((item) => (
             <Link
               key={item.href}
               href={item.href}
@@ -93,6 +105,9 @@ export function SiteHeader({ searchIndex }: { searchIndex: SearchItem[] }) {
               {item.label}
             </Link>
           ))}
+          <span className="py-3">
+            <UserMenu />
+          </span>
         </nav>
       )}
     </header>

@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 
+import { forwardAuth } from "@/lib/upstream";
+
 const UPSTREAM = process.env.FOODGENOME_API;
 
 export async function POST(request: Request) {
@@ -13,7 +15,7 @@ export async function POST(request: Request) {
   try {
     const res = await fetch(`${UPSTREAM}/feedback`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: forwardAuth(request, { "Content-Type": "application/json" }),
       body: JSON.stringify(body),
     });
     return NextResponse.json(res.ok ? await res.json() : { error: "rejected" },

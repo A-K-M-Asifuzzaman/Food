@@ -16,16 +16,18 @@ import threading
 import time
 
 import numpy as np
-from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi import Depends, FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from PIL import Image, UnidentifiedImageError
 from pydantic import BaseModel, Field
 
 from fastapi import Request
 
+from .auth import User, current_user, require_admin, require_user
 from .config import CONSTANTS, KB_PATH, MEMBERS
 from .inference import CLASSIFIER, conformal_set
 from .metrics import METRICS
+from .store import STORE
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger("foodgenome")
@@ -84,7 +86,11 @@ def title_for(name: str) -> str:
 
 
 @app.post("/explain")
-async def explain(image: UploadFile = File(...), food_class: str | None = None) -> dict:
+async def explain(
+    image: UploadFile = File(...),
+    food_class: str | None = None,
+    user: User = Depends(require_user),
+) -> dict:
     """Grad-CAM overlay for an uploaded image, returned inline as a data URI.
 
     The overlay is composited server-side rather than shipping a raw heatmap for
@@ -136,16 +142,19 @@ class AskRequest(BaseModel):
 
 
 @app.post("/ask")
-def ask(request: AskRequest) -> dict:
-    if request.food_class and request.food_class not in ENTRIES:
-        raise HTTPException(400, f"Unknown food class: {request.food_class}")
+def ask(body: AskRequest, user: User = Depends(require_user)) -> dict:
+    if body.food_class and body.food_class not in ENTRIES:
+        raise HTTPException(400, f"Unknown food class: {body.food_class}")
 
     from nutrivision.rag.generate import answer
 
-    result = answer(request.question, food_class=request.food_class)
-    METRICS.record_answer(
-        mode=result.mode, grounded=result.grounded,
-        cost=result.usage.get("cost_usd", 0.0),
+    result = answer(body.question, food_class=body.food_class)
+    cost = result.usage.get("cost_usd", 0.0)
+    METRICS.record_answer(mode=result.mode, grounded=result.grounded, cost=cost)
+    STORE.record_question(
+        session=user.uid, email=user.email, question=body.question,
+        food_class=body.food_class, mode=result.mode, grounded=result.grounded,
+        citations=len(result.citations), cost_usd=cost, ms=result.latency_ms,
     )
     payload = result.as_dict()
     # The retrieved documents are large and only useful for debugging; the
@@ -181,7 +190,7 @@ def warm() -> dict:
 
 
 @app.get("/stats")
-def stats() -> dict:
+def stats(_: User = Depends(require_admin)) -> dict:
     """Operational counters for the admin console.
 
     In-process, so they cover the current container only — which the payload
@@ -205,7 +214,7 @@ class Feedback(BaseModel):
 
 
 @app.post("/feedback")
-def feedback(body: Feedback) -> dict:
+def feedback(body: Feedback, user: User = Depends(require_user)) -> dict:
     """Thumbs up or down on a prediction.
 
     A thumbs-down on a confident prediction is precisely the case worth
@@ -218,7 +227,59 @@ def feedback(body: Feedback) -> dict:
     METRICS.record_feedback(
         food_class=body.food_class, helpful=body.helpful, note=body.note
     )
+    STORE.record_feedback(
+        session=user.uid, email=user.email, food_class=body.food_class,
+        helpful=body.helpful, note=body.note,
+    )
     return {"recorded": True}
+
+
+@app.get("/history")
+def history(limit: int = 40, user: User = Depends(require_user)) -> dict:
+    """One visitor's own record, keyed by the id their browser generated.
+
+    Scoped to the caller's own uid, taken from the verified token rather than
+    from anything the request asks for. There is deliberately no way to request
+    somebody else's history through this endpoint — the admin console reads that
+    through /analytics, which is a separate check.
+    """
+    return STORE.history(user.uid, limit=min(limit, 100))
+
+
+@app.delete("/history")
+def erase_history(user: User = Depends(require_user)) -> dict:
+    """Delete every row belonging to the caller.
+
+    Scoped to their own uid from the token, so this endpoint cannot be pointed
+    at anyone else's data — including by an admin, who has a console for
+    reading aggregates and no route for deleting a person's history from under
+    them.
+    """
+    return STORE.erase(user.uid)
+
+
+@app.get("/analytics")
+def analytics(days: int = 14, _: User = Depends(require_admin)) -> dict:
+    """Aggregated history for the admin console.
+
+    Distinct from /stats: that one reports the current container's memory and is
+    empty after every restart. This one survives, and is where volume per day,
+    dish distribution, spend and the review queue come from.
+    """
+    return STORE.analytics(days=max(1, min(days, 90)))
+
+
+@app.get("/me")
+def me(request: Request) -> dict:
+    """Who the presented token belongs to, if anyone.
+
+    The frontend already knows the signed-in user from the Firebase SDK; this
+    exists so it can find out whether the *server* agrees, and whether that
+    account is on the admin list. A client deciding for itself that it is an
+    admin is not an authorisation check.
+    """
+    user = current_user(request)
+    return {"signed_in": bool(user), "user": user.as_dict() if user else None}
 
 
 @app.get("/classes")
@@ -243,7 +304,9 @@ def model_info() -> dict:
 
 
 @app.post("/predict")
-async def predict(image: UploadFile = File(...)) -> dict:
+async def predict(
+    image: UploadFile = File(...), user: User = Depends(require_user)
+) -> dict:
     started = time.time()
 
     raw = await image.read()
@@ -283,6 +346,12 @@ async def predict(image: UploadFile = File(...)) -> dict:
     latency = int((time.time() - started) * 1000)
     METRICS.record_prediction(
         title=entry["title"], confidence=msp, set_size=len(members),
+        abstained=uncertain, ms=latency,
+    )
+    STORE.record_prediction(
+        session=user.uid, email=user.email, food_class=top_name, title=entry["title"],
+        confidence=msp, set_size=len(members),
+        candidates=[CLASS_ORDER[i] for i in members],
         abstained=uncertain, ms=latency,
     )
 

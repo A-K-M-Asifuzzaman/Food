@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+
+import { useAuth } from "./AuthProvider";
 
 type Stats = {
   uptime_seconds: number;
@@ -42,6 +44,7 @@ function duration(s: number): string {
  *  service does not keep.
  */
 export function LiveOps() {
+  const { authFetch } = useAuth();
   const [stats, setStats] = useState<Stats | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -49,7 +52,7 @@ export function LiveOps() {
     let alive = true;
     const load = async () => {
       try {
-        const res = await fetch("/api/stats", { cache: "no-store" });
+        const res = await authFetch("/api/stats", { cache: "no-store" });
         const data = await res.json();
         if (!alive) return;
         if (!res.ok) setError(data.error ?? "unavailable");
@@ -67,7 +70,7 @@ export function LiveOps() {
       alive = false;
       clearInterval(t);
     };
-  }, []);
+  }, [authFetch]);
 
   if (error) {
     return (

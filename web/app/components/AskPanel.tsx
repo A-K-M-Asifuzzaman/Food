@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useAuth } from "./AuthProvider";
 
 type Citation = { n: number; title: string; kind: string; doc_id: string };
 
@@ -47,6 +48,7 @@ const MODES = {
 } as const;
 
 export function AskPanel({ foodClass, title }: { foodClass: string; title: string }) {
+  const { authFetch } = useAuth();
   const [question, setQuestion] = useState("");
   const [result, setResult] = useState<AskResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -59,7 +61,7 @@ export function AskPanel({ foodClass, title }: { foodClass: string; title: strin
     setError(null);
     setResult(null);
     try {
-      const res = await fetch("/api/ask", {
+      const res = await authFetch("/api/ask", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ question: q, food_class: foodClass }),

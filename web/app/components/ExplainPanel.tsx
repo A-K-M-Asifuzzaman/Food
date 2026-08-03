@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useAuth } from "./AuthProvider";
 
 type ExplainResponse = {
   overlay: string;
@@ -24,6 +25,7 @@ type ExplainResponse = {
  *  labelled diffuse.
  */
 export function ExplainPanel({ file, foodClass }: { file: File; foodClass: string }) {
+  const { authFetch } = useAuth();
   const [result, setResult] = useState<ExplainResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -35,7 +37,7 @@ export function ExplainPanel({ file, foodClass }: { file: File; foodClass: strin
     body.append("image", file);
     body.append("food_class", foodClass);
     try {
-      const res = await fetch("/api/explain", { method: "POST", body });
+      const res = await authFetch("/api/explain", { method: "POST", body });
       const payload = await res.json();
       if (!res.ok) setError(payload.error ?? "Could not produce an explanation.");
       else setResult(payload as ExplainResponse);

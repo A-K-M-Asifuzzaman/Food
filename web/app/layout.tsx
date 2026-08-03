@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Anton, JetBrains_Mono, Source_Sans_3 } from "next/font/google";
 import "./globals.css";
+import { AuthProvider } from "./components/AuthProvider";
 import { SiteFooter } from "./components/SiteFooter";
 import { SiteHeader } from "./components/SiteHeader";
 import { THEME_INIT_SCRIPT } from "./components/ThemeToggle";
@@ -35,9 +36,11 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
       </head>
       <body className="min-h-full flex flex-col">
-        <SiteHeader searchIndex={buildSearchIndex()} />
-        {children}
-        <SiteFooter />
+        <AuthProvider>
+          <SiteHeader searchIndex={buildSearchIndex()} />
+          {children}
+          <SiteFooter />
+        </AuthProvider>
       </body>
     </html>
   );

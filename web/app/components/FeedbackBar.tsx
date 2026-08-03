@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useAuth } from "./AuthProvider";
 
 /** Was the prediction right?
  *
@@ -11,6 +12,7 @@ import { useState } from "react";
  *  worth re-examining. The votes surface in the admin console's feedback panel.
  */
 export function FeedbackBar({ foodClass, title }: { foodClass: string; title: string }) {
+  const { authFetch } = useAuth();
   const [sent, setSent] = useState<boolean | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -18,7 +20,7 @@ export function FeedbackBar({ foodClass, title }: { foodClass: string; title: st
     if (busy || sent !== null) return;
     setBusy(true);
     try {
-      await fetch("/api/feedback", {
+      await authFetch("/api/feedback", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ food_class: foodClass, helpful }),

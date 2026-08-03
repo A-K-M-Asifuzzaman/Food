@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { allClasses, getEntry, titleFor } from "@/lib/kb";
 import type { Candidate, PredictResponse } from "@/lib/types";
+import { forwardAuth, relay } from "@/lib/upstream";
 
 // Stage 11 will stand up the FastAPI service. Until FOODGENOME_API is set, this
 // route answers from the knowledge base alone and labels the response "demo" so
@@ -110,15 +111,10 @@ export async function POST(request: Request) {
     try {
       const res = await fetch(`${UPSTREAM}/predict`, {
         method: "POST",
+        headers: forwardAuth(request),
         body: upstreamForm,
       });
-      if (!res.ok) {
-        return NextResponse.json(
-          { error: `Model service returned ${res.status}.` },
-          { status: 502 },
-        );
-      }
-      return NextResponse.json(await res.json());
+      return relay(res, "Model service");
     } catch {
       return NextResponse.json(
         { error: "Model service unreachable." },

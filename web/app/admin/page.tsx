@@ -73,9 +73,8 @@ export default function AdminOverview() {
       <div>
         <h1 className="font-display text-2xl">Overview</h1>
         <p className="text-sm text-[var(--text-dim)] mt-1">
-          Model, reliability, retrieval and knowledge base. Figures come from the evaluation
-          artifacts, not from live traffic — request volume and latency arrive with the
-          metrics middleware.
+          Model, reliability, retrieval and knowledge base, from the evaluation artifacts.
+          Live traffic is below; per-account usage is under People.
         </p>
       </div>
 

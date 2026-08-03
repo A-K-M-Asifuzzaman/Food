@@ -5,6 +5,8 @@ import { useCallback, useRef, useState } from "react";
 import type { PredictResponse } from "@/lib/types";
 
 import { AskPanel } from "./AskPanel";
+import { useAuth } from "./AuthProvider";
+import { SignInGate } from "./SignInGate";
 import { FeedbackBar } from "./FeedbackBar";
 import { ExplainPanel } from "./ExplainPanel";
 import { ResultPanels } from "./ResultPanels";
@@ -17,6 +19,7 @@ type State =
   | { phase: "error"; preview?: string; message: string };
 
 export function Analyzer() {
+  const { user, loading, authFetch } = useAuth();
   const [state, setState] = useState<State>({ phase: "idle" });
   const [dragging, setDragging] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -29,7 +32,7 @@ export function Analyzer() {
     body.append("image", file);
 
     try {
-      const res = await fetch("/api/predict", { method: "POST", body });
+      const res = await authFetch("/api/predict", { method: "POST", body });
       const payload = await res.json();
       if (!res.ok) {
         setState({ phase: "error", preview, message: payload.error ?? "Request failed." });
@@ -43,7 +46,7 @@ export function Analyzer() {
         message: "Could not reach the analyzer. Check your connection and try again.",
       });
     }
-  }, []);
+  }, [authFetch]);
 
   const onDrop = useCallback(
     (e: React.DragEvent) => {
@@ -56,6 +59,12 @@ export function Analyzer() {
   );
 
   const preview = "preview" in state ? state.preview : undefined;
+
+  // A prediction is filed against an account, so the account comes first. The
+  // gate is here rather than on the route so the page's explanation, the
+  // warm-up bar and the disclaimer all still render — a signed-out visitor
+  // should be able to read what this does before being asked to join.
+  if (!loading && !user) return <SignInGate />;
 
   return (
     <div className="w-full">

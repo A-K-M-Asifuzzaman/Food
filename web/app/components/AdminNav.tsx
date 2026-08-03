@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 
 const SECTIONS = [
   { href: "/admin", label: "Overview", note: "system at a glance" },
+  { href: "/admin/users", label: "People", note: "accounts & usage" },
   { href: "/admin/models", label: "Models", note: "registry & ablations" },
   { href: "/admin/reliability", label: "Reliability", note: "calibration & conformal" },
   { href: "/admin/rag", label: "Retrieval", note: "RAG quality & spend" },

@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 
+import { forwardAuth } from "@/lib/upstream";
+
 // Grounded answers require the model service. There is deliberately no demo
 // fallback here: a fabricated nutrition answer is the one output this product
 // must never produce, and a plausible-looking placeholder is worse than an
@@ -30,7 +32,7 @@ export async function POST(request: Request) {
   try {
     const res = await fetch(`${UPSTREAM}/ask`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: forwardAuth(request, { "Content-Type": "application/json" }),
       body: JSON.stringify({ question, food_class: body?.food_class ?? null }),
     });
     if (!res.ok) {
