@@ -2,6 +2,8 @@ import calibrationEnsemble from "@/data/reports/calibration_ensemble_siglip_eva0
 import calibrationSiglip from "@/data/reports/calibration_siglip_so400m.json";
 import conformal from "@/data/reports/conformal.json";
 import ensemble from "@/data/reports/ensemble.json";
+import ensembleWithFinetune from "@/data/reports/ensemble_with_finetune.json";
+import finetuneResult from "@/data/reports/eva02_ft_result.json";
 import probeDinov2 from "@/data/reports/probe_dinov2_large.json";
 import probeEva02 from "@/data/reports/probe_eva02_large.json";
 import probeFusion from "@/data/reports/probe_fusion_siglip_eva02.json";
@@ -105,6 +107,23 @@ export const ensembleReport = ensemble as unknown as {
       }
     >;
   };
+};
+
+/** The sweep that includes the fine-tuned model.
+ *
+ *  Kept separate from `ensembleReport` rather than replacing it. The frozen pair
+ *  is what the service actually runs — serving the fine-tune means a 304M
+ *  parameter model against two small heads over cached features — so the site
+ *  reports the shipped configuration as the headline and this one as the best
+ *  measured result, with its significance stated. Collapsing the two would let
+ *  the page claim an accuracy the API does not deliver.
+ */
+export const ensembleWithFinetuneReport = ensembleWithFinetune as unknown as typeof ensembleReport;
+
+export const finetune = finetuneResult as unknown as {
+  test_top1: number;
+  test_top5: number;
+  history: { stage: string; epoch: number; size: number; val_top1: number; ema_top1: number; minutes: number }[];
 };
 
 export const calibration = {

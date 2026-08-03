@@ -6,6 +6,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 mkdir -p web/data/reports web/public/data
 cp artifacts/reports/{calibration_ensemble_siglip_eva02,calibration_siglip_so400m,conformal,ensemble,rag_evaluation}.json web/data/reports/
+cp artifacts/reports/{ensemble_with_finetune,eva02_ft_result}.json web/data/reports/ 2>/dev/null || true
 cp artifacts/reports/probe_*.json web/data/reports/
 cp data/nutrition/kb.json web/data/kb.json
 cp artifacts/index/graph.json web/public/data/graph.json

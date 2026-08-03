@@ -1,7 +1,15 @@
 import type { Metadata } from "next";
 
 import { Beat, Caption, GutterRule, Panel, StatPanel } from "../components/comic";
-import { conformalReport, ensembleReport, labelFor, probes, ragReport } from "@/lib/reports";
+import {
+  conformalReport,
+  ensembleReport,
+  ensembleWithFinetuneReport,
+  finetune,
+  labelFor,
+  probes,
+  ragReport,
+} from "@/lib/reports";
 
 export const metadata: Metadata = {
   title: "Benchmarks — FoodGenome AI",
@@ -207,12 +215,93 @@ export default function BenchmarksPage() {
         </Caption>
       </section>
 
+      {/* ── Fine-tune ─────────────────────────────────────────────────── */}
+      <section className="mx-auto max-w-6xl px-5 pb-12">
+        <Beat
+          n="05"
+          title="DID FINE-TUNING HELP?"
+          lede={`EVA-02-L was fine-tuned end to end — six epochs at 224px then one at 448px, about nine GPU-hours. Alone it reaches ${finetune.test_top1}%, below the frozen pair. The question is whether its errors are different enough to help in combination.`}
+        />
+
+        <div className="mt-6 grid gap-4 md:grid-cols-3">
+          {[
+            ["Frozen pair (deployed)", "97.156%", "two small heads over cached features"],
+            ["Three-way, uniform", "97.236%", "p = 0.214 — not significant"],
+            ["Three-way, val-tuned", "97.267%", "p = 0.052 — not significant"],
+          ].map(([label, value, note], i) => (
+            <Panel key={label} tilt={i === 1 ? "right" : "none"} className="p-5">
+              <p className="text-xs uppercase tracking-widest text-[var(--text-dim)]">{label}</p>
+              <p
+                className="figures text-3xl mt-1"
+                style={{ color: i === 0 ? "var(--color-green)" : undefined }}
+              >
+                {value}
+              </p>
+              <p className="text-xs text-[var(--text-dim)] mt-1">{note}</p>
+            </Panel>
+          ))}
+        </div>
+
+        <div className="mt-6 grid gap-6 md:grid-cols-2">
+          <Panel className="p-5">
+            <h3 className="font-display text-lg">Shared errors</h3>
+            <p className="text-xs text-[var(--text-dim)] mt-1 mb-4">
+              Ensembling only pays when members fail on different images. This is the number
+              that decided it.
+            </p>
+            {Object.entries(ensembleWithFinetuneReport.agreement.pairs).map(([pair, v]) => {
+              const [a, b] = pair.split(" vs ");
+              return (
+                <div key={pair} className="flex items-baseline justify-between gap-3 py-1.5 border-b border-[var(--line)]/15">
+                  <span className="text-sm">
+                    {labelFor(a)} / {labelFor(b)}
+                  </span>
+                  <span className="figures text-sm">{v.shared_error_rate.toFixed(1)}%</span>
+                </div>
+              );
+            })}
+            <p className="mt-4 text-sm text-[var(--text-dim)]">
+              At 224px the fine-tune shared 65.5% of SigLIP&apos;s errors — no better than the
+              frozen backbone. The single 448px epoch dropped that to 60.9% while adding just
+              0.2 points of validation accuracy. Its contribution was diversity, which no
+              accuracy column shows.
+            </p>
+          </Panel>
+
+          <Panel className="p-5">
+            <h3 className="font-display text-lg">Training curve</h3>
+            <p className="text-xs text-[var(--text-dim)] mt-1 mb-3">
+              Validation top-1 per epoch. The resolution change is the last step.
+            </p>
+            <ul className="space-y-1 text-sm">
+              {finetune.history.map((h) => (
+                <li key={`${h.stage}-${h.epoch}`} className="flex items-baseline justify-between gap-3">
+                  <span className="text-[var(--text-dim)]">
+                    {h.stage === "stage2" ? "448px" : "224px"} · epoch {h.epoch}
+                  </span>
+                  <span className="figures">
+                    {h.val_top1.toFixed(2)}
+                    <span className="text-[var(--text-dim)] text-xs"> ({h.minutes.toFixed(0)} min)</span>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </Panel>
+        </div>
+
+        <Caption className="mt-6 max-w-3xl">
+          The frozen pair stays deployed. Serving the fine-tune means loading a 304M-parameter
+          model instead of two small heads over cached features — a large operational cost for
+          0.11 points that does not clear significance.
+        </Caption>
+      </section>
+
       <GutterRule />
 
       {/* ── RAG ───────────────────────────────────────────────────────── */}
       <section className="mx-auto max-w-6xl px-5 py-12">
         <Beat
-          n="05"
+          n="06"
           title="RETRIEVAL AND ANSWERS"
           lede={`A ${ragReport.gold_cases}-case gold set whose ground truth is known before the system is asked, including questions it is supposed to refuse.`}
         />
