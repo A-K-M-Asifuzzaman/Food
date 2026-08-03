@@ -102,6 +102,41 @@ def fig_ablation() -> None:
     fig.savefig(OUT / "ablation.pdf"); plt.close(fig)
 
 
+def fig_ablation_slide() -> None:
+    """A reduced ablation for projection.
+
+    The paper's version carries ten rows at 7pt, which is right for a page held
+    at reading distance and illegible on a screen across a room. Same data, five
+    rows, type that survives a projector.
+    """
+    ens = load("ensemble_with_finetune.json")
+    rows = ens["results"][:5][::-1]
+    fig, ax = plt.subplots(figsize=(5.0, 2.6))
+
+    best = max(r["test_top1"] for r in rows)
+    labels, values, colours = [], [], []
+    for r in rows:
+        short = " + ".join(
+            {"siglip_so400m": "SigLIP", "eva02_large": "EVA-02",
+             "eva02_ft": "EVA-02 ft", "dinov2_large": "DINOv2"}.get(m, m)
+            for m in r["members"]
+        )
+        labels.append(short)
+        values.append(r["test_top1"])
+        colours.append(C[4] if r["test_top1"] == best else "#c9c6bd")
+
+    ax.barh(range(len(rows)), values, color=colours, height=0.62)
+    ax.set_yticks(range(len(rows)))
+    ax.set_yticklabels(labels, fontsize=10)
+    ax.set_xlim(96.9, 97.42)
+    ax.set_xlabel("test top-1 (%)", fontsize=10)
+    ax.tick_params(labelsize=9)
+    ax.grid(axis="y", visible=False)
+    for i, v in enumerate(values):
+        ax.text(v + 0.008, i, f"{v:.3f}", va="center", fontsize=9.5)
+    fig.savefig(OUT / "ablation_slide.pdf"); plt.close(fig)
+
+
 def fig_decorrelation() -> None:
     """Shared-error rate: the quantity that decides whether ensembling pays."""
     frozen = load("ensemble.json")["agreement"]["pairs"]
@@ -179,8 +214,8 @@ def fig_training() -> None:
 
 
 if __name__ == "__main__":
-    for fn in [fig_reliability, fig_ablation, fig_decorrelation,
-               fig_attribution, fig_rag, fig_training]:
+    for fn in [fig_reliability, fig_ablation, fig_ablation_slide,
+               fig_decorrelation, fig_attribution, fig_rag, fig_training]:
         fn()
         print(f"  {fn.__name__.replace('fig_', '')}.pdf")
     print(f"\nwrote {len(list(OUT.glob('*.pdf')))} figures to {OUT}")
