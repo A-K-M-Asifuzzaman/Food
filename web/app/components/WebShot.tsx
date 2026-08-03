@@ -42,12 +42,12 @@ type Props = {
 
 export function WebShot({
   targetId,
-  corner = "tr",
+  corner: wideCorner = "tr",
   pose = "perch",
   side = "right",
-  inset = 24,
-  top = 4,
-  scale = 1.45,
+  inset: wideInset = 24,
+  top: wideTop = 4,
+  scale: wideScale = 1.45,
   sfx = "THWIP!",
 }: Props) {
   const host = useRef<HTMLDivElement>(null);
@@ -64,6 +64,8 @@ export function WebShot({
       // Just inside the corner, so the strand reads as stuck to the panel
       // rather than floating beside it.
       const pad = 5;
+      const narrow = box.width < 1024;
+      const corner = narrow ? "tr" : wideCorner;
       setAnchor({
         x:
           (corner === "tr" || corner === "br"
@@ -90,16 +92,29 @@ export function WebShot({
       window.removeEventListener("resize", measure);
       clearTimeout(t);
     };
-  }, [targetId, corner]);
+  }, [targetId, wideCorner]);
 
   if (!anchor || !width) {
     return <div ref={host} className="absolute inset-0 pointer-events-none" />;
   }
 
+  // Narrow screens get a smaller figure docked directly above its target
+  // rather than the wide layout's long diagonal. On a phone the section header
+  // sits where that diagonal would travel, so the same composition that frames
+  // the content on a desktop draws a line straight through the headline.
+  const narrow = width < 1024;
+  const scale = narrow ? (width < 480 ? 0.5 : 0.82) : wideScale;
+  const inset = narrow ? 2 : wideInset;
+  const wrist = POSES[pose].wrist;
   const size = BOX * scale;
+
+  // Docked: put the wrist a short drop above the corner it is webbing.
+  const top = narrow
+    ? Math.max(0, anchor.y - wrist.y * scale - 14)
+    : wideTop;
+
   const heroX = side === "right" ? width - size - inset : inset;
   const flip = side === "left";
-  const wrist = POSES[pose].wrist;
   // Mirroring the figure mirrors the wrist with it.
   const hand = {
     x: heroX + (flip ? size - wrist.x * scale : wrist.x * scale),
@@ -118,7 +133,7 @@ export function WebShot({
   return (
     <div
       ref={host}
-      className="absolute inset-0 pointer-events-none hidden lg:block z-10"
+      className="absolute inset-0 pointer-events-none z-10"
       aria-hidden="true"
     >
       <svg className="w-full h-full overflow-visible" fill="none">
@@ -157,7 +172,7 @@ export function WebShot({
           }
           transform={`translate(${anchor.x} ${anchor.y})`}
         >
-          {[10, 17, 24].map((r, i) => (
+          {(narrow ? [7, 12] : [10, 17, 24]).map((r, i) => (
             <circle
               key={r}
               r={r}
@@ -172,19 +187,19 @@ export function WebShot({
               key={deg}
               x1="0"
               y1="0"
-              x2={Math.cos((deg * Math.PI) / 180) * 25}
-              y2={Math.sin((deg * Math.PI) / 180) * 25}
+              x2={Math.cos((deg * Math.PI) / 180) * (narrow ? 13 : 25)}
+              y2={Math.sin((deg * Math.PI) / 180) * (narrow ? 13 : 25)}
               stroke="var(--text)"
               strokeWidth="1.5"
               strokeLinecap="round"
               opacity="0.4"
             />
           ))}
-          <circle r="6" fill="var(--text)" opacity="0.92" />
+          <circle r={narrow ? 4 : 6} fill="var(--text)" opacity="0.92" />
         </g>
 
         {/* The sound effect fires once with the web and does not repeat. */}
-        {sfx && (
+        {sfx && !narrow && (
           <text
             className={
               fired ? "webshot-thwip webshot-thwip-fired" : "webshot-thwip"

@@ -26,8 +26,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
+    /* suppressHydrationWarning is load-bearing on both elements. The theme
+       script below stamps data-theme on <html> before React hydrates — that is
+       the whole point of running it pre-paint — so the server markup cannot
+       match by construction. On <body> it absorbs attributes injected by
+       browser extensions, which are outside our control and would otherwise
+       fill a console with a warning about markup we did not write. */
     <html
       lang="en"
+      suppressHydrationWarning
       className={`${anton.variable} ${sourceSans.variable} ${jetbrains.variable} h-full antialiased`}
     >
       {/* Applied before first paint. Running this in an effect instead would
@@ -35,7 +42,7 @@ export default function RootLayout({
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
       </head>
-      <body className="min-h-full flex flex-col">
+      <body suppressHydrationWarning className="min-h-full flex flex-col">
         <AuthProvider>
           <SiteHeader searchIndex={buildSearchIndex()} />
           {children}

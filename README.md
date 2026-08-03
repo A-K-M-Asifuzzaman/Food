@@ -13,6 +13,7 @@ Photograph a dish and the system returns the category, a confidence figure that 
 | **97.94%** | accuracy on accepted images, after abstaining on 2.28% |
 | **98.6%** | RAG answers correct on a 76-case gold set, 100% grounded |
 | **101** | dish categories, each with a 32-nutrient USDA profile |
+| **$0.024** | cost of a full RAG evaluation run, with a daily budget gate |
 
 ---
 
@@ -80,13 +81,50 @@ Seven stages with a measurement behind each, followed by a section on what the s
 
 ---
 
+### Signing in
+
+![Sign in](docs/images/login.png)
+
+Predictions are filed against an account. A browser-generated id would have been
+less friction, and it was the first implementation — but it is lost the moment
+somebody clears site data or opens the page on their phone, and anyone reading
+the network tab can forge one. Neither makes a history worth showing.
+
+Google or email, whichever is quicker. The ID token is verified server-side
+against Google's public keys, so the uid comes from the signature rather than
+from the request; `/history` can only ever return the caller's own rows, and
+there is no value a client can send to read somebody else's.
+
+![Sign-in gate](docs/images/analyze-gate.png)
+
+The gate on the analyser explains what an account buys before asking for one,
+and returns you to the page you wanted rather than the home page. That is the
+difference between a gate and an obstacle.
+
+### Your own record
+
+Every dish you have analysed, every question you asked about one, and every
+correction you sent back — with a delete button that actually deletes. A record
+you cannot remove is not a record you agreed to keep, and "contact us to delete
+your data" is not a delete button.
+
+---
+
 ## The admin console
 
 ### Overview
 
 ![Admin overview](docs/images/admin-overview.png)
 
-Model, reliability, retrieval and knowledge-base health, each tile linking to its evidence. Metrics that are not yet instrumented are listed as pending rather than mocked — a dashboard showing invented traffic is worse than one admitting it has none.
+Model, reliability, retrieval and knowledge-base health, each tile linking to its evidence, above live operational counters: request and error rates, p50/p95/p99 latency per endpoint, a rolling prediction feed that doubles as the low-confidence review queue, OpenAI spend, resident memory and uptime.
+
+Those counters are in-process, so they cover the container currently running and reset when it restarts — which the panel says outright, because a dashboard implying a history the service does not keep is worse than one admitting its window.
+
+### People
+
+Every signed-in account and what it has been analysing: volume, mean confidence, how often the model declined, and the dishes each person photographs most. Rows are per account rather than per request on purpose — thirty predictions from one person is a different fact from thirty people trying it once, and a request count cannot tell them apart.
+
+Two lists on that page carry signal no labelled split can produce: what the model declined as too uncertain, and what a person marked wrong. A thumbs-down on a confident prediction is the single most valuable row in the console.
 
 ### Model registry
 
@@ -138,10 +176,15 @@ flowchart LR
     OUT(["dish · confidence · candidates"])
     LOST(["declines — the model is lost"])
 
-    IMG --> S & E
+    AUTH["Firebase ID token · verified server-side"]
+    HIST[("Firestore · your history")]
+
+    IMG --> AUTH --> S & E
     S & E --> AVG --> CAL --> CONF --> AB
     AB -- "yes" --> NUT --> OUT
     AB -- "no" --> LOST
+    OUT -.-> HIST
+    LOST -.-> HIST
 
     classDef vision fill:#e62429,stroke:#0b0b0f,stroke-width:2px,color:#ffffff
     classDef rel fill:#1b4ce0,stroke:#0b0b0f,stroke-width:2px,color:#ffffff
@@ -152,6 +195,8 @@ flowchart LR
 
     class S,E,AVG vision
     class CAL,CONF rel
+    class AUTH gate
+    class HIST know
     class NUT know
     class AB gate
     class IMG,OUT term
@@ -262,8 +307,14 @@ src/nutrivision/
   explain/      Grad-CAM and attribution comparison
   nutrition/    USDA resolution and the 101-class knowledge base
   rag/          corpus, index, retrieval, graph, generation, grounding, evaluation
-backend/        FastAPI service and its container
+backend/app/
+  main.py       the API surface
+  inference.py  ensemble, calibration, conformal sets
+  auth.py       Firebase ID token verification and the admin list
+  store.py      durable storage — Firestore or MongoDB, both optional
+  metrics.py    in-process counters and the rolling prediction feed
 web/            Next.js frontend
+firestore.rules deny-all: no browser talks to the database
 notebooks/      Kaggle fine-tuning notebook
 docs/           architecture, design system, proposal
 ```
@@ -287,6 +338,38 @@ cd web && npm install && FOODGENOME_API=http://127.0.0.1:8000 npm run dev
 ```
 
 Copy `.env.example` to `.env` for the OpenAI key. Without it the RAG pipeline serves deterministic template answers assembled from the same records — correct by construction, and free.
+
+#### Optional services
+
+Both degrade rather than fail, so a fresh clone serves predictions with neither configured.
+
+| Variable | On | Effect when unset |
+|---|---|---|
+| `OPENAI_API_KEY` | model service | answers come from deterministic templates over the same records |
+| `FIREBASE_CREDENTIALS` | model service | predictions are answered but not kept; history and analytics report themselves off |
+| `MONGODB_URI` | model service | the alternative store, used only if no Firebase credential is present |
+| `REQUIRE_AUTH` | model service | unset, the service serves unauthenticated callers; set to `1` in deployment |
+| `ADMIN_EMAILS` | model service | comma-separated; the only accounts `/analytics` and `/stats` will answer |
+| `FOODGENOME_API` | frontend | the frontend serves clearly-labelled demo responses instead of predictions |
+
+`firestore.rules` denies every client read and write. No browser in this system
+talks to Firestore — the web app uses Firebase only to sign a user in, and all
+reads go through the API where they can be scoped to the caller.
+
+#### API
+
+| Route | Auth | What it does |
+|---|---|---|
+| `POST /predict` | user | classification, conformal set, abstention, nutrition |
+| `POST /explain` | user | Grad-CAM overlay, composited server-side |
+| `POST /ask` | user | grounded answer with citations, or a refusal |
+| `POST /feedback` | user | thumbs up or down on a prediction |
+| `GET /history` | user | the caller's own rows |
+| `DELETE /history` | user | erases them |
+| `GET /stats` | admin | in-process counters for the current container |
+| `GET /analytics` | admin | per-day, per-dish and per-account rollups |
+| `GET /me` | open | who the presented token belongs to, if anyone |
+| `GET /health` `POST /warm` | open | readiness, and starting the model load early |
 
 ### Evaluation
 

@@ -227,7 +227,10 @@ class Store:
             log.info("store connected: %s", self.backend.name)
             threading.Thread(target=self._drain, daemon=True).start()
         except Exception as exc:  # noqa: BLE001 — any failure means "run without it"
-            self.error = f"{type(exc).__name__}: {exc}"
+            # First line only. Google's PermissionDenied carries forty lines of
+            # protobuf metadata, and pasting that into a dashboard panel tells a
+            # reader nothing the first sentence did not.
+            self.error = f"{type(exc).__name__}: {str(exc).splitlines()[0][:200]}"
             log.warning("store unavailable, running without persistence: %s", self.error)
 
     def _drain(self) -> None:
