@@ -47,3 +47,4 @@ prompt.md
 *Sample*.pdf
 scripts/screenshot.mjs
 web/shot*.mjs
+.space-build/

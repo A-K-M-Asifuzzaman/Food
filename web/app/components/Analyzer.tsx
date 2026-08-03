@@ -5,6 +5,7 @@ import { useCallback, useRef, useState } from "react";
 import type { PredictResponse } from "@/lib/types";
 
 import { AskPanel } from "./AskPanel";
+import { FeedbackBar } from "./FeedbackBar";
 import { ExplainPanel } from "./ExplainPanel";
 import { ResultPanels } from "./ResultPanels";
 import { WebLoader } from "./WebLoader";
@@ -172,6 +173,12 @@ export function Analyzer() {
       {state.phase === "done" && (
         <div className="mt-6 space-y-6">
           <ResultPanels result={state.result} />
+          {state.result.source === "model" && (
+            <FeedbackBar
+              foodClass={state.result.prediction.class}
+              title={state.result.prediction.title}
+            />
+          )}
           {/* Only offered when the prediction came from the real model. There is
               nothing to explain about, or ask of, a demo response. */}
           {state.result.source === "model" && state.result.ood.is_food && (

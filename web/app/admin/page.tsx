@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { Panel } from "../components/comic";
+import { LiveOps } from "../components/LiveOps";
 import { STATUS } from "../components/charts/palette";
 import {
   calibration,
@@ -195,30 +195,7 @@ export default function AdminOverview() {
         </div>
       </section>
 
-      <Panel className="p-5">
-        <h2 className="font-display text-lg">Not yet wired</h2>
-        <p className="text-sm text-[var(--text-dim)] mt-2 max-w-prose">
-          Live request volume, latency percentiles, the prediction feed and per-day OpenAI
-          spend all need the metrics middleware writing to Firestore, and Prometheus pushing
-          to Grafana Cloud. Those are listed as pending rather than mocked, because a
-          dashboard showing invented traffic is worse than one admitting it has none.
-        </p>
-        <ul className="mt-3 grid gap-1.5 sm:grid-cols-2 text-sm">
-          {[
-            "Request rate, error rate, p50/p95/p99 duration",
-            "Live prediction feed with confidence and set size",
-            "Rejected images and the low-confidence review queue",
-            "OpenAI tokens and spend per endpoint per day",
-            "Deployed model version, memory, uptime",
-            "User feedback, which doubles as retraining data",
-          ].map((t) => (
-            <li key={t} className="flex gap-2">
-              <span className="text-[var(--text-dim)]">○</span>
-              <span className="text-[var(--text-dim)]">{t}</span>
-            </li>
-          ))}
-        </ul>
-      </Panel>
+      <LiveOps />
     </div>
   );
 }

@@ -3,5 +3,13 @@ uvicorn[standard]>=0.32
 python-multipart>=0.0.12
 pillow>=10.4
 numpy>=1.26
+scipy>=1.13
 torch>=2.4
 timm>=1.0.11
+
+# Retrieval. These are imported lazily inside the RAG path, so their absence
+# surfaces as a 500 on /ask rather than a failure at start-up — which is how
+# they came to be missing from the first deployment.
+sentence-transformers>=3.0
+rank-bm25>=0.2.2
+openai>=1.40

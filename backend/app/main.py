@@ -12,6 +12,7 @@ import io
 import json
 import logging
 import os
+import threading
 import time
 
 import numpy as np
@@ -20,8 +21,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from PIL import Image, UnidentifiedImageError
 from pydantic import BaseModel, Field
 
+from fastapi import Request
+
 from .config import CONSTANTS, KB_PATH, MEMBERS
 from .inference import CLASSIFIER, conformal_set
+from .metrics import METRICS
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger("foodgenome")
@@ -42,6 +46,22 @@ app.add_middleware(
     allow_methods=["GET", "POST"],
     allow_headers=["*"],
 )
+
+@app.middleware("http")
+async def track(request: Request, call_next):
+    """Time every request. The route template is recorded rather than the raw
+    path so that 101 dish lookups do not become 101 separate series."""
+    started = time.time()
+    try:
+        response = await call_next(request)
+    except Exception:
+        METRICS.record_request(request.url.path, (time.time() - started) * 1000, ok=False)
+        raise
+    METRICS.record_request(
+        request.url.path, (time.time() - started) * 1000, ok=response.status_code < 500
+    )
+    return response
+
 
 _kb = json.loads(KB_PATH.read_text())
 ENTRIES = {e["class"]: e for e in _kb["entries"]}
@@ -123,6 +143,10 @@ def ask(request: AskRequest) -> dict:
     from nutrivision.rag.generate import answer
 
     result = answer(request.question, food_class=request.food_class)
+    METRICS.record_answer(
+        mode=result.mode, grounded=result.grounded,
+        cost=result.usage.get("cost_usd", 0.0),
+    )
     payload = result.as_dict()
     # The retrieved documents are large and only useful for debugging; the
     # citations carry everything the interface needs to attribute a claim.
@@ -137,7 +161,64 @@ def health() -> dict:
         "model_loaded": CLASSIFIER.ready,
         "device": str(CLASSIFIER.device),
         "missing_reports": CONSTANTS["missing_reports"],
+        "uptime_seconds": METRICS.snapshot()["uptime_seconds"],
     }
+
+
+@app.post("/warm")
+def warm() -> dict:
+    """Start loading the backbones without waiting for them.
+
+    A free Space sleeps, and the first request after that pays roughly thirty
+    seconds of model download. Letting the client trigger the load on page open
+    means the wait happens behind a progress indicator rather than behind an
+    apparently frozen upload button.
+    """
+    if CLASSIFIER.ready:
+        return {"status": "ready"}
+    threading.Thread(target=CLASSIFIER.load, daemon=True).start()
+    return {"status": "warming"}
+
+
+@app.get("/stats")
+def stats() -> dict:
+    """Operational counters for the admin console.
+
+    In-process, so they cover the current container only — which the payload
+    states rather than leaving a reader to assume otherwise.
+    """
+    snap = METRICS.snapshot()
+    snap["model"] = {
+        "name": MODEL_NAME,
+        "loaded": CLASSIFIER.ready,
+        "device": str(CLASSIFIER.device),
+        "test_top1": CONSTANTS["test_top1"],
+        "temperature": CONSTANTS["temperature"],
+    }
+    return snap
+
+
+class Feedback(BaseModel):
+    food_class: str
+    helpful: bool
+    note: str | None = Field(default=None, max_length=200)
+
+
+@app.post("/feedback")
+def feedback(body: Feedback) -> dict:
+    """Thumbs up or down on a prediction.
+
+    A thumbs-down on a confident prediction is precisely the case worth
+    re-examining, and it appears in no accuracy metric computed on a labelled
+    split. Stored in the rolling feed rather than a database, so it survives the
+    container and no longer.
+    """
+    if body.food_class not in ENTRIES:
+        raise HTTPException(400, f"Unknown food class: {body.food_class}")
+    METRICS.record_feedback(
+        food_class=body.food_class, helpful=body.helpful, note=body.note
+    )
+    return {"recorded": True}
 
 
 @app.get("/classes")
@@ -199,9 +280,15 @@ async def predict(image: UploadFile = File(...)) -> dict:
     LOST_SET_SIZE = 5
     uncertain = msp < threshold or len(members) >= LOST_SET_SIZE
 
+    latency = int((time.time() - started) * 1000)
+    METRICS.record_prediction(
+        title=entry["title"], confidence=msp, set_size=len(members),
+        abstained=uncertain, ms=latency,
+    )
+
     return {
         "source": "model",
-        "latency_ms": int((time.time() - started) * 1000),
+        "latency_ms": latency,
         "model": {
             "name": MODEL_NAME,
             "test_top1": CONSTANTS["test_top1"],

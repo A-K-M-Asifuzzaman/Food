@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import { Analyzer } from "../components/Analyzer";
+import { ApiWarmup } from "../components/ApiWarmup";
 import { Beat, Caption } from "../components/comic";
 
 export const metadata: Metadata = {
@@ -18,6 +19,10 @@ export default function AnalyzePage() {
           title="ANALYSE A PHOTO"
           lede="Everything below is computed from your image: the category, a calibrated confidence, the candidate set the model cannot rule out, where it looked, and nutrition traced to source."
         />
+      </section>
+
+      <section className="mx-auto max-w-6xl px-5 pb-4">
+        <ApiWarmup />
       </section>
 
       <section className="mx-auto max-w-6xl px-5 pb-10">

@@ -18,6 +18,13 @@ COPY data/nutrition/kb.json ./data/nutrition/kb.json
 COPY artifacts/checkpoints/probe_siglip_so400m.pt artifacts/checkpoints/probe_eva02_large.pt ./artifacts/checkpoints/
 COPY artifacts/reports/calibration_ensemble_siglip_eva02.json artifacts/reports/conformal.json ./artifacts/reports/
 
+# The retrieval side. Omitting these is how /ask returned 500 in production for
+# a day: the RAG imports are lazy, so the service started clean, answered
+# /predict correctly, and only failed once somebody asked a question. Uploading
+# the files to the Space repo is not enough — they have to enter the image.
+COPY data/nutrition/corpus.jsonl ./data/nutrition/corpus.jsonl
+COPY artifacts/index ./artifacts/index
+
 ENV PYTHONPATH=/app/nutrivision_pkg \
     FOODGENOME_ROOT=/app \
     HF_HOME=/app/.hf
