@@ -25,8 +25,15 @@ export function Analyzer() {
   const inputRef = useRef<HTMLInputElement>(null);
 
   const analyze = useCallback(async (file: File) => {
+    // Every createObjectURL holds its blob until revoked. Analysing six photos
+    // in a session without this pins six full-size images in memory for as long
+    // as the tab is open.
     const preview = URL.createObjectURL(file);
-    setState({ phase: "working", preview });
+    setState((previous) => {
+      const old = "preview" in previous ? previous.preview : undefined;
+      if (old) URL.revokeObjectURL(old);
+      return { phase: "working", preview };
+    });
 
     const body = new FormData();
     body.append("image", file);

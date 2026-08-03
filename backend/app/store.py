@@ -144,7 +144,7 @@ class FirestoreBackend:
         for field, value in (where or {}).items():
             query = query.where(field, "==", value)
         # count() is a server-side aggregation and does not read the documents.
-        return query.count().get()[0][0].value
+        return int(query.count().get()[0][0].value)
 
     def delete_session(self, collection: str, session: str) -> int:
         # Firestore has no "delete by query"; the documents have to be walked.

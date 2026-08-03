@@ -435,3 +435,27 @@
   .webshot-thwip-fired { animation: none; opacity: 0; }
   .webshot-hero { animation: none; }
 }
+
+/* ── Inline loader ──────────────────────────────────────────────────────
+   The spider crosses its strand and walks back. A one-way loop that snaps
+   to the start would read as a stutter every cycle, so it reverses — which
+   is also what a real one does on a line it is inspecting. */
+
+.spider-walk {
+  animation: spider-walk 2.4s cubic-bezier(0.45, 0, 0.55, 1) infinite alternate;
+}
+
+@keyframes spider-walk {
+  0%   { transform: translate(10px, 12.5px) rotate(-5deg); }
+  25%  { transform: translate(24px, 14.6px) rotate(3deg); }
+  50%  { transform: translate(38px, 15.2px) rotate(-3deg); }
+  75%  { transform: translate(52px, 14.2px) rotate(4deg); }
+  100% { transform: translate(62px, 12.5px) rotate(-2deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spider-walk {
+    animation: none;
+    transform: translate(36px, 15px);
+  }
+}

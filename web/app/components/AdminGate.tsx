@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import { useAuth } from "./AuthProvider";
+import { SpiderBar } from "./SpiderBar";
 
 /** Who is allowed to see the console.
  *
@@ -19,7 +20,7 @@ export function AdminGate({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
   if (loading) {
-    return <p className="text-sm text-[var(--text-dim)]">Checking your session…</p>;
+    return <SpiderBar label="Checking your session" />;
   }
 
   if (!user) {

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 
+import { Reveal } from "../components/Reveal";
 import { WebShot } from "../components/WebShot";
 import { Beat, Caption, GutterRule, Panel, StatPanel } from "../components/comic";
 import {
@@ -29,6 +30,7 @@ export default function BenchmarksPage() {
 
   return (
     <main className="flex-1 w-full">
+      <Reveal>
       <div className="relative">
       <section className="mx-auto max-w-6xl px-5 pt-10 pb-6">
         <Beat
@@ -395,6 +397,7 @@ export default function BenchmarksPage() {
           answer.
         </Caption>
       </section>
+      </Reveal>
     </main>
   );
 }

@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 
 import { useAuth } from "../components/AuthProvider";
 import { SignInGate } from "../components/SignInGate";
+import { SpiderBar } from "../components/SpiderBar";
 
 type Prediction = {
   at: string;
@@ -95,7 +96,7 @@ export default function HistoryPage() {
     return (
       <main className="flex-1 w-full">
         <section className="mx-auto max-w-5xl px-5 py-16">
-          <p className="text-sm text-[var(--text-dim)]">Checking your session…</p>
+          <SpiderBar label="Checking your session" />
         </section>
       </main>
     );
@@ -180,7 +181,7 @@ export default function HistoryPage() {
         <div className="panel p-5">
           <h2 className="font-display text-lg">Your predictions</h2>
           {!data ? (
-            <p className="mt-3 text-sm text-[var(--text-dim)]">Loading…</p>
+            <SpiderBar label="Fetching your predictions" className="mt-3" />
           ) : data.predictions.length === 0 ? (
             <div className="mt-3">
               <p className="text-sm text-[var(--text-dim)]">Nothing yet.</p>

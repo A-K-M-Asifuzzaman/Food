@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 
 import { useAuth } from "../../components/AuthProvider";
+import { SpiderBar } from "../../components/SpiderBar";
 
 type Person = {
   uid: string;
@@ -90,7 +91,7 @@ export default function AdminUsers() {
     );
   }
 
-  if (!data) return <p className="text-sm text-[var(--text-dim)]">Loading…</p>;
+  if (!data) return <SpiderBar label="Reading the record" />;
 
   if (!data.enabled) {
     return (

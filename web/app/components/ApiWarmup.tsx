@@ -53,7 +53,19 @@ export function ApiWarmup({ onReady }: { onReady?: () => void } = {}) {
         startedAt.current = Date.now();
         void fetch("/api/warm", { method: "POST" });
 
+        // A container wake is about thirty seconds and a cold model load
+        // under two minutes. Past that the service is not waking, and polling
+        // every three seconds until the tab closes only drains a phone.
+        let attempts = 0;
+        const MAX_ATTEMPTS = 60;
+
         poll = setInterval(async () => {
+          attempts += 1;
+          if (attempts > MAX_ATTEMPTS) {
+            if (poll) clearInterval(poll);
+            setStatus("unreachable");
+            return;
+          }
           try {
             const r = await fetch("/api/warm", { cache: "no-store" });
             const d = await r.json();

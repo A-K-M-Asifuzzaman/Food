@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 
 import { useAuth } from "./AuthProvider";
+import { SpiderBar } from "./SpiderBar";
 
 type Stats = {
   uptime_seconds: number;
@@ -91,7 +92,7 @@ export function LiveOps() {
   if (!stats) {
     return (
       <div className="panel p-5">
-        <p className="text-sm text-[var(--text-dim)]">Reading counters…</p>
+        <SpiderBar label="Reading counters" />
       </div>
     );
   }

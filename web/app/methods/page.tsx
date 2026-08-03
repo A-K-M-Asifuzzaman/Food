@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import { Reveal } from "../components/Reveal";
 import { WebShot } from "../components/WebShot";
 import { Beat, Caption, GutterRule, Panel } from "../components/comic";
 import { calibration, ensembleReport } from "@/lib/reports";
@@ -67,6 +68,7 @@ export default function MethodsPage() {
   const cal = calibration.ensemble;
   return (
     <main className="flex-1 w-full">
+      <Reveal>
       <div className="relative">
       <section className="mx-auto max-w-6xl px-5 pt-10 pb-8">
         <Beat
@@ -124,6 +126,7 @@ export default function MethodsPage() {
           </Link>
         </p>
       </section>
+      </Reveal>
     </main>
   );
 }

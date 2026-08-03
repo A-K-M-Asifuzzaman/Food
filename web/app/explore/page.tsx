@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 
+import { Reveal } from "../components/Reveal";
 import { WebShot } from "../components/WebShot";
 import { GraphExplorer } from "../components/GraphExplorer";
 import type { GraphData } from "../components/three/GraphWeb";
@@ -22,6 +23,7 @@ export default async function WebPage() {
 
   return (
     <main className="flex-1 w-full">
+      <Reveal>
 
       <div className="relative">
       <section className="mx-auto max-w-6xl px-5 pt-10 pb-6">
@@ -72,6 +74,7 @@ export default async function WebPage() {
           </article>
         ))}
       </section>
+      </Reveal>
     </main>
   );
 }
