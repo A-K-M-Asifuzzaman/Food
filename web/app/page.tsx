@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { Beat, Caption, GutterRule, InkSplit, Panel, Sfx, StatPanel } from "./components/comic";
+import { SpiderWebBackground } from "./components/SpiderWebBackground";
 import { WebShot } from "./components/WebShot";
 import { getKb } from "@/lib/kb";
 
@@ -14,6 +15,9 @@ export default function Home() {
           own frame, smaller panels crowding the edge. */}
       <section className="relative overflow-hidden border-b-3 border-[var(--line)]">
         <div className="absolute inset-0 halftone-shade opacity-60" aria-hidden="true" />
+        {/* Anchored at the same corner the spider hangs from, so it reads as the web
+            that spider is sitting on rather than a second unrelated motif. */}
+        <SpiderWebBackground className="absolute inset-0 h-full w-full" origin={[1, 0]} />
         <WebShot targetId="hero-panel" corner="tr" pose="hang" top={-14} sfx="" />
 
         <div className="relative mx-auto max-w-6xl px-5 py-14 sm:py-20">
