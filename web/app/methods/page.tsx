@@ -70,7 +70,7 @@ export default function MethodsPage() {
   return (
     <main className="flex-1 w-full">
       <Reveal>
-      <div className="relative">
+      <div className="relative overflow-hidden">
       <section className="mx-auto max-w-6xl px-5 pt-10 pb-8">
         <Beat
           n="—"
@@ -80,9 +80,11 @@ export default function MethodsPage() {
       </section>
 
         <Spider3D
-          className="absolute right-2 top-[-10px] z-10 hidden xl:block w-[400px] h-[450px]"
-          scale={0.95}
+          className="absolute right-2 top-0 z-10 hidden xl:block w-[330px] h-[340px]"
+          scale={0.8}
           side="right"
+          model="/models/slinger-b.glb"
+          pose={[0.1, -0.5, 0.06]}
           fallback={<WebShot targetId="features" corner="tl" pose="crawl" top={-6} />}
         />
       <section className="mx-auto max-w-6xl px-5 pb-12 space-y-6">

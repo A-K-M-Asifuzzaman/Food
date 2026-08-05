@@ -3,6 +3,7 @@
 import { Component, ReactNode, Suspense, useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { Canvas } from "@react-three/fiber";
+import { OrbitControls } from "@react-three/drei";
 
 const SlingerModel = dynamic(
   () => import("./three/SlingerModel").then((m) => m.SlingerModel),
@@ -50,6 +51,8 @@ export function Spider3D({
   pose,
   side = "right",
   hideBelowVerts = 400,
+  model,
+  interactive = true,
   fallback = null,
 }: {
   className?: string;
@@ -60,6 +63,11 @@ export function Spider3D({
   side?: "left" | "right";
   /** Drop meshes below this vertex count — rig widgets and prop geometry. */
   hideBelowVerts?: number;
+  /** Override the model path. Defaults to the first candidate that exists. */
+  model?: string;
+  /** Let a reader drag the figure around. Costs the canvas its click-through,
+   *  so it is only worth it where the figure sits in empty margin. */
+  interactive?: boolean;
   /** Shown when there is no model, no WebGL, or the reader asked for stillness.
    *  The flat figure is the fallback, so the page is never missing its
    *  character just because an asset decision has not been made. */
@@ -84,7 +92,7 @@ export function Spider3D({
     // HEAD rather than GET: this only needs to know which files exist, and a
     // character model runs to megabytes.
     (async () => {
-      for (const candidate of MODEL_CANDIDATES) {
+      for (const candidate of model ? [model] : MODEL_CANDIDATES) {
         try {
           const res = await fetch(candidate, { method: "HEAD" });
           if (res.ok) {
@@ -108,10 +116,10 @@ export function Spider3D({
       alive = false;
       io.disconnect();
     };
-  }, []);
+  }, [model]);
 
   return (
-    <div ref={host} aria-hidden="true" className={`pointer-events-none ${className}`}>
+    <div ref={host} aria-hidden="true" className={`${interactive ? "" : "pointer-events-none"} ${className}`}>
       {decided && !url && fallback}
       {url && (
         <Guard>
@@ -127,6 +135,19 @@ export function Spider3D({
             <ambientLight intensity={0.9} />
             <directionalLight position={[3, 4, 5]} intensity={2} />
             <directionalLight position={[-4, 1, -2]} intensity={0.5} color="#8fa8ff" />
+            {interactive && (
+              // Rotation only. Zoom and pan on a decorative figure just let a
+              // reader lose it off the side of its own canvas with no way back.
+              <OrbitControls
+                enableZoom={false}
+                enablePan={false}
+                enableDamping
+                dampingFactor={0.08}
+                rotateSpeed={0.6}
+                minPolarAngle={Math.PI * 0.15}
+                maxPolarAngle={Math.PI * 0.85}
+              />
+            )}
             <Suspense fallback={null}>
               <SlingerModel
                 url={url}

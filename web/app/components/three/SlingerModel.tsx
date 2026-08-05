@@ -66,7 +66,10 @@ export function SlingerModel({
 }) {
   const stage = useRef<THREE.Group>(null);
   const group = useRef<THREE.Group>(null);
-  const { scene, animations } = useGLTF(url);
+  // Draco-compressed geometry, with the decoder served from this origin. The
+  // default path is a Google CDN, which makes a decorative figure depend on a
+  // third party being up.
+  const { scene, animations } = useGLTF(url, "/draco/");
 
   // Skinned meshes cannot be shared between renderers by reference — cloning
   // the scene graph normally leaves both copies driven by one skeleton.
@@ -161,6 +164,13 @@ export function SlingerModel({
       // instead of thickening it, which is what smeared black slabs behind
       // this character's arms. Displacement has to be per-vertex.
       const shell = mesh.clone() as THREE.Mesh;
+      // clone() copies the transform, and the shell is then parented *to* the
+      // mesh — so the mesh's own transform lands on it twice. Identity on a
+      // model whose nodes are identity, and a black duplicate lying on its
+      // back on one carrying a Z-up conversion.
+      shell.position.set(0, 0, 0);
+      shell.rotation.set(0, 0, 0);
+      shell.scale.set(1, 1, 1);
       shell.material = new THREE.ShaderMaterial({
         uniforms: { uThickness: { value: outlineWidth } },
         vertexShader: `

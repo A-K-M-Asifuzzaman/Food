@@ -26,7 +26,7 @@ export default async function WebPage() {
     <main className="flex-1 w-full">
       <Reveal>
 
-      <div className="relative">
+      <div className="relative overflow-hidden">
       <section className="mx-auto max-w-6xl px-5 pt-10 pb-6">
         <p className="text-xs uppercase tracking-[0.2em] text-[var(--text-dim)]">
           GraphRAG · {data.stats.dishes} dishes · {data.stats.ingredients} ingredients
@@ -43,9 +43,14 @@ export default async function WebPage() {
       </section>
 
         <Spider3D
-          className="absolute right-2 top-[-10px] z-10 hidden xl:block w-[400px] h-[450px]"
-          scale={0.95}
+          className="absolute right-2 top-0 z-10 hidden xl:block w-[330px] h-[340px]"
+          scale={0.8}
           side="right"
+          // Not draggable here: this page's controls sit under the figure, and
+          // an invisible canvas that swallows a click on the sort button is a
+          // worse bug than a figure you cannot spin.
+          interactive={false}
+          model="/models/slinger.glb"
           fallback={<WebShot targetId="graph-panel" corner="tl" pose="perch" top={-6} />}
         />
         <section id="graph-panel" className="mx-auto max-w-6xl px-5 pb-10">

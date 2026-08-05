@@ -18,11 +18,13 @@ export default function AnalyzePage() {
       {/* The header, warm-up bar and analyser share one positioning context so
           the web strand can be drawn from above the heading all the way down
           to the upload panel's corner. */}
-      <div className="relative">
+      <div className="relative overflow-hidden">
         <Spider3D
           className="absolute right-0 top-0 z-10 hidden lg:block w-[260px] h-[360px]"
-          scale={0.95}
+          scale={0.8}
           side="right"
+          model="/models/slinger-b.glb"
+          pose={[0.1, -0.7, 0.06]}
           fallback={<WebShot targetId="dropzone" corner="tr" pose="perch" />}
         />
 

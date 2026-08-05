@@ -35,7 +35,7 @@ export default function DishesPage() {
   return (
     <main className="flex-1 w-full">
       <Reveal>
-      <div className="relative">
+      <div className="relative overflow-hidden">
       <section className="mx-auto max-w-6xl px-5 pt-10 pb-6">
         <Beat
           n="—"
@@ -45,9 +45,15 @@ export default function DishesPage() {
       </section>
 
         <Spider3D
-          className="absolute right-2 top-[-10px] z-10 hidden xl:block w-[400px] h-[450px]"
-          scale={0.95}
+          className="absolute right-2 top-0 z-10 hidden xl:block w-[330px] h-[340px]"
+          scale={0.8}
           side="right"
+          // Not draggable here: this page's controls sit under the figure, and
+          // an invisible canvas that swallows a click on the sort button is a
+          // worse bug than a figure you cannot spin.
+          interactive={false}
+          model="/models/slinger-b.glb"
+          pose={[0.1, -0.45, 0.06]}
           fallback={<WebShot targetId="dish-browser" corner="tl" pose="crawl" top={-6} />}
         />
         <section id="dish-browser" className="mx-auto max-w-6xl px-5 pb-16">

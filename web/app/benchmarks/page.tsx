@@ -32,7 +32,7 @@ export default function BenchmarksPage() {
   return (
     <main className="flex-1 w-full">
       <Reveal>
-      <div className="relative">
+      <div className="relative overflow-hidden">
       <section className="mx-auto max-w-6xl px-5 pt-10 pb-6">
         <Beat
           n="—"
@@ -42,9 +42,10 @@ export default function BenchmarksPage() {
       </section>
 
         <Spider3D
-          className="absolute right-2 top-[-10px] z-10 hidden xl:block w-[400px] h-[450px]"
-          scale={0.95}
+          className="absolute right-2 top-0 z-10 hidden xl:block w-[330px] h-[340px]"
+          scale={0.8}
           side="right"
+          model="/models/slinger.glb"
           fallback={<WebShot targetId="headline-stats" corner="tl" pose="hang" top={-6} />}
         />
       <section id="headline-stats" className="mx-auto max-w-6xl px-5 pb-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
