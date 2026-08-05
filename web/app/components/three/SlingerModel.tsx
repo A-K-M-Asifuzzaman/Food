@@ -6,8 +6,6 @@ import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { SkeletonUtils } from "three-stdlib";
 
-import { thwip } from "@/lib/sfx";
-
 /** Renders a rigged humanoid from a glTF file, shaded to match the page.
  *
  *  Deliberately model-agnostic: it takes whatever skinned mesh is at `url`,
@@ -24,7 +22,6 @@ import { thwip } from "@/lib/sfx";
  */
 
 const INK = "#0b0b0f";
-const UP = new THREE.Vector3(0, 1, 0);
 
 /** Clip names vary by author. Prefer something idle-ish, take anything if not. */
 const CLIP_PREFERENCE = [/idle/i, /hang/i, /float/i, /breath/i, /stand/i];
@@ -43,20 +40,16 @@ export function SlingerModel({
   url,
   scale = 1,
   outline = true,
-  shootEvery = 6.4,
   suit = null,
   suitSplit = 0.52,
   targetHeight = 3,
   outlineWidth = 0.004,
   pose = [0, 0, 0],
   hideBelowVerts = 0,
-  handBone = "DEF-hand.R",
-  webTarget = [-2.6, 2.2, 0.4],
 }: {
   url: string;
   scale?: number;
   outline?: boolean;
-  shootEvery?: number;
   /** Two-tone suit. Pass null to keep the model's own materials. */
   suit?: { top: string; bottom: string } | null;
   /** Height of the colour break, 0 at the feet and 1 at the crown. */
@@ -70,24 +63,9 @@ export function SlingerModel({
   /** Drop meshes below this vertex count. Character models routinely ship rig
    *  widgets and prop geometry that are not the character. */
   hideBelowVerts?: number;
-  /** Which bone the web leaves from, by name.
-   *
-   *  Two traps here, both of which cost a debugging pass. Matching loosely on
-   *  "hand" hits MCH-hand_ik_root long before the hand itself, and the strand
-   *  then leaves from somewhere near the hips — the deform bone is the one at
-   *  the end of the arm. And glTF import sanitises node names, so the file's
-   *  `DEF-hand.R_rig` arrives as `DEF-hand_R_rig`: an exact or dot-sensitive
-   *  match silently finds nothing and the web fires from the model's origin. */
-  handBone?: string;
-  /** Where the strand lands, in the figure's own space. */
-  webTarget?: [number, number, number];
 }) {
   const stage = useRef<THREE.Group>(null);
   const group = useRef<THREE.Group>(null);
-  const strand = useRef<THREE.Mesh>(null);
-  const splat = useRef<THREE.Mesh>(null);
-  const fired = useRef(false);
-  const scratch = useMemo(() => ({ from: new THREE.Vector3(), dir: new THREE.Vector3() }), []);
   const { scene, animations } = useGLTF(url);
 
   // Skinned meshes cannot be shared between renderers by reference — cloning
@@ -211,19 +189,6 @@ export function SlingerModel({
     return () => outlines.forEach((o) => o.removeFromParent());
   }, [model, ramp, outline, outlineWidth, suit, suitSplit, hideBelowVerts]);
 
-  /** The bone the web leaves from, resolved by name off the imported skeleton.
-   *  Anchoring the strand to a fixed offset works until the figure moves — the
-   *  whole point of a rigged model is that the hand has a real position. */
-  const hand = useMemo(() => {
-    const key = handBone.replace(/[^a-z0-9]/gi, "").toLowerCase();
-    let found: THREE.Object3D | null = null;
-    model.traverse((child) => {
-      if (found) return;
-      if (child.name.replace(/[^a-z0-9]/gi, "").toLowerCase().startsWith(key)) found = child;
-    });
-    return found as THREE.Object3D | null;
-  }, [model, handBone]);
-
   const { actions, names } = useAnimations(animations, group);
 
   useEffect(() => {
@@ -240,64 +205,14 @@ export function SlingerModel({
   useFrame((state) => {
     const t = state.clock.getElapsedTime();
 
-    // A gentle sway on top of whatever the clip does. A looping idle that never
-    // drifts reads as a video; the drift is what sells it as hanging.
+    // Sway and drift only. This model ships a skeleton but no animation clips,
+    // and a web leaving the hand of a figure whose arm never moves reads as a
+    // bug rather than an effect. The strand comes back when the shoulder is
+    // animated to throw it.
     if (group.current) {
       group.current.rotation.z = Math.sin(t * 0.55) * 0.05;
       group.current.rotation.y = Math.sin(t * 0.37) * 0.18;
       group.current.position.y = Math.sin(t * 0.7) * 0.03;
-    }
-
-    // One shot per cycle: a beat of nothing, the strand paying out fast, a hold,
-    // then it lets go.
-    const phase = (t % shootEvery) / shootEvery;
-    let extend = 0;
-    if (phase > 0.62 && phase < 0.78) {
-      extend = 1 - Math.pow(1 - (phase - 0.62) / 0.16, 3);
-    } else if (phase >= 0.78 && phase < 0.9) {
-      extend = 1 - (phase - 0.78) / 0.12;
-    }
-
-    if (strand.current && stage.current) {
-      strand.current.visible = extend > 0.04;
-      if (splat.current) splat.current.visible = extend > 0.85;
-      if (strand.current.visible) {
-        // Read the hand's actual position and bring it into the group's space,
-        // so the strand starts at the hand however the figure is posed, scaled
-        // or swaying.
-        if (hand) {
-          hand.getWorldPosition(scratch.from);
-          stage.current.worldToLocal(scratch.from);
-        } else {
-          scratch.from.set(0, 0, 0);
-        }
-
-        scratch.dir
-          .set(webTarget[0], webTarget[1], webTarget[2])
-          .sub(scratch.from)
-          .multiplyScalar(extend);
-
-        const length = Math.max(scratch.dir.length(), 1e-4);
-        strand.current.position.copy(scratch.from).addScaledVector(scratch.dir, 0.5);
-        strand.current.scale.set(1, length, 1);
-        // A cylinder is built along Y, so align that axis with the throw.
-        strand.current.quaternion.setFromUnitVectors(UP, scratch.dir.normalize());
-        if (splat.current && splat.current.visible) {
-          splat.current.position
-            .copy(scratch.from)
-            .addScaledVector(scratch.dir, length);
-        }
-      }
-    }
-
-    // Sound on the snap, once per cycle.
-    if (phase > 0.63 && phase < 0.69) {
-      if (!fired.current) {
-        fired.current = true;
-        thwip(0.85);
-      }
-    } else if (phase > 0.8 || phase < 0.6) {
-      fired.current = false;
     }
   });
 
@@ -305,9 +220,6 @@ export function SlingerModel({
     // Pose and sway are separate groups on purpose: the frame loop writes
     // rotation every tick, so a resting attitude set on the same object would
     // be overwritten sixty times a second.
-    // Three nested frames, each doing one job: `stage` is unrotated and owns
-    // the web, `pose` turns the body, `group` carries the sway. Collapsing any
-    // two of them turns the throw with the figure.
     <group ref={stage} scale={scale * targetHeight} dispose={null}>
       <group rotation={pose}>
         <group ref={group}>
@@ -318,16 +230,6 @@ export function SlingerModel({
           </Resize>
         </group>
       </group>
-
-      <mesh ref={strand} visible={false}>
-        <cylinderGeometry args={[0.006, 0.013, 1, 6, 1]} />
-        <meshBasicMaterial color={INK} />
-      </mesh>
-      {/* Where it lands. A strand that simply stops reads as unfinished. */}
-      <mesh ref={splat} visible={false}>
-        <sphereGeometry args={[0.05, 10, 8]} />
-        <meshBasicMaterial color={INK} />
-      </mesh>
     </group>
   );
 }

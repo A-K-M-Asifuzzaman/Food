@@ -43,8 +43,8 @@ export default async function WebPage() {
       </section>
 
         <Spider3D
-          className="absolute right-4 top-[-8px] z-10 hidden xl:block w-[380px] h-[440px]"
-          scale={1.05}
+          className="absolute right-2 top-[-10px] z-10 hidden xl:block w-[400px] h-[450px]"
+          scale={0.95}
           side="right"
           fallback={<WebShot targetId="graph-panel" corner="tl" pose="perch" top={-6} />}
         />

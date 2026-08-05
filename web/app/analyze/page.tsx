@@ -21,7 +21,7 @@ export default function AnalyzePage() {
       <div className="relative">
         <Spider3D
           className="absolute right-0 top-0 z-10 hidden lg:block w-[260px] h-[360px]"
-          scale={1.05}
+          scale={0.95}
           side="right"
           fallback={<WebShot targetId="dropzone" corner="tr" pose="perch" />}
         />

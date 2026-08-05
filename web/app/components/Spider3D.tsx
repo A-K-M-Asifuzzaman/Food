@@ -47,7 +47,6 @@ class Guard extends Component<{ children: ReactNode }, { failed: boolean }> {
 export function Spider3D({
   className = "",
   scale = 1,
-  shootEvery = 6.4,
   pose,
   side = "right",
   hideBelowVerts = 400,
@@ -55,7 +54,6 @@ export function Spider3D({
 }: {
   className?: string;
   scale?: number;
-  shootEvery?: number;
   /** Resting attitude. Defaults to facing into the page from `side`. */
   pose?: [number, number, number];
   /** Which edge the figure sits on. Mirrors the pose and the throw with it. */
@@ -121,7 +119,7 @@ export function Spider3D({
             frameloop={active ? "always" : "never"}
             dpr={[1, 2]}
             gl={{ alpha: true, antialias: true }}
-            camera={{ position: [0.3, 0.4, 6], fov: 34 }}
+            camera={{ position: [0, 0.15, 7.4], fov: 34 }}
             style={{ background: "transparent" }}
           >
             {/* Key from the upper front so the ramp breaks across the chest,
@@ -133,9 +131,7 @@ export function Spider3D({
               <SlingerModel
                 url={url}
                 scale={scale}
-                shootEvery={shootEvery}
                 pose={pose ?? (side === "left" ? [0.34, 0.6, -0.22] : [0.34, -0.6, 0.22])}
-                webTarget={side === "left" ? [2.1, 1.7, 0] : [-2.1, 1.7, 0]}
                 hideBelowVerts={hideBelowVerts}
               />
             </Suspense>
