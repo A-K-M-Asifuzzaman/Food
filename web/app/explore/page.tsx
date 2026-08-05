@@ -43,7 +43,7 @@ export default async function WebPage() {
       </section>
 
         <Spider3D
-          className="absolute right-2 top-0 z-10 hidden xl:block w-[330px] h-[340px]"
+          className="absolute right-1 top-0 z-10 w-[128px] h-[170px] opacity-70 sm:w-[170px] sm:h-[210px] sm:opacity-100 xl:right-2 xl:w-[330px] xl:h-[340px]"
           scale={0.8}
           side="right"
           // Not draggable here: this page's controls sit under the figure, and

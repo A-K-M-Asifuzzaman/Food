@@ -79,14 +79,24 @@ export function Spider3D({
   // Starts true: frameloop="never" renders zero frames, so a canvas that
   // mounts before the observer reports in would simply stay empty.
   const [active, setActive] = useState(true);
+  const [wide, setWide] = useState(false);
 
   useEffect(() => {
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const wide = window.matchMedia("(min-width: 1024px)").matches;
-    if (reduced || !wide) {
+    // A few megabytes of character is not what someone on a metered connection
+    // asked for. Save-Data is the one signal a browser gives us for that.
+    const thrifty = Boolean(
+      (navigator as Navigator & { connection?: { saveData?: boolean } }).connection?.saveData,
+    );
+    if (reduced || thrifty) {
       setDecided(true);
       return;
     }
+
+    const desktop = window.matchMedia("(min-width: 1024px)");
+    setWide(desktop.matches);
+    const onWidth = (e: MediaQueryListEvent) => setWide(e.matches);
+    desktop.addEventListener("change", onWidth);
 
     let alive = true;
     // HEAD rather than GET: this only needs to know which files exist, and a
@@ -115,17 +125,23 @@ export function Spider3D({
     return () => {
       alive = false;
       io.disconnect();
+      desktop.removeEventListener("change", onWidth);
     };
   }, [model]);
 
+  // Dragging is a pointer gesture on desktop and a scroll gesture on a phone.
+  // Leaving OrbitControls on for touch means the figure swallows the swipe and
+  // the page stops scrolling wherever it happens to sit.
+  const draggable = interactive && wide;
+
   return (
-    <div ref={host} aria-hidden="true" className={`${interactive ? "" : "pointer-events-none"} ${className}`}>
+    <div ref={host} aria-hidden="true" className={`${draggable ? "" : "pointer-events-none"} ${className}`}>
       {decided && !url && fallback}
       {url && (
         <Guard>
           <Canvas
             frameloop={active ? "always" : "never"}
-            dpr={[1, 2]}
+            dpr={wide ? [1, 2] : [1, 1.5]}
             gl={{ alpha: true, antialias: true }}
             camera={{ position: [0, 0.15, 7.4], fov: 34 }}
             style={{ background: "transparent" }}
@@ -135,7 +151,7 @@ export function Spider3D({
             <ambientLight intensity={0.9} />
             <directionalLight position={[3, 4, 5]} intensity={2} />
             <directionalLight position={[-4, 1, -2]} intensity={0.5} color="#8fa8ff" />
-            {interactive && (
+            {draggable && (
               // Rotation only. Zoom and pan on a decorative figure just let a
               // reader lose it off the side of its own canvas with no way back.
               <OrbitControls
@@ -151,7 +167,10 @@ export function Spider3D({
             <Suspense fallback={null}>
               <SlingerModel
                 url={url}
-                scale={scale}
+                // A phone canvas is narrow enough that the frustum is
+                // narrower than the figure at the desktop scale, cropping him
+                // down one side.
+                scale={wide ? scale : scale * 0.72}
                 pose={pose ?? (side === "left" ? [0.34, 0.6, -0.22] : [0.34, -0.6, 0.22])}
                 hideBelowVerts={hideBelowVerts}
               />

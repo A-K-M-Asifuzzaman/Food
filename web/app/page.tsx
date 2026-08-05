@@ -20,7 +20,7 @@ export default function Home() {
             that spider is sitting on rather than a second unrelated motif. */}
         <SpiderWebBackground className="absolute inset-0 h-full w-full" origin={[1, 0]} />
         <Spider3D
-          className="absolute right-2 top-0 z-10 hidden lg:block w-[460px] h-[520px]"
+          className="absolute right-1 top-0 z-10 w-[150px] h-[200px] opacity-75 sm:w-[210px] sm:h-[260px] sm:opacity-100 lg:right-2 lg:w-[460px] lg:h-[520px]"
           scale={1.05}
           hideBelowVerts={400}
           fallback={<WebShot targetId="hero-panel" corner="tr" pose="hang" top={-14} sfx="" />}
