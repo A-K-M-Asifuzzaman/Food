@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 
 import { Reveal } from "../components/Reveal";
+import { Spider3D } from "../components/Spider3D";
 import { WebShot } from "../components/WebShot";
 import { GraphExplorer } from "../components/GraphExplorer";
 import type { GraphData } from "../components/three/GraphWeb";
@@ -41,7 +42,12 @@ export default async function WebPage() {
         </p>
       </section>
 
-        <WebShot targetId="graph-panel" corner="tl" pose="perch" top={-6} />
+        <Spider3D
+          className="absolute right-4 top-[-8px] z-10 hidden xl:block w-[380px] h-[440px]"
+          scale={1.05}
+          side="right"
+          fallback={<WebShot targetId="graph-panel" corner="tl" pose="perch" top={-6} />}
+        />
         <section id="graph-panel" className="mx-auto max-w-6xl px-5 pb-10">
           <GraphExplorer data={data} />
         </section>

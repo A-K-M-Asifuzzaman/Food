@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { Reveal } from "../components/Reveal";
+import { Spider3D } from "../components/Spider3D";
 import { WebShot } from "../components/WebShot";
 import { Beat, Caption, GutterRule, Panel } from "../components/comic";
 import { calibration, ensembleReport } from "@/lib/reports";
@@ -78,7 +79,12 @@ export default function MethodsPage() {
         />
       </section>
 
-        <WebShot targetId="features" corner="tl" pose="crawl" top={-6} />
+        <Spider3D
+          className="absolute right-4 top-[-8px] z-10 hidden xl:block w-[380px] h-[440px]"
+          scale={1.05}
+          side="right"
+          fallback={<WebShot targetId="features" corner="tl" pose="crawl" top={-6} />}
+        />
       <section className="mx-auto max-w-6xl px-5 pb-12 space-y-6">
         {STAGES.map((s, i) => (
           <Panel key={s.id} id={s.id} tilt={i % 3 === 1 ? "right" : "none"} className="p-6 scroll-mt-24">

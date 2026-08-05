@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import { Reveal } from "../components/Reveal";
+import { Spider3D } from "../components/Spider3D";
 import { WebShot } from "../components/WebShot";
 import { Beat, Caption, GutterRule, Panel, StatPanel } from "../components/comic";
 import {
@@ -40,7 +41,12 @@ export default function BenchmarksPage() {
         />
       </section>
 
-        <WebShot targetId="headline-stats" corner="tl" pose="hang" top={-6} />
+        <Spider3D
+          className="absolute right-4 top-[-8px] z-10 hidden xl:block w-[380px] h-[440px]"
+          scale={1.05}
+          side="right"
+          fallback={<WebShot targetId="headline-stats" corner="tl" pose="hang" top={-6} />}
+        />
       <section id="headline-stats" className="mx-auto max-w-6xl px-5 pb-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
         <StatPanel value={`${best.test_top1}%`} label="test top-1" note={best.method} tilt="left" />
         <StatPanel

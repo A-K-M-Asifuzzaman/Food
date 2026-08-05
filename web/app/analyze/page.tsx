@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { Analyzer } from "../components/Analyzer";
 import { ApiWarmup } from "../components/ApiWarmup";
 import { Beat, Caption } from "../components/comic";
+import { Spider3D } from "../components/Spider3D";
 import { WebShot } from "../components/WebShot";
 
 export const metadata: Metadata = {
@@ -18,7 +19,12 @@ export default function AnalyzePage() {
           the web strand can be drawn from above the heading all the way down
           to the upload panel's corner. */}
       <div className="relative">
-        <WebShot targetId="dropzone" corner="tr" pose="perch" />
+        <Spider3D
+          className="absolute right-0 top-0 z-10 hidden lg:block w-[260px] h-[360px]"
+          scale={1.05}
+          side="right"
+          fallback={<WebShot targetId="dropzone" corner="tr" pose="perch" />}
+        />
 
         <section className="mx-auto max-w-6xl px-5 pt-10 pb-6">
           <Beat

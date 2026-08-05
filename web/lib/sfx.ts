@@ -27,11 +27,14 @@ export function isMuted(): boolean {
   return muted;
 }
 
-/** Read the stored preference. Sound is opt-out, but nothing can play until a
- *  gesture unlocks the context anyway, so this never surprises anyone on load. */
+/** Read the stored preference.
+ *
+ *  Silent unless asked for. A page that makes noise on its own every few
+ *  seconds is irritating however good the noise is, and the reader did not ask
+ *  for it — only an explicit "on" turns it on, and that choice persists. */
 export function loadPreference(): boolean {
-  if (typeof window === "undefined") return false;
-  muted = window.localStorage.getItem(STORAGE_KEY) === "off";
+  if (typeof window === "undefined") return true;
+  muted = window.localStorage.getItem(STORAGE_KEY) !== "on";
   return muted;
 }
 

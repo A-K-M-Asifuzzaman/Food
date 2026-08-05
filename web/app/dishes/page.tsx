@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 
 import { Beat } from "../components/comic";
 import { Reveal } from "../components/Reveal";
+import { Spider3D } from "../components/Spider3D";
 import { WebShot } from "../components/WebShot";
 import { DishBrowser } from "../components/DishBrowser";
 import { getKb } from "@/lib/kb";
@@ -43,7 +44,12 @@ export default function DishesPage() {
         />
       </section>
 
-        <WebShot targetId="dish-browser" corner="tl" pose="crawl" top={-6} />
+        <Spider3D
+          className="absolute right-4 top-[-8px] z-10 hidden xl:block w-[380px] h-[440px]"
+          scale={1.05}
+          side="right"
+          fallback={<WebShot targetId="dish-browser" corner="tl" pose="crawl" top={-6} />}
+        />
         <section id="dish-browser" className="mx-auto max-w-6xl px-5 pb-16">
           <DishBrowser dishes={dishes} />
         </section>
