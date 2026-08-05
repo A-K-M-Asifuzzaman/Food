@@ -5,6 +5,7 @@ import { AuthProvider } from "./components/AuthProvider";
 import { RouteTransition } from "./components/RouteTransition";
 import { SiteFooter } from "./components/SiteFooter";
 import { SiteHeader } from "./components/SiteHeader";
+import { SiteWeb } from "./components/SiteWeb";
 import { THEME_INIT_SCRIPT } from "./components/ThemeToggle";
 import { buildSearchIndex } from "@/lib/search";
 
@@ -44,6 +45,7 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
       </head>
       <body suppressHydrationWarning className="min-h-full flex flex-col">
+        <SiteWeb />
         <AuthProvider>
           <RouteTransition />
           <SiteHeader searchIndex={buildSearchIndex()} />

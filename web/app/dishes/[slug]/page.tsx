@@ -63,7 +63,25 @@ export default async function DishPage({ params }: Params) {
           <span>{entry.title}</span>
         </nav>
 
-        <div className="mt-4 flex flex-wrap items-end justify-between gap-4">
+        <div className="mt-4 grid gap-6 sm:grid-cols-[196px_1fr] sm:items-end">
+          {/* The representative photograph: the training image nearest this
+              class's centroid in embedding space, so it is the dataset's most
+              typical example of the dish rather than an arbitrary one. */}
+          <div
+            className="dish-thumb relative w-40 sm:w-full border-3 border-[var(--line)] overflow-hidden bg-[var(--panel)]"
+            style={{ boxShadow: "7px 7px 0 var(--line)" }}
+          >
+            <img
+              src={`/dishes/${slug}.webp`}
+              alt={`${entry.title}, a representative photograph from the Food-101 dataset`}
+              width={512}
+              height={512}
+              decoding="async"
+              className="block w-full aspect-square object-cover halftone-img"
+            />
+          </div>
+
+          <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
             <h1 className="font-display text-5xl sm:text-6xl leading-none">
               <InkSplit>{entry.title.toUpperCase()}</InkSplit>
@@ -82,6 +100,7 @@ export default async function DishPage({ params }: Params) {
           >
             {entry.method === "direct" ? "✓ Measured by USDA" : "! Composed from ingredients"}
           </span>
+          </div>
         </div>
       </section>
 

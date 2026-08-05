@@ -7,6 +7,7 @@ import { useState } from "react";
 import type { SearchItem } from "@/lib/search";
 
 import { CommandPalette } from "./CommandPalette";
+import { SoundToggle } from "./SoundToggle";
 import { ThemeToggle } from "./ThemeToggle";
 import { useAuth } from "./AuthProvider";
 import { UserMenu } from "./UserMenu";
@@ -36,6 +37,7 @@ export function SiteHeader({ searchIndex }: { searchIndex: SearchItem[] }) {
 
         <div className="flex items-center gap-3">
           <CommandPalette index={searchIndex} />
+          <SoundToggle />
           <ThemeToggle />
         </div>
 

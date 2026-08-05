@@ -121,6 +121,21 @@ export function DishBrowser({ dishes }: { dishes: Dish[] }) {
                 className="panel p-4 h-full flex flex-col transition-transform hover:-translate-x-0.5 hover:-translate-y-0.5 block"
                 style={{ transform: i % 7 === 3 ? "rotate(-0.5deg)" : undefined }}
               >
+                {/* Plain <img> rather than next/image: these are already sized
+                    and encoded at build time, so the optimiser would bill us
+                    per request to redo work that is finished. */}
+                <div className="dish-thumb relative mb-3 -mx-1 -mt-1 border-2 border-[var(--line)] overflow-hidden bg-[var(--panel)]">
+                  <img
+                    src={`/dishes/${d.slug}.webp`}
+                    alt=""
+                    width={512}
+                    height={512}
+                    loading={i < 6 ? "eager" : "lazy"}
+                    decoding="async"
+                    className="block w-full aspect-square object-cover halftone-img"
+                  />
+                </div>
+
                 <div className="flex items-start justify-between gap-2">
                   <h2 className="font-display text-lg leading-tight">{d.title}</h2>
                   <span

@@ -1,0 +1,1315 @@
+{
+  "apple_pie": {
+    "alternates": [
+      "apple_pie_011427.jpg",
+      "apple_pie_011362.jpg",
+      "apple_pie_011628.jpg",
+      "apple_pie_011659.jpg"
+    ],
+    "file": "/dishes/apple_pie.webp",
+    "height": 512,
+    "similarity": 0.9316,
+    "source": "apple_pie_011309.jpg",
+    "width": 512
+  },
+  "baby_back_ribs": {
+    "alternates": [
+      "baby_back_ribs_065361.jpg",
+      "baby_back_ribs_065613.jpg",
+      "baby_back_ribs_065867.jpg",
+      "baby_back_ribs_065989.jpg"
+    ],
+    "file": "/dishes/baby_back_ribs.webp",
+    "height": 512,
+    "similarity": 0.9518,
+    "source": "baby_back_ribs_065550.jpg",
+    "width": 512
+  },
+  "baklava": {
+    "alternates": [
+      "baklava_025775.jpg",
+      "baklava_025759.jpg",
+      "baklava_026052.jpg",
+      "baklava_025964.jpg"
+    ],
+    "file": "/dishes/baklava.webp",
+    "height": 512,
+    "similarity": 0.9603,
+    "source": "baklava_026215.jpg",
+    "width": 512
+  },
+  "beef_carpaccio": {
+    "alternates": [
+      "beef_carpaccio_049201.jpg",
+      "beef_carpaccio_049109.jpg",
+      "beef_carpaccio_049417.jpg",
+      "beef_carpaccio_049098.jpg"
+    ],
+    "file": "/dishes/beef_carpaccio.webp",
+    "height": 512,
+    "similarity": 0.9605,
+    "source": "beef_carpaccio_049349.jpg",
+    "width": 512
+  },
+  "beef_tartare": {
+    "alternates": [
+      "beef_tartare_033953.jpg",
+      "beef_tartare_034497.jpg",
+      "beef_tartare_033819.jpg",
+      "beef_tartare_034110.jpg"
+    ],
+    "file": "/dishes/beef_tartare.webp",
+    "height": 512,
+    "similarity": 0.9549,
+    "source": "beef_tartare_033786.jpg",
+    "width": 512
+  },
+  "beet_salad": {
+    "alternates": [
+      "beet_salad_015915.jpg",
+      "beet_salad_016283.jpg",
+      "beet_salad_015758.jpg",
+      "beet_salad_016037.jpg"
+    ],
+    "file": "/dishes/beet_salad.webp",
+    "height": 512,
+    "similarity": 0.9557,
+    "source": "beet_salad_015860.jpg",
+    "width": 512
+  },
+  "beignets": {
+    "alternates": [
+      "beignets_000109.jpg",
+      "beignets_000748.jpg",
+      "beignets_000733.jpg",
+      "beignets_000720.jpg"
+    ],
+    "file": "/dishes/beignets.webp",
+    "height": 512,
+    "similarity": 0.9663,
+    "source": "beignets_000073.jpg",
+    "width": 512
+  },
+  "bibimbap": {
+    "alternates": [
+      "bibimbap_068878.jpg",
+      "bibimbap_068722.jpg",
+      "bibimbap_068800.jpg",
+      "bibimbap_068359.jpg"
+    ],
+    "file": "/dishes/bibimbap.webp",
+    "height": 512,
+    "similarity": 0.9653,
+    "source": "bibimbap_068810.jpg",
+    "width": 512
+  },
+  "bread_pudding": {
+    "alternates": [
+      "bread_pudding_055961.jpg",
+      "bread_pudding_055864.jpg",
+      "bread_pudding_056164.jpg",
+      "bread_pudding_055748.jpg"
+    ],
+    "file": "/dishes/bread_pudding.webp",
+    "height": 512,
+    "similarity": 0.9529,
+    "source": "bread_pudding_056208.jpg",
+    "width": 512
+  },
+  "breakfast_burrito": {
+    "alternates": [
+      "breakfast_burrito_031852.jpg",
+      "breakfast_burrito_031962.jpg",
+      "breakfast_burrito_031792.jpg",
+      "breakfast_burrito_031526.jpg"
+    ],
+    "file": "/dishes/breakfast_burrito.webp",
+    "height": 512,
+    "similarity": 0.9451,
+    "source": "breakfast_burrito_031879.jpg",
+    "width": 512
+  },
+  "bruschetta": {
+    "alternates": [
+      "bruschetta_003357.jpg",
+      "bruschetta_003581.jpg",
+      "bruschetta_003354.jpg",
+      "bruschetta_003674.jpg"
+    ],
+    "file": "/dishes/bruschetta.webp",
+    "height": 512,
+    "similarity": 0.9591,
+    "source": "bruschetta_003031.jpg",
+    "width": 512
+  },
+  "caesar_salad": {
+    "alternates": [
+      "caesar_salad_020256.jpg",
+      "caesar_salad_020804.jpg",
+      "caesar_salad_020422.jpg",
+      "caesar_salad_020506.jpg"
+    ],
+    "file": "/dishes/caesar_salad.webp",
+    "height": 512,
+    "similarity": 0.9645,
+    "source": "caesar_salad_020748.jpg",
+    "width": 512
+  },
+  "cannoli": {
+    "alternates": [
+      "cannoli_072391.jpg",
+      "cannoli_072331.jpg",
+      "cannoli_072460.jpg",
+      "cannoli_072531.jpg"
+    ],
+    "file": "/dishes/cannoli.webp",
+    "height": 512,
+    "similarity": 0.9674,
+    "source": "cannoli_072509.jpg",
+    "width": 512
+  },
+  "caprese_salad": {
+    "alternates": [
+      "caprese_salad_060974.jpg",
+      "caprese_salad_061458.jpg",
+      "caprese_salad_061218.jpg",
+      "caprese_salad_061418.jpg"
+    ],
+    "file": "/dishes/caprese_salad.webp",
+    "height": 512,
+    "similarity": 0.9748,
+    "source": "caprese_salad_061305.jpg",
+    "width": 512
+  },
+  "carrot_cake": {
+    "alternates": [
+      "carrot_cake_015694.jpg",
+      "carrot_cake_015723.jpg",
+      "carrot_cake_015388.jpg",
+      "carrot_cake_015055.jpg"
+    ],
+    "file": "/dishes/carrot_cake.webp",
+    "height": 384,
+    "similarity": 0.9526,
+    "source": "carrot_cake_015563.jpg",
+    "width": 384
+  },
+  "ceviche": {
+    "alternates": [
+      "ceviche_070907.jpg",
+      "ceviche_070934.jpg",
+      "ceviche_070641.jpg",
+      "ceviche_070840.jpg"
+    ],
+    "file": "/dishes/ceviche.webp",
+    "height": 512,
+    "similarity": 0.9392,
+    "source": "ceviche_071202.jpg",
+    "width": 512
+  },
+  "cheese_plate": {
+    "alternates": [
+      "cheese_plate_051022.jpg",
+      "cheese_plate_051300.jpg",
+      "cheese_plate_051313.jpg",
+      "cheese_plate_051466.jpg"
+    ],
+    "file": "/dishes/cheese_plate.webp",
+    "height": 382,
+    "similarity": 0.9488,
+    "source": "cheese_plate_051360.jpg",
+    "width": 382
+  },
+  "cheesecake": {
+    "alternates": [
+      "cheesecake_025255.jpg",
+      "cheesecake_025357.jpg",
+      "cheesecake_025405.jpg",
+      "cheesecake_025269.jpg"
+    ],
+    "file": "/dishes/cheesecake.webp",
+    "height": 512,
+    "similarity": 0.9447,
+    "source": "cheesecake_025387.jpg",
+    "width": 512
+  },
+  "chicken_curry": {
+    "alternates": [
+      "chicken_curry_058609.jpg",
+      "chicken_curry_059138.jpg",
+      "chicken_curry_058573.jpg",
+      "chicken_curry_058708.jpg"
+    ],
+    "file": "/dishes/chicken_curry.webp",
+    "height": 512,
+    "similarity": 0.9447,
+    "source": "chicken_curry_058970.jpg",
+    "width": 512
+  },
+  "chicken_quesadilla": {
+    "alternates": [
+      "chicken_quesadilla_041542.jpg",
+      "chicken_quesadilla_041340.jpg",
+      "chicken_quesadilla_041563.jpg",
+      "chicken_quesadilla_041386.jpg"
+    ],
+    "file": "/dishes/chicken_quesadilla.webp",
+    "height": 512,
+    "similarity": 0.9618,
+    "source": "chicken_quesadilla_041326.jpg",
+    "width": 512
+  },
+  "chicken_wings": {
+    "alternates": [
+      "chicken_wings_004160.jpg",
+      "chicken_wings_004492.jpg",
+      "chicken_wings_004027.jpg",
+      "chicken_wings_004398.jpg"
+    ],
+    "file": "/dishes/chicken_wings.webp",
+    "height": 382,
+    "similarity": 0.9596,
+    "source": "chicken_wings_004287.jpg",
+    "width": 382
+  },
+  "chocolate_cake": {
+    "alternates": [
+      "chocolate_cake_010148.jpg",
+      "chocolate_cake_010068.jpg",
+      "chocolate_cake_010041.jpg",
+      "chocolate_cake_009849.jpg"
+    ],
+    "file": "/dishes/chocolate_cake.webp",
+    "height": 384,
+    "similarity": 0.9423,
+    "source": "chocolate_cake_009872.jpg",
+    "width": 384
+  },
+  "chocolate_mousse": {
+    "alternates": [
+      "chocolate_mousse_022865.jpg",
+      "chocolate_mousse_022540.jpg",
+      "chocolate_mousse_023063.jpg",
+      "chocolate_mousse_022706.jpg"
+    ],
+    "file": "/dishes/chocolate_mousse.webp",
+    "height": 304,
+    "similarity": 0.9335,
+    "source": "chocolate_mousse_023083.jpg",
+    "width": 304
+  },
+  "churros": {
+    "alternates": [
+      "churros_071989.jpg",
+      "churros_071334.jpg",
+      "churros_071727.jpg",
+      "churros_071496.jpg"
+    ],
+    "file": "/dishes/churros.webp",
+    "height": 512,
+    "similarity": 0.9581,
+    "source": "churros_071402.jpg",
+    "width": 512
+  },
+  "clam_chowder": {
+    "alternates": [
+      "clam_chowder_048250.jpg",
+      "clam_chowder_048458.jpg",
+      "clam_chowder_048550.jpg",
+      "clam_chowder_048219.jpg"
+    ],
+    "file": "/dishes/clam_chowder.webp",
+    "height": 512,
+    "similarity": 0.9623,
+    "source": "clam_chowder_048479.jpg",
+    "width": 512
+  },
+  "club_sandwich": {
+    "alternates": [
+      "club_sandwich_040465.jpg",
+      "club_sandwich_040115.jpg",
+      "club_sandwich_040205.jpg",
+      "club_sandwich_040011.jpg"
+    ],
+    "file": "/dishes/club_sandwich.webp",
+    "height": 512,
+    "similarity": 0.946,
+    "source": "club_sandwich_040345.jpg",
+    "width": 512
+  },
+  "crab_cakes": {
+    "alternates": [
+      "crab_cakes_032317.jpg",
+      "crab_cakes_032507.jpg",
+      "crab_cakes_032764.jpg",
+      "crab_cakes_032983.jpg"
+    ],
+    "file": "/dishes/crab_cakes.webp",
+    "height": 512,
+    "similarity": 0.9523,
+    "source": "crab_cakes_032998.jpg",
+    "width": 512
+  },
+  "creme_brulee": {
+    "alternates": [
+      "creme_brulee_036135.jpg",
+      "creme_brulee_036672.jpg",
+      "creme_brulee_036322.jpg",
+      "creme_brulee_036248.jpg"
+    ],
+    "file": "/dishes/creme_brulee.webp",
+    "height": 382,
+    "similarity": 0.9682,
+    "source": "creme_brulee_036223.jpg",
+    "width": 382
+  },
+  "croque_madame": {
+    "alternates": [
+      "croque_madame_062685.jpg",
+      "croque_madame_062518.jpg",
+      "croque_madame_062466.jpg",
+      "croque_madame_062583.jpg"
+    ],
+    "file": "/dishes/croque_madame.webp",
+    "height": 384,
+    "similarity": 0.9554,
+    "source": "croque_madame_062863.jpg",
+    "width": 384
+  },
+  "cup_cakes": {
+    "alternates": [
+      "cup_cakes_069137.jpg",
+      "cup_cakes_069025.jpg",
+      "cup_cakes_069195.jpg",
+      "cup_cakes_069022.jpg"
+    ],
+    "file": "/dishes/cup_cakes.webp",
+    "height": 512,
+    "similarity": 0.9394,
+    "source": "cup_cakes_069678.jpg",
+    "width": 512
+  },
+  "deviled_eggs": {
+    "alternates": [
+      "deviled_eggs_055498.jpg",
+      "deviled_eggs_054858.jpg",
+      "deviled_eggs_054959.jpg",
+      "deviled_eggs_055384.jpg"
+    ],
+    "file": "/dishes/deviled_eggs.webp",
+    "height": 512,
+    "similarity": 0.9603,
+    "source": "deviled_eggs_055038.jpg",
+    "width": 512
+  },
+  "donuts": {
+    "alternates": [
+      "donuts_058183.jpg",
+      "donuts_058433.jpg",
+      "donuts_057908.jpg",
+      "donuts_058317.jpg"
+    ],
+    "file": "/dishes/donuts.webp",
+    "height": 306,
+    "similarity": 0.9401,
+    "source": "donuts_058477.jpg",
+    "width": 306
+  },
+  "dumplings": {
+    "alternates": [
+      "dumplings_035440.jpg",
+      "dumplings_035922.jpg",
+      "dumplings_035472.jpg",
+      "dumplings_035272.jpg"
+    ],
+    "file": "/dishes/dumplings.webp",
+    "height": 512,
+    "similarity": 0.9732,
+    "source": "dumplings_035512.jpg",
+    "width": 512
+  },
+  "edamame": {
+    "alternates": [
+      "edamame_053671.jpg",
+      "edamame_053877.jpg",
+      "edamame_053372.jpg",
+      "edamame_053956.jpg"
+    ],
+    "file": "/dishes/edamame.webp",
+    "height": 512,
+    "similarity": 0.9833,
+    "source": "edamame_053675.jpg",
+    "width": 512
+  },
+  "eggs_benedict": {
+    "alternates": [
+      "eggs_benedict_008796.jpg",
+      "eggs_benedict_008373.jpg",
+      "eggs_benedict_008508.jpg",
+      "eggs_benedict_008383.jpg"
+    ],
+    "file": "/dishes/eggs_benedict.webp",
+    "height": 468,
+    "similarity": 0.9619,
+    "source": "eggs_benedict_008824.jpg",
+    "width": 468
+  },
+  "escargots": {
+    "alternates": [
+      "escargots_042374.jpg",
+      "escargots_042119.jpg",
+      "escargots_042071.jpg",
+      "escargots_042545.jpg"
+    ],
+    "file": "/dishes/escargots.webp",
+    "height": 512,
+    "similarity": 0.9645,
+    "source": "escargots_042630.jpg",
+    "width": 512
+  },
+  "falafel": {
+    "alternates": [
+      "falafel_037371.jpg",
+      "falafel_036810.jpg",
+      "falafel_037337.jpg",
+      "falafel_037253.jpg"
+    ],
+    "file": "/dishes/falafel.webp",
+    "height": 512,
+    "similarity": 0.9471,
+    "source": "falafel_037247.jpg",
+    "width": 512
+  },
+  "filet_mignon": {
+    "alternates": [
+      "filet_mignon_060302.jpg",
+      "filet_mignon_060087.jpg",
+      "filet_mignon_060543.jpg",
+      "filet_mignon_060341.jpg"
+    ],
+    "file": "/dishes/filet_mignon.webp",
+    "height": 384,
+    "similarity": 0.9477,
+    "source": "filet_mignon_060375.jpg",
+    "width": 384
+  },
+  "fish_and_chips": {
+    "alternates": [
+      "fish_and_chips_020226.jpg",
+      "fish_and_chips_020146.jpg",
+      "fish_and_chips_019986.jpg",
+      "fish_and_chips_020227.jpg"
+    ],
+    "file": "/dishes/fish_and_chips.webp",
+    "height": 512,
+    "similarity": 0.9651,
+    "source": "fish_and_chips_020211.jpg",
+    "width": 512
+  },
+  "foie_gras": {
+    "alternates": [
+      "foie_gras_028588.jpg",
+      "foie_gras_029118.jpg",
+      "foie_gras_028963.jpg",
+      "foie_gras_029015.jpg"
+    ],
+    "file": "/dishes/foie_gras.webp",
+    "height": 512,
+    "similarity": 0.933,
+    "source": "foie_gras_028828.jpg",
+    "width": 512
+  },
+  "french_fries": {
+    "alternates": [
+      "french_fries_041103.jpg",
+      "french_fries_040657.jpg",
+      "french_fries_040742.jpg",
+      "french_fries_041012.jpg"
+    ],
+    "file": "/dishes/french_fries.webp",
+    "height": 512,
+    "similarity": 0.9681,
+    "source": "french_fries_040672.jpg",
+    "width": 512
+  },
+  "french_onion_soup": {
+    "alternates": [
+      "french_onion_soup_047081.jpg",
+      "french_onion_soup_047182.jpg",
+      "french_onion_soup_046794.jpg",
+      "french_onion_soup_046710.jpg"
+    ],
+    "file": "/dishes/french_onion_soup.webp",
+    "height": 512,
+    "similarity": 0.9721,
+    "source": "french_onion_soup_047243.jpg",
+    "width": 512
+  },
+  "french_toast": {
+    "alternates": [
+      "french_toast_043999.jpg",
+      "french_toast_043981.jpg",
+      "french_toast_043854.jpg",
+      "french_toast_043551.jpg"
+    ],
+    "file": "/dishes/french_toast.webp",
+    "height": 512,
+    "similarity": 0.9591,
+    "source": "french_toast_044229.jpg",
+    "width": 512
+  },
+  "fried_calamari": {
+    "alternates": [
+      "fried_calamari_012289.jpg",
+      "fried_calamari_012557.jpg",
+      "fried_calamari_012519.jpg",
+      "fried_calamari_012053.jpg"
+    ],
+    "file": "/dishes/fried_calamari.webp",
+    "height": 512,
+    "similarity": 0.9608,
+    "source": "fried_calamari_012047.jpg",
+    "width": 512
+  },
+  "fried_rice": {
+    "alternates": [
+      "fried_rice_012896.jpg",
+      "fried_rice_013054.jpg",
+      "fried_rice_013163.jpg",
+      "fried_rice_013432.jpg"
+    ],
+    "file": "/dishes/fried_rice.webp",
+    "height": 382,
+    "similarity": 0.9556,
+    "source": "fried_rice_012792.jpg",
+    "width": 382
+  },
+  "frozen_yogurt": {
+    "alternates": [
+      "frozen_yogurt_030553.jpg",
+      "frozen_yogurt_030591.jpg",
+      "frozen_yogurt_030515.jpg",
+      "frozen_yogurt_030638.jpg"
+    ],
+    "file": "/dishes/frozen_yogurt.webp",
+    "height": 512,
+    "similarity": 0.943,
+    "source": "frozen_yogurt_030353.jpg",
+    "width": 512
+  },
+  "garlic_bread": {
+    "alternates": [
+      "garlic_bread_017123.jpg",
+      "garlic_bread_016538.jpg",
+      "garlic_bread_017203.jpg",
+      "garlic_bread_016712.jpg"
+    ],
+    "file": "/dishes/garlic_bread.webp",
+    "height": 512,
+    "similarity": 0.9641,
+    "source": "garlic_bread_017122.jpg",
+    "width": 512
+  },
+  "gnocchi": {
+    "alternates": [
+      "gnocchi_063696.jpg",
+      "gnocchi_063681.jpg",
+      "gnocchi_063424.jpg",
+      "gnocchi_063631.jpg"
+    ],
+    "file": "/dishes/gnocchi.webp",
+    "height": 384,
+    "similarity": 0.956,
+    "source": "gnocchi_063441.jpg",
+    "width": 384
+  },
+  "greek_salad": {
+    "alternates": [
+      "greek_salad_005750.jpg",
+      "greek_salad_005549.jpg",
+      "greek_salad_005598.jpg",
+      "greek_salad_005531.jpg"
+    ],
+    "file": "/dishes/greek_salad.webp",
+    "height": 512,
+    "similarity": 0.9651,
+    "source": "greek_salad_005685.jpg",
+    "width": 512
+  },
+  "grilled_cheese_sandwich": {
+    "alternates": [
+      "grilled_cheese_sandwich_029758.jpg",
+      "grilled_cheese_sandwich_029622.jpg",
+      "grilled_cheese_sandwich_029360.jpg",
+      "grilled_cheese_sandwich_029680.jpg"
+    ],
+    "file": "/dishes/grilled_cheese_sandwich.webp",
+    "height": 512,
+    "similarity": 0.9381,
+    "source": "grilled_cheese_sandwich_029817.jpg",
+    "width": 512
+  },
+  "grilled_salmon": {
+    "alternates": [
+      "grilled_salmon_074200.jpg",
+      "grilled_salmon_074215.jpg",
+      "grilled_salmon_073640.jpg",
+      "grilled_salmon_074131.jpg"
+    ],
+    "file": "/dishes/grilled_salmon.webp",
+    "height": 384,
+    "similarity": 0.9399,
+    "source": "grilled_salmon_073856.jpg",
+    "width": 384
+  },
+  "guacamole": {
+    "alternates": [
+      "guacamole_009089.jpg",
+      "guacamole_009500.jpg",
+      "guacamole_009199.jpg",
+      "guacamole_009687.jpg"
+    ],
+    "file": "/dishes/guacamole.webp",
+    "height": 512,
+    "similarity": 0.964,
+    "source": "guacamole_009030.jpg",
+    "width": 512
+  },
+  "gyoza": {
+    "alternates": [
+      "gyoza_063952.jpg",
+      "gyoza_064280.jpg",
+      "gyoza_064343.jpg",
+      "gyoza_063829.jpg"
+    ],
+    "file": "/dishes/gyoza.webp",
+    "height": 512,
+    "similarity": 0.9765,
+    "source": "gyoza_064225.jpg",
+    "width": 512
+  },
+  "hamburger": {
+    "alternates": [
+      "hamburger_002868.jpg",
+      "hamburger_002323.jpg",
+      "hamburger_002395.jpg",
+      "hamburger_002773.jpg"
+    ],
+    "file": "/dishes/hamburger.webp",
+    "height": 512,
+    "similarity": 0.9393,
+    "source": "hamburger_002336.jpg",
+    "width": 512
+  },
+  "hot_and_sour_soup": {
+    "alternates": [
+      "hot_and_sour_soup_064775.jpg",
+      "hot_and_sour_soup_065020.jpg",
+      "hot_and_sour_soup_064832.jpg",
+      "hot_and_sour_soup_064573.jpg"
+    ],
+    "file": "/dishes/hot_and_sour_soup.webp",
+    "height": 512,
+    "similarity": 0.9711,
+    "source": "hot_and_sour_soup_064807.jpg",
+    "width": 512
+  },
+  "hot_dog": {
+    "alternates": [
+      "hot_dog_017865.jpg",
+      "hot_dog_017507.jpg",
+      "hot_dog_017622.jpg",
+      "hot_dog_017265.jpg"
+    ],
+    "file": "/dishes/hot_dog.webp",
+    "height": 512,
+    "similarity": 0.9502,
+    "source": "hot_dog_017923.jpg",
+    "width": 512
+  },
+  "huevos_rancheros": {
+    "alternates": [
+      "huevos_rancheros_043353.jpg",
+      "huevos_rancheros_042901.jpg",
+      "huevos_rancheros_043417.jpg",
+      "huevos_rancheros_043312.jpg"
+    ],
+    "file": "/dishes/huevos_rancheros.webp",
+    "height": 512,
+    "similarity": 0.9458,
+    "source": "huevos_rancheros_043286.jpg",
+    "width": 512
+  },
+  "hummus": {
+    "alternates": [
+      "hummus_014838.jpg",
+      "hummus_014674.jpg",
+      "hummus_014777.jpg",
+      "hummus_014817.jpg"
+    ],
+    "file": "/dishes/hummus.webp",
+    "height": 512,
+    "similarity": 0.958,
+    "source": "hummus_014786.jpg",
+    "width": 512
+  },
+  "ice_cream": {
+    "alternates": [
+      "ice_cream_026713.jpg",
+      "ice_cream_026589.jpg",
+      "ice_cream_026583.jpg",
+      "ice_cream_026547.jpg"
+    ],
+    "file": "/dishes/ice_cream.webp",
+    "height": 384,
+    "similarity": 0.9205,
+    "source": "ice_cream_026410.jpg",
+    "width": 384
+  },
+  "lasagna": {
+    "alternates": [
+      "lasagna_023970.jpg",
+      "lasagna_023691.jpg",
+      "lasagna_023840.jpg",
+      "lasagna_023894.jpg"
+    ],
+    "file": "/dishes/lasagna.webp",
+    "height": 512,
+    "similarity": 0.9639,
+    "source": "lasagna_023933.jpg",
+    "width": 512
+  },
+  "lobster_bisque": {
+    "alternates": [
+      "lobster_bisque_044349.jpg",
+      "lobster_bisque_044509.jpg",
+      "lobster_bisque_044730.jpg",
+      "lobster_bisque_044350.jpg"
+    ],
+    "file": "/dishes/lobster_bisque.webp",
+    "height": 512,
+    "similarity": 0.952,
+    "source": "lobster_bisque_044364.jpg",
+    "width": 512
+  },
+  "lobster_roll_sandwich": {
+    "alternates": [
+      "lobster_roll_sandwich_052614.jpg",
+      "lobster_roll_sandwich_053149.jpg",
+      "lobster_roll_sandwich_052720.jpg",
+      "lobster_roll_sandwich_052770.jpg"
+    ],
+    "file": "/dishes/lobster_roll_sandwich.webp",
+    "height": 512,
+    "similarity": 0.9648,
+    "source": "lobster_roll_sandwich_052854.jpg",
+    "width": 512
+  },
+  "macaroni_and_cheese": {
+    "alternates": [
+      "macaroni_and_cheese_073099.jpg",
+      "macaroni_and_cheese_073499.jpg",
+      "macaroni_and_cheese_072845.jpg",
+      "macaroni_and_cheese_073200.jpg"
+    ],
+    "file": "/dishes/macaroni_and_cheese.webp",
+    "height": 512,
+    "similarity": 0.9642,
+    "source": "macaroni_and_cheese_072992.jpg",
+    "width": 512
+  },
+  "macarons": {
+    "alternates": [
+      "macarons_061891.jpg",
+      "macarons_061936.jpg",
+      "macarons_062215.jpg",
+      "macarons_061535.jpg"
+    ],
+    "file": "/dishes/macarons.webp",
+    "height": 512,
+    "similarity": 0.9726,
+    "source": "macarons_062240.jpg",
+    "width": 512
+  },
+  "miso_soup": {
+    "alternates": [
+      "miso_soup_010530.jpg",
+      "miso_soup_011112.jpg",
+      "miso_soup_011235.jpg",
+      "miso_soup_010815.jpg"
+    ],
+    "file": "/dishes/miso_soup.webp",
+    "height": 512,
+    "similarity": 0.9714,
+    "source": "miso_soup_011139.jpg",
+    "width": 512
+  },
+  "mussels": {
+    "alternates": [
+      "mussels_034997.jpg",
+      "mussels_035193.jpg",
+      "mussels_034741.jpg",
+      "mussels_035249.jpg"
+    ],
+    "file": "/dishes/mussels.webp",
+    "height": 512,
+    "similarity": 0.9666,
+    "source": "mussels_035130.jpg",
+    "width": 512
+  },
+  "nachos": {
+    "alternates": [
+      "nachos_057592.jpg",
+      "nachos_057686.jpg",
+      "nachos_057479.jpg",
+      "nachos_057590.jpg"
+    ],
+    "file": "/dishes/nachos.webp",
+    "height": 384,
+    "similarity": 0.9669,
+    "source": "nachos_057437.jpg",
+    "width": 384
+  },
+  "omelette": {
+    "alternates": [
+      "omelette_059465.jpg",
+      "omelette_059471.jpg",
+      "omelette_059908.jpg",
+      "omelette_059425.jpg"
+    ],
+    "file": "/dishes/omelette.webp",
+    "height": 512,
+    "similarity": 0.9466,
+    "source": "omelette_059880.jpg",
+    "width": 512
+  },
+  "onion_rings": {
+    "alternates": [
+      "onion_rings_045109.jpg",
+      "onion_rings_045076.jpg",
+      "onion_rings_045459.jpg",
+      "onion_rings_045352.jpg"
+    ],
+    "file": "/dishes/onion_rings.webp",
+    "height": 512,
+    "similarity": 0.9731,
+    "source": "onion_rings_045198.jpg",
+    "width": 512
+  },
+  "oysters": {
+    "alternates": [
+      "oysters_038553.jpg",
+      "oysters_038739.jpg",
+      "oysters_038552.jpg",
+      "oysters_038256.jpg"
+    ],
+    "file": "/dishes/oysters.webp",
+    "height": 384,
+    "similarity": 0.9712,
+    "source": "oysters_038549.jpg",
+    "width": 384
+  },
+  "pad_thai": {
+    "alternates": [
+      "pad_thai_024192.jpg",
+      "pad_thai_024232.jpg",
+      "pad_thai_024455.jpg",
+      "pad_thai_024210.jpg"
+    ],
+    "file": "/dishes/pad_thai.webp",
+    "height": 512,
+    "similarity": 0.9715,
+    "source": "pad_thai_024709.jpg",
+    "width": 512
+  },
+  "paella": {
+    "alternates": [
+      "paella_074429.jpg",
+      "paella_074508.jpg",
+      "paella_074750.jpg",
+      "paella_074458.jpg"
+    ],
+    "file": "/dishes/paella.webp",
+    "height": 512,
+    "similarity": 0.9668,
+    "source": "paella_074434.jpg",
+    "width": 512
+  },
+  "pancakes": {
+    "alternates": [
+      "pancakes_021841.jpg",
+      "pancakes_021933.jpg",
+      "pancakes_022411.jpg",
+      "pancakes_022140.jpg"
+    ],
+    "file": "/dishes/pancakes.webp",
+    "height": 382,
+    "similarity": 0.9526,
+    "source": "pancakes_022474.jpg",
+    "width": 382
+  },
+  "panna_cotta": {
+    "alternates": [
+      "panna_cotta_013979.jpg",
+      "panna_cotta_014228.jpg",
+      "panna_cotta_013798.jpg",
+      "panna_cotta_014116.jpg"
+    ],
+    "file": "/dishes/panna_cotta.webp",
+    "height": 512,
+    "similarity": 0.9516,
+    "source": "panna_cotta_013755.jpg",
+    "width": 512
+  },
+  "peking_duck": {
+    "alternates": [
+      "peking_duck_056651.jpg",
+      "peking_duck_056753.jpg",
+      "peking_duck_056494.jpg",
+      "peking_duck_056428.jpg"
+    ],
+    "file": "/dishes/peking_duck.webp",
+    "height": 512,
+    "similarity": 0.9569,
+    "source": "peking_duck_056391.jpg",
+    "width": 512
+  },
+  "pho": {
+    "alternates": [
+      "pho_050314.jpg",
+      "pho_050463.jpg",
+      "pho_050530.jpg",
+      "pho_050710.jpg"
+    ],
+    "file": "/dishes/pho.webp",
+    "height": 512,
+    "similarity": 0.9778,
+    "source": "pho_050961.jpg",
+    "width": 512
+  },
+  "pizza": {
+    "alternates": [
+      "pizza_008042.jpg",
+      "pizza_007547.jpg",
+      "pizza_007859.jpg",
+      "pizza_008176.jpg"
+    ],
+    "file": "/dishes/pizza.webp",
+    "height": 512,
+    "similarity": 0.9413,
+    "source": "pizza_008101.jpg",
+    "width": 512
+  },
+  "pork_chop": {
+    "alternates": [
+      "pork_chop_005087.jpg",
+      "pork_chop_004681.jpg",
+      "pork_chop_004932.jpg",
+      "pork_chop_004563.jpg"
+    ],
+    "file": "/dishes/pork_chop.webp",
+    "height": 512,
+    "similarity": 0.9369,
+    "source": "pork_chop_004649.jpg",
+    "width": 512
+  },
+  "poutine": {
+    "alternates": [
+      "poutine_070280.jpg",
+      "poutine_070172.jpg",
+      "poutine_070434.jpg",
+      "poutine_069948.jpg"
+    ],
+    "file": "/dishes/poutine.webp",
+    "height": 382,
+    "similarity": 0.9677,
+    "source": "poutine_070207.jpg",
+    "width": 382
+  },
+  "prime_rib": {
+    "alternates": [
+      "prime_rib_000978.jpg",
+      "prime_rib_001209.jpg",
+      "prime_rib_001048.jpg",
+      "prime_rib_000885.jpg"
+    ],
+    "file": "/dishes/prime_rib.webp",
+    "height": 512,
+    "similarity": 0.9559,
+    "source": "prime_rib_001472.jpg",
+    "width": 512
+  },
+  "pulled_pork_sandwich": {
+    "alternates": [
+      "pulled_pork_sandwich_054332.jpg",
+      "pulled_pork_sandwich_054732.jpg",
+      "pulled_pork_sandwich_054530.jpg",
+      "pulled_pork_sandwich_054091.jpg"
+    ],
+    "file": "/dishes/pulled_pork_sandwich.webp",
+    "height": 512,
+    "similarity": 0.9479,
+    "source": "pulled_pork_sandwich_054062.jpg",
+    "width": 512
+  },
+  "ramen": {
+    "alternates": [
+      "ramen_001528.jpg",
+      "ramen_001529.jpg",
+      "ramen_001928.jpg",
+      "ramen_002195.jpg"
+    ],
+    "file": "/dishes/ramen.webp",
+    "height": 382,
+    "similarity": 0.9559,
+    "source": "ramen_002204.jpg",
+    "width": 382
+  },
+  "ravioli": {
+    "alternates": [
+      "ravioli_066604.jpg",
+      "ravioli_066418.jpg",
+      "ravioli_066079.jpg",
+      "ravioli_066352.jpg"
+    ],
+    "file": "/dishes/ravioli.webp",
+    "height": 512,
+    "similarity": 0.9537,
+    "source": "ravioli_066401.jpg",
+    "width": 512
+  },
+  "red_velvet_cake": {
+    "alternates": [
+      "red_velvet_cake_027569.jpg",
+      "red_velvet_cake_027600.jpg",
+      "red_velvet_cake_027479.jpg",
+      "red_velvet_cake_027523.jpg"
+    ],
+    "file": "/dishes/red_velvet_cake.webp",
+    "height": 512,
+    "similarity": 0.9677,
+    "source": "red_velvet_cake_027240.jpg",
+    "width": 512
+  },
+  "risotto": {
+    "alternates": [
+      "risotto_007022.jpg",
+      "risotto_007120.jpg",
+      "risotto_007428.jpg",
+      "risotto_007422.jpg"
+    ],
+    "file": "/dishes/risotto.webp",
+    "height": 512,
+    "similarity": 0.9482,
+    "source": "risotto_007261.jpg",
+    "width": 512
+  },
+  "samosa": {
+    "alternates": [
+      "samosa_039402.jpg",
+      "samosa_039041.jpg",
+      "samosa_039623.jpg",
+      "samosa_039254.jpg"
+    ],
+    "file": "/dishes/samosa.webp",
+    "height": 382,
+    "similarity": 0.9605,
+    "source": "samosa_039305.jpg",
+    "width": 382
+  },
+  "sashimi": {
+    "alternates": [
+      "sashimi_006458.jpg",
+      "sashimi_006212.jpg",
+      "sashimi_006390.jpg",
+      "sashimi_006009.jpg"
+    ],
+    "file": "/dishes/sashimi.webp",
+    "height": 512,
+    "similarity": 0.9618,
+    "source": "sashimi_006560.jpg",
+    "width": 512
+  },
+  "scallops": {
+    "alternates": [
+      "scallops_038206.jpg",
+      "scallops_038153.jpg",
+      "scallops_037901.jpg",
+      "scallops_037804.jpg"
+    ],
+    "file": "/dishes/scallops.webp",
+    "height": 382,
+    "similarity": 0.9534,
+    "source": "scallops_038246.jpg",
+    "width": 382
+  },
+  "seaweed_salad": {
+    "alternates": [
+      "seaweed_salad_031372.jpg",
+      "seaweed_salad_030843.jpg",
+      "seaweed_salad_030839.jpg",
+      "seaweed_salad_031400.jpg"
+    ],
+    "file": "/dishes/seaweed_salad.webp",
+    "height": 512,
+    "similarity": 0.9797,
+    "source": "seaweed_salad_031269.jpg",
+    "width": 512
+  },
+  "shrimp_and_grits": {
+    "alternates": [
+      "shrimp_and_grits_050062.jpg",
+      "shrimp_and_grits_049640.jpg",
+      "shrimp_and_grits_050183.jpg",
+      "shrimp_and_grits_049694.jpg"
+    ],
+    "file": "/dishes/shrimp_and_grits.webp",
+    "height": 512,
+    "similarity": 0.9643,
+    "source": "shrimp_and_grits_050071.jpg",
+    "width": 512
+  },
+  "spaghetti_bolognese": {
+    "alternates": [
+      "spaghetti_bolognese_075265.jpg",
+      "spaghetti_bolognese_075472.jpg",
+      "spaghetti_bolognese_075582.jpg",
+      "spaghetti_bolognese_075193.jpg"
+    ],
+    "file": "/dishes/spaghetti_bolognese.webp",
+    "height": 512,
+    "similarity": 0.9651,
+    "source": "spaghetti_bolognese_075613.jpg",
+    "width": 512
+  },
+  "spaghetti_carbonara": {
+    "alternates": [
+      "spaghetti_carbonara_067000.jpg",
+      "spaghetti_carbonara_067403.jpg",
+      "spaghetti_carbonara_067234.jpg",
+      "spaghetti_carbonara_067264.jpg"
+    ],
+    "file": "/dishes/spaghetti_carbonara.webp",
+    "height": 512,
+    "similarity": 0.9647,
+    "source": "spaghetti_carbonara_066797.jpg",
+    "width": 512
+  },
+  "spring_rolls": {
+    "alternates": [
+      "spring_rolls_047876.jpg",
+      "spring_rolls_047845.jpg",
+      "spring_rolls_047448.jpg",
+      "spring_rolls_047749.jpg"
+    ],
+    "file": "/dishes/spring_rolls.webp",
+    "height": 384,
+    "similarity": 0.959,
+    "source": "spring_rolls_047894.jpg",
+    "width": 384
+  },
+  "steak": {
+    "alternates": [
+      "steak_018172.jpg",
+      "steak_018048.jpg",
+      "steak_018722.jpg",
+      "steak_018443.jpg"
+    ],
+    "file": "/dishes/steak.webp",
+    "height": 512,
+    "similarity": 0.943,
+    "source": "steak_018214.jpg",
+    "width": 512
+  },
+  "strawberry_shortcake": {
+    "alternates": [
+      "strawberry_shortcake_033223.jpg",
+      "strawberry_shortcake_033694.jpg",
+      "strawberry_shortcake_033679.jpg",
+      "strawberry_shortcake_033314.jpg"
+    ],
+    "file": "/dishes/strawberry_shortcake.webp",
+    "height": 512,
+    "similarity": 0.9337,
+    "source": "strawberry_shortcake_033198.jpg",
+    "width": 512
+  },
+  "sushi": {
+    "alternates": [
+      "sushi_068112.jpg",
+      "sushi_068004.jpg",
+      "sushi_067721.jpg",
+      "sushi_068156.jpg"
+    ],
+    "file": "/dishes/sushi.webp",
+    "height": 382,
+    "similarity": 0.9533,
+    "source": "sushi_068102.jpg",
+    "width": 382
+  },
+  "tacos": {
+    "alternates": [
+      "tacos_028466.jpg",
+      "tacos_028058.jpg",
+      "tacos_028049.jpg",
+      "tacos_028375.jpg"
+    ],
+    "file": "/dishes/tacos.webp",
+    "height": 382,
+    "similarity": 0.9441,
+    "source": "tacos_027914.jpg",
+    "width": 382
+  },
+  "takoyaki": {
+    "alternates": [
+      "takoyaki_051827.jpg",
+      "takoyaki_051786.jpg",
+      "takoyaki_052366.jpg",
+      "takoyaki_051790.jpg"
+    ],
+    "file": "/dishes/takoyaki.webp",
+    "height": 384,
+    "similarity": 0.972,
+    "source": "takoyaki_052405.jpg",
+    "width": 384
+  },
+  "tiramisu": {
+    "alternates": [
+      "tiramisu_018859.jpg",
+      "tiramisu_018767.jpg",
+      "tiramisu_018945.jpg",
+      "tiramisu_019493.jpg"
+    ],
+    "file": "/dishes/tiramisu.webp",
+    "height": 512,
+    "similarity": 0.9596,
+    "source": "tiramisu_019015.jpg",
+    "width": 512
+  },
+  "tuna_tartare": {
+    "alternates": [
+      "tuna_tartare_021693.jpg",
+      "tuna_tartare_021538.jpg",
+      "tuna_tartare_021457.jpg",
+      "tuna_tartare_021260.jpg"
+    ],
+    "file": "/dishes/tuna_tartare.webp",
+    "height": 512,
+    "similarity": 0.9622,
+    "source": "tuna_tartare_021454.jpg",
+    "width": 512
+  },
+  "waffles": {
+    "alternates": [
+      "waffles_046154.jpg",
+      "waffles_045847.jpg",
+      "waffles_046265.jpg",
+      "waffles_045824.jpg"
+    ],
+    "file": "/dishes/waffles.webp",
+    "height": 512,
+    "similarity": 0.9474,
+    "source": "waffles_045925.jpg",
+    "width": 512
+  }
+}

@@ -459,3 +459,58 @@
     transform: translate(36px, 15px);
   }
 }
+
+/* ── Photographs, printed ────────────────────────────────────────────────
+   A photograph dropped into an inked page looks pasted in from another
+   document. Screening it — a halftone laid over slightly punchier tone —
+   puts it on the same press as the panels around it. The dot grid is a
+   radial-gradient rather than an asset, so it scales and costs nothing. */
+
+.dish-thumb::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: radial-gradient(var(--halftone) 30%, transparent 31%);
+  background-size: 4px 4px;
+  opacity: 0.55;
+  mix-blend-mode: multiply;
+}
+
+/* Multiply darkens, which is what a dot screen does on paper. On an ink-dark
+   page it would just fill the picture in, so the dots lighten there instead. */
+@media (prefers-color-scheme: dark) {
+  .dish-thumb::after {
+    mix-blend-mode: screen;
+  }
+}
+
+:root[data-theme="light"] .dish-thumb::after {
+  mix-blend-mode: multiply;
+}
+
+:root[data-theme="dark"] .dish-thumb::after {
+  mix-blend-mode: screen;
+}
+
+.halftone-img {
+  filter: contrast(1.08) saturate(1.06);
+}
+
+/* The ink border is the frame; a hover lift on the card already moves it, so
+   the image only needs to answer the pointer, not perform. */
+.dish-thumb img {
+  transition: transform var(--dur-panel, 260ms) var(--ease-snap, ease-out);
+}
+
+a:hover .dish-thumb img {
+  transform: scale(1.035);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dish-thumb img,
+  a:hover .dish-thumb img {
+    transition: none;
+    transform: none;
+  }
+}

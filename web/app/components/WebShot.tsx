@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 
+import { thwip } from "@/lib/sfx";
+
 /** Spider-Man anchoring a web strand to a corner of something on the page.
  *
  *  Drawn as one SVG spanning the section so the strand can start at his wrist
@@ -86,7 +88,12 @@ export function WebShot({
     window.addEventListener("resize", measure);
 
     // Fire once the anchor is known, so the strand never animates to a stale point.
-    const t = setTimeout(() => setFired(true), 400);
+    // The sound rides the same timer as the animation rather than the render, or
+    // it plays while the strand is still a point at his wrist.
+    const t = setTimeout(() => {
+      setFired(true);
+      if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) thwip();
+    }, 400);
     return () => {
       observer.disconnect();
       window.removeEventListener("resize", measure);
