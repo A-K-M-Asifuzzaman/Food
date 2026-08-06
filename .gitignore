@@ -48,3 +48,6 @@ prompt.md
 scripts/screenshot.mjs
 web/shot*.mjs
 .space-build/
+
+# Bangla walkthrough: kept locally, not distributed
+docs/bangla/
