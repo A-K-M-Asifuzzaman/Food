@@ -17,6 +17,7 @@ const NAV = [
   { href: "/dishes", label: "Dishes" },
   { href: "/explore", label: "The web" },
   { href: "/benchmarks", label: "Benchmarks" },
+  { href: "/pipeline", label: "Pipeline" },
   { href: "/methods", label: "Method" },
 ];
 
