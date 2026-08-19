@@ -48,3 +48,6 @@ prompt.md
 scripts/screenshot.mjs
 web/shot*.mjs
 .space-build/
+
+# Local-only documents, never distributed
+docs/bangla/
