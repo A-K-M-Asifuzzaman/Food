@@ -1,19 +1,8 @@
 import type { ReactNode } from "react";
 
-/** The comic print kit.
- *
- *  These wrap the CSS in `comic.css` so a page composes panels rather than
- *  remembering class strings, and so the print rules stay in one place when the
- *  language is extended.
- */
+/** The comic print kit. */
 
-/** Display type with plate misregistration.
- *
- *  The cyan and magenta layers are `aria-hidden` duplicates: a screen reader
- *  must hear the word once, not three times. They are also the reason this is a
- *  component — hand-writing three stacked spans per heading is how the offset
- *  ends up inconsistent across a site.
- */
+/** Display type with plate misregistration. */
 export function InkSplit({
   children,
   className = "",
@@ -62,9 +51,7 @@ export function Panel({
   );
 }
 
-/** The yellow narration box. Reserved for methodology asides — the voice that
- *  explains rather than the voice that reports. Overusing it would flatten that
- *  distinction, so it is deliberately not a general-purpose callout. */
+/** The yellow narration box. */
 export function Caption({
   children,
   className = "",
@@ -114,8 +101,7 @@ export function Beat({
   );
 }
 
-/** A statistic rendered as a panel. Figures are the product, so they get the
- *  mono face with tabular figures and the largest type on the card. */
+/** A statistic rendered as a panel. */
 export function StatPanel({
   value,
   label,

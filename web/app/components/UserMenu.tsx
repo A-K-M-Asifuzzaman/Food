@@ -5,12 +5,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { useAuth } from "./AuthProvider";
 
-/** The signed-in account, or the way in.
- *
- *  The Admin link only appears for an admin account. That is presentation, not
- *  protection — the server checks the same list against a verified token and
- *  returns 403 regardless of what the interface chose to show.
- */
+/** The signed-in account, or the way in. */
 export function UserMenu({ compact = false }: { compact?: boolean }) {
   const { user, loading, isAdmin, signOut } = useAuth();
   const [open, setOpen] = useState(false);
@@ -30,8 +25,8 @@ export function UserMenu({ compact = false }: { compact?: boolean }) {
     };
   }, [open]);
 
-  // Reserve the space rather than collapsing it, so the header does not jump
-  // when Firebase finishes restoring the session a beat after first paint.
+  // Reserve the space rather than collapsing it, so the header does not jump when
+  // Firebase finishes restoring the session a beat after first paint.
   if (loading) return <span className="w-20 h-8" aria-hidden="true" />;
 
   if (!user) {

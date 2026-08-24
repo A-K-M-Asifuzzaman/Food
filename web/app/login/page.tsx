@@ -6,10 +6,7 @@ import { Suspense, useEffect, useState } from "react";
 
 import { useAuth } from "../components/AuthProvider";
 
-/** Firebase surfaces machine codes. A person reading "auth/invalid-credential"
- *  learns nothing they can act on, so each is translated into the thing to try
- *  next. Unknown codes fall through to the raw message rather than being
- *  swallowed — a mystery is better than a wrong explanation. */
+/** Firebase surfaces machine codes. */
 function explain(code: string, fallback: string): string {
   const map: Record<string, string> = {
     "auth/invalid-credential": "That email and password do not match an account.",

@@ -1,12 +1,6 @@
 import { getKb } from "./kb";
 
-/** The command palette's index.
- *
- *  Built on the server and handed to the client as a trimmed projection. The
- *  knowledge base is 300 kB and the palette only matches on a name, a cuisine
- *  and a few tags — shipping the nutrient tables would be a third of a megabyte
- *  nobody reads to support a search box.
- */
+/** The command palette's index. */
 
 export type SearchItem = {
   id: string;
@@ -43,9 +37,7 @@ export function buildSearchIndex(): SearchItem[] {
   return [...PAGES, ...dishes];
 }
 
-/** Subsequence match with a score, which is what makes "chkn" find "Chicken
- *  Wings". A plain `includes` would not, and a full fuzzy library is a
- *  dependency for something this small. */
+/** Subsequence match with a score, which is what makes "chkn" find "Chicken Wings". */
 export function scoreMatch(item: SearchItem, query: string): number {
   const q = query.toLowerCase().trim();
   if (!q) return 0;

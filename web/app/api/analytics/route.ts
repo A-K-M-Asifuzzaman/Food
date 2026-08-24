@@ -1,7 +1,6 @@
 import { forwardAuth, relay, UPSTREAM } from "@/lib/upstream";
 
-// Aggregates across every account. Admin-only, checked upstream against a
-// verified token — this route relays, it does not decide.
+// Aggregates across every account.
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 

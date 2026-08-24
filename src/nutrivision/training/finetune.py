@@ -1,14 +1,4 @@
-"""End-to-end fine-tuning of a timm backbone on Food-101.
-
-Runs in progressive-resolution stages. Most epochs happen at a cheap resolution
-where the model learns what the classes are, then a short high-resolution stage
-closes the train/test resolution gap. On a laptop this buys most of the accuracy
-of a full high-res run for roughly a third of the wall clock.
-
-Every epoch writes a resumable checkpoint. A multi-day run on a machine that
-also gets used for other things will be interrupted, and losing 20 hours to a
-closed lid is not an acceptable failure mode.
-"""
+"""End-to-end fine-tuning of a timm backbone on Food-101."""
 
 from __future__ import annotations
 
@@ -279,13 +269,7 @@ def run_stage(
 
 
 def resize_state_dict(sd: dict, model) -> dict:
-    """Match a state dict to a model that may use a different input resolution.
-
-    Only the position embedding depends on resolution; everything else transfers
-    verbatim. Building each stage at its own `img_size` rather than interpolating every
-    forward pass keeps the resize out of the autograd graph — its antialiased backward
-    is not implemented on MPS, and paying for it per step would be wasteful anyway.
-    """
+    """Match a state dict to a model that may use a different input resolution."""
     out = {k: v for k, v in sd.items()}
     key = "pos_embed"
     if key in out and out[key].shape != model.pos_embed.shape:
@@ -310,8 +294,6 @@ def build_model(cfg: FinetuneConfig, size: int, weights: dict | None, grad_ckpt:
         model.load_state_dict(resize_state_dict(weights, model))
     model = model.to(DEVICE)
     if grad_ckpt:
-        # Recomputing activations in the backward pass is what brings a 304M-parameter
-        # model at 448 inside 18 GB of unified memory; it costs roughly 20% throughput.
         model.set_grad_checkpointing(True)
     return model
 
@@ -321,8 +303,7 @@ def main() -> None:
     p.add_argument("--backbone", default=FinetuneConfig.backbone)
     p.add_argument("--out-name", default=FinetuneConfig.out_name)
     # Batch sizes are set from measured peak memory on an 18 GB M3 Pro: bs 24 at 224
-    # needed 22.6 GB and died. With gradient checkpointing, 16 at 224 peaks at 7.2 GB
-    # and 4 at 448 at 9.1 GB, both of which leave room for the rest of the machine.
+    # needed 22.6 GB and died.
     p.add_argument("--stage1-size", type=int, default=224)
     p.add_argument("--stage1-epochs", type=int, default=6)
     p.add_argument("--stage1-bs", type=int, default=16)

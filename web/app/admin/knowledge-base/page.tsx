@@ -18,8 +18,6 @@ export default function KnowledgeBasePage() {
     .sort((a, b) => b[1] - a[1])
     .slice(0, 8);
 
-  // Composites with the fewest components carry the most uncertainty: a dish
-  // approximated by two ingredients is a rougher estimate than one built from six.
   const thin = composite
     .map((e) => ({ e, n: e.components?.length ?? 0 }))
     .sort((a, b) => a.n - b.n)

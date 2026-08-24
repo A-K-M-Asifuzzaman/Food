@@ -5,18 +5,7 @@ import { Canvas, useFrame } from "@react-three/fiber";
 import { useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 
-/** The GraphRAG knowledge graph rendered as a literal web.
- *
- *  This is the one 3D view where the metaphor and the data coincide exactly: the
- *  dish -> ingredient graph *is* a web, and the strands are real weighted edges
- *  from USDA composite recipes, not decoration. Every node and line here comes
- *  from `artifacts/index/graph.json`, which the retriever also queries.
- *
- *  Layout is precomputed server-side. Running a force simulation in the browser
- *  would spend the first seconds of the most visually important view watching
- *  nodes settle, differently on every device; baked positions are correct on the
- *  first frame and identical across reloads.
- */
+/** The GraphRAG knowledge graph rendered as a literal web. */
 
 export type GraphNode = {
   id: string;
@@ -91,8 +80,7 @@ function Node({
   onSelect: (id: string | null) => void;
 }) {
   const ref = useRef<THREE.Mesh>(null);
-  // Radius encodes degree, so hub ingredients read as hubs. sqrt keeps a node
-  // in fifteen recipes from dwarfing one in two.
+  // Radius encodes degree, so hub ingredients read as hubs.
   const radius = 0.12 + Math.sqrt(node.degree) * 0.07;
   const colour = node.type === "dish" ? DISH : INGREDIENT;
 
@@ -150,8 +138,7 @@ function Scene({
   onSelect: (id: string | null) => void;
 }) {
   const [hovered, setHovered] = useState<string | null>(null);
-  // A click pins the focus; a hover only previews it. Without the distinction
-  // the panel empties the moment the pointer leaves the canvas.
+  // A click pins the focus; a hover only previews it.
   const active = hovered ?? selected;
 
   const index = useMemo(

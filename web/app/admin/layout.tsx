@@ -9,16 +9,7 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-/** The operator surface.
- *
- *  Deliberately plainer than the public site: an operator reads numbers under
- *  time pressure, and the print flourishes that make a landing page memorable
- *  make a dashboard slower to scan. Same tokens, less ink.
- *
- *  Restricted to the operator accounts in ADMIN_EMAILS. The gate here is
- *  presentation; the endpoints behind it check the same list against a verified
- *  ID token, so editing this component in devtools buys a page of 403s.
- */
+/** The operator surface. */
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex-1 w-full">

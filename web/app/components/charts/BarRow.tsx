@@ -4,17 +4,7 @@ import { useState } from "react";
 
 import { CATEGORICAL, GRID, SEQUENTIAL } from "./palette";
 
-/** Horizontal bars for comparing magnitude across named categories.
- *
- *  Horizontal rather than vertical because the categories here have long names —
- *  "graph_inversion", "nutrient_lookup" — and rotated axis labels are a reliable
- *  way to make a chart unreadable.
- *
- *  Sequential by default: one hue, more-is-darker. Categorical colour would imply
- *  the categories are the subject, when the job is comparing sizes. An `emphasis`
- *  option exists for the common case where one row is the story and the rest are
- *  context — that reads far better than five competing hues.
- */
+/** Horizontal bars for comparing magnitude across named categories. */
 
 export type BarDatum = { label: string; value: number; note?: string };
 
@@ -36,8 +26,8 @@ export function BarRow({
 
   const colourFor = (d: BarDatum, i: number) => {
     if (emphasis) return d.label === emphasis ? CATEGORICAL[0] : "color-mix(in oklab, var(--line) 22%, transparent)";
-    // More-is-darker within the sequential ramp, by rank rather than raw value so
-    // a cluster of similar numbers still separates visually.
+    // More-is-darker within the sequential ramp, by rank rather than raw value so a
+    // cluster of similar numbers still separates visually.
     const rank = [...data].sort((a, b) => a.value - b.value).findIndex((x) => x.label === d.label);
     const step = Math.min(SEQUENTIAL.length - 1, 1 + Math.floor((rank / Math.max(1, data.length - 1)) * (SEQUENTIAL.length - 2)));
     return SEQUENTIAL[step];

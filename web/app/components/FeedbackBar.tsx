@@ -3,14 +3,7 @@
 import { useState } from "react";
 import { useAuth } from "./AuthProvider";
 
-/** Was the prediction right?
- *
- *  This is the only signal the system gets that a labelled test split cannot
- *  give it. 97.16% on Food-101 says nothing about the photo someone actually
- *  took, in their kitchen, of a dish plated differently from every training
- *  image — and a thumbs-down on a confident prediction is exactly the case
- *  worth re-examining. The votes surface in the admin console's feedback panel.
- */
+/** Was the prediction right? */
 export function FeedbackBar({ foodClass, title }: { foodClass: string; title: string }) {
   const { authFetch } = useAuth();
   const [sent, setSent] = useState<boolean | null>(null);

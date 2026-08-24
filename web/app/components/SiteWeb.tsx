@@ -4,19 +4,7 @@ import { usePathname } from "next/navigation";
 
 import { SpiderWebBackground } from "./SpiderWebBackground";
 
-/** The web, behind every page.
- *
- *  Fixed rather than absolute, so it stays put while the page scrolls past it —
- *  a web that scrolls away is a decoration, one that stays is a backdrop.
- *
- *  The home page is the exception. Its hero already carries a web anchored to
- *  the corner the spider hangs from, and that one has to scroll with him or the
- *  strand he is holding drifts off his hand. Rendering both would put two
- *  lattices at different depths on the busiest page on the site.
- *
- *  Reading routes get a heavier web than working ones: nobody is trying to
- *  compare a nutrient table through a lattice, but a page of prose can carry it.
- */
+/** The web, behind every page. */
 
 const QUIET = ["/analyze", "/admin", "/history", "/login"];
 

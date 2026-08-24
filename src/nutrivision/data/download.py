@@ -1,9 +1,4 @@
-"""Materialise Food-101 from the Hub into a plain image folder tree.
-
-Parquet is great for transfer and terrible for the random access pattern of
-multi-epoch training with worker processes, so we pay a one-off decode cost and
-write JPEGs to disk once.
-"""
+"""Materialise Food-101 from the Hub into a plain image folder tree."""
 
 from __future__ import annotations
 

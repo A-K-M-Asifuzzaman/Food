@@ -6,24 +6,11 @@ import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { SkeletonUtils } from "three-stdlib";
 
-/** Renders a rigged humanoid from a glTF file, shaded to match the page.
- *
- *  Deliberately model-agnostic: it takes whatever skinned mesh is at `url`,
- *  finds the animation clip whose name looks closest to what it wants, and
- *  falls back to a procedural sway if the file ships no clips at all. That is
- *  the difference between a component tied to one asset and one you can drop a
- *  different character into without touching the code.
- *
- *  The imported materials are replaced rather than used. A model authored for
- *  physically based rendering arrives with roughness and metalness maps that
- *  look photographic, and a photographic figure is the one thing on this site
- *  that is not printed — so everything is re-shaded onto a toon ramp with an
- *  inverted-hull outline, and only the base colour survives the transfer.
- */
+/** Renders a rigged humanoid from a glTF file, shaded to match the page. */
 
 const INK = "#0b0b0f";
 
-/** Clip names vary by author. Prefer something idle-ish, take anything if not. */
+/** Clip names vary by author. */
 const CLIP_PREFERENCE = [/idle/i, /hang/i, /float/i, /breath/i, /stand/i];
 
 function toonRamp() {
@@ -50,7 +37,7 @@ export function SlingerModel({
   url: string;
   scale?: number;
   outline?: boolean;
-  /** Two-tone suit. Pass null to keep the model's own materials. */
+  /** Two-tone suit. */
   suit?: { top: string; bottom: string } | null;
   /** Height of the colour break, 0 at the feet and 1 at the crown. */
   suitSplit?: number;
@@ -58,21 +45,18 @@ export function SlingerModel({
   targetHeight?: number;
   /** Ink line weight, as a fraction of view depth. */
   outlineWidth?: number;
-  /** Resting rotation. A static sculpt has only its attitude to act with. */
+  /** Resting rotation. */
   pose?: [number, number, number];
-  /** Drop meshes below this vertex count. Character models routinely ship rig
-   *  widgets and prop geometry that are not the character. */
+  /** Drop meshes below this vertex count. */
   hideBelowVerts?: number;
 }) {
   const stage = useRef<THREE.Group>(null);
   const group = useRef<THREE.Group>(null);
-  // Draco-compressed geometry, with the decoder served from this origin. The
-  // default path is a Google CDN, which makes a decorative figure depend on a
-  // third party being up.
+  // Draco-compressed geometry, with the decoder served from this origin.
   const { scene, animations } = useGLTF(url, "/draco/");
 
-  // Skinned meshes cannot be shared between renderers by reference — cloning
-  // the scene graph normally leaves both copies driven by one skeleton.
+  // Skinned meshes cannot be shared between renderers by reference — cloning the scene
+  // graph normally leaves both copies driven by one skeleton.
   const model = useMemo(() => SkeletonUtils.clone(scene) as THREE.Group, [scene]);
   const ramp = useMemo(toonRamp, []);
 
@@ -86,17 +70,12 @@ export function SlingerModel({
   useEffect(() => {
     const outlines: THREE.Mesh[] = [];
 
-    // Collect first. Adding the outline hull inside the traversal makes the
-    // walk visit the hull it just created, clone that, and recurse until the
-    // stack gives out.
+    // Collect first.
     const meshes: THREE.Mesh[] = [];
     model.traverse((child) => {
       if ((child as THREE.Mesh).isMesh) meshes.push(child as THREE.Mesh);
     });
 
-    // Rig widgets and prop geometry come along with a lot of published models —
-    // this one carries two meshes taller than the character itself, which
-    // render as grey slabs once the original materials are replaced.
     if (hideBelowVerts > 0) {
       meshes.forEach((mesh) => {
         const count = mesh.geometry?.getAttribute("position")?.count ?? 0;
@@ -109,8 +88,7 @@ export function SlingerModel({
     const height = Math.max(bounds.max.y - bounds.min.y, 1e-4);
     const split = bounds.min.y + height * suitSplit;
     // Proportional, because model units vary wildly - metres for one author,
-    // centimetres for the next. A fixed width blended the whole body to purple
-    // on a model 1.8 units tall.
+    // centimetres for the next.
     const blend = height * 0.015;
 
     meshes.forEach((mesh) => {
@@ -123,14 +101,7 @@ export function SlingerModel({
         gradientMap: ramp,
       });
 
-      /** Paint the suit by height instead of by texture.
-       *
-       *  A downloaded humanoid arrives in whatever colour its author chose,
-       *  usually as one material over the whole body, so there is no "legs"
-       *  submesh to recolour. Splitting in the shader on the bind-pose Y gives
-       *  a two-tone suit on any model — and using the bind pose rather than the
-       *  skinned position is what stops the colours sliding around the body as
-       *  the character moves, exactly as a texture would not. */
+      /** Paint the suit by height instead of by texture. */
       if (suit) {
         material.onBeforeCompile = (shader) => {
           shader.uniforms.uSplit = { value: split };
@@ -157,17 +128,9 @@ export function SlingerModel({
 
       if (!outline) return;
       // Back faces displaced along their own normals, in view space.
-      //
-      // Uniformly scaling a clone is the trick everyone reaches for first and
-      // it only works when the geometry is centred on its own origin. On a
-      // model whose parts sit far from theirs it throws each piece outward
-      // instead of thickening it, which is what smeared black slabs behind
-      // this character's arms. Displacement has to be per-vertex.
       const shell = mesh.clone() as THREE.Mesh;
-      // clone() copies the transform, and the shell is then parented *to* the
-      // mesh — so the mesh's own transform lands on it twice. Identity on a
-      // model whose nodes are identity, and a black duplicate lying on its
-      // back on one carrying a Z-up conversion.
+      // clone() copies the transform, and the shell is then parented *to* the mesh — so
+      // the mesh's own transform lands on it twice.
       shell.position.set(0, 0, 0);
       shell.rotation.set(0, 0, 0);
       shell.scale.set(1, 1, 1);
@@ -215,10 +178,7 @@ export function SlingerModel({
   useFrame((state) => {
     const t = state.clock.getElapsedTime();
 
-    // Sway and drift only. This model ships a skeleton but no animation clips,
-    // and a web leaving the hand of a figure whose arm never moves reads as a
-    // bug rather than an effect. The strand comes back when the shoulder is
-    // animated to throw it.
+    // Sway and drift only.
     if (group.current) {
       group.current.rotation.z = Math.sin(t * 0.55) * 0.05;
       group.current.rotation.y = Math.sin(t * 0.37) * 0.18;
@@ -227,9 +187,6 @@ export function SlingerModel({
   });
 
   return (
-    // Pose and sway are separate groups on purpose: the frame loop writes
-    // rotation every tick, so a resting attitude set on the same object would
-    // be overwritten sixty times a second.
     <group ref={stage} scale={scale * targetHeight} dispose={null}>
       <group rotation={pose}>
         <group ref={group}>

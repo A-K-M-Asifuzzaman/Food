@@ -4,22 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 type Status = "checking" | "cold" | "warming" | "ready" | "demo" | "unreachable";
 
-/** Wakes the model service and shows a spider spinning the web while it loads.
- *
- *  The service sleeps on the free tier, and the first request afterwards pays
- *  roughly thirty seconds of container wake plus backbone download. Without
- *  this, a first-time visitor uploads a photo and watches a button do nothing
- *  for half a minute, which reads as broken.
- *
- *  So the page asks the service to start loading the moment it opens, and shows
- *  honest progress while it does. By the time a photo is chosen the model is
- *  usually resident and the prediction is immediate.
- *
- *  The bar is deliberately **not** a fake percentage. There is no progress
- *  signal to report — the service tells us "loaded" or "not loaded" and nothing
- *  in between — so the spider walks a fixed circuit and the elapsed seconds are
- *  shown as the honest measure of how long it has taken.
- */
+/** Wakes the model service and shows a spider spinning the web while it loads. */
 export function ApiWarmup({ onReady }: { onReady?: () => void } = {}) {
   const [status, setStatus] = useState<Status>("checking");
   const [elapsed, setElapsed] = useState(0);
@@ -48,14 +33,13 @@ export function ApiWarmup({ onReady }: { onReady?: () => void } = {}) {
         if (data.status === "demo") return setStatus("demo");
         if (data.status === "unreachable") return setStatus("unreachable");
 
-        // Cold. Kick the load off and poll until the backbones are resident.
+        // Cold.
         setStatus("warming");
         startedAt.current = Date.now();
         void fetch("/api/warm", { method: "POST" });
 
-        // A container wake is about thirty seconds and a cold model load
-        // under two minutes. Past that the service is not waking, and polling
-        // every three seconds until the tab closes only drains a phone.
+        // A container wake is about thirty seconds and a cold model load under two
+        // minutes.
         let attempts = 0;
         const MAX_ATTEMPTS = 60;
 

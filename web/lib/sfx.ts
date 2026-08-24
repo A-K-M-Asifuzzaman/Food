@@ -1,19 +1,4 @@
-/** The web-shot sound, synthesised.
- *
- *  Shipping an audio file was the obvious route and the wrong one: the sound
- *  everybody pictures is a licensed asset, and a royalty-free stand-in is a
- *  download on every page load to play something two hundred milliseconds long.
- *  Web Audio builds it from noise and a swept filter for nothing.
- *
- *  What a thwip actually is, acoustically: a burst of broadband noise whose
- *  bright content collapses fast — the hiss of something leaving under pressure
- *  — with a pitched whip under it that falls as the strand pays out. Two
- *  layers, one envelope each.
- *
- *  Browsers refuse to start an AudioContext before the reader has interacted
- *  with the page, so the context is created lazily on the first gesture and
- *  every call before that is a silent no-op rather than an error.
- */
+/** The web-shot sound, synthesised. */
 
 const STORAGE_KEY = "foodgenome:sound";
 
@@ -27,11 +12,7 @@ export function isMuted(): boolean {
   return muted;
 }
 
-/** Read the stored preference.
- *
- *  Silent unless asked for. A page that makes noise on its own every few
- *  seconds is irritating however good the noise is, and the reader did not ask
- *  for it — only an explicit "on" turns it on, and that choice persists. */
+/** Read the stored preference. */
 export function loadPreference(): boolean {
   if (typeof window === "undefined") return true;
   muted = window.localStorage.getItem(STORAGE_KEY) !== "on";
@@ -43,7 +24,7 @@ export function setMuted(next: boolean): void {
   try {
     window.localStorage.setItem(STORAGE_KEY, next ? "off" : "on");
   } catch {
-    // Private browsing denies writes. The preference lasts the session instead.
+    // Private browsing denies writes.
   }
 }
 
@@ -55,7 +36,7 @@ function buildNoise(context: AudioContext): AudioBuffer {
   return buffer;
 }
 
-/** Attach once. The first gesture of any kind opens the context. */
+/** Attach once. */
 export function armAudio(): () => void {
   if (typeof window === "undefined") return () => {};
   loadPreference();
@@ -75,17 +56,11 @@ export function armAudio(): () => void {
   return () => events.forEach((e) => window.removeEventListener(e, open));
 }
 
-/**
- * Fire one web-shot.
- *
- * `strength` scales loudness and brightness together — a short strand across a
- * card should not sound like one crossing the viewport.
- */
+/** Fire one web-shot. */
 export function thwip(strength = 1): void {
   if (!unlocked || muted || !ctx || !noiseBuffer) return;
 
-  // Several WebShots can mount at once on a route change. Without this they
-  // stack into a single loud smear instead of reading as one sound.
+  // Several WebShots can mount at once on a route change.
   const now = ctx.currentTime;
   if (now - lastPlayed < 0.06) return;
   lastPlayed = now;
@@ -98,8 +73,7 @@ export function thwip(strength = 1): void {
   out.gain.value = 0.5 * level;
   out.connect(ctx.destination);
 
-  // Layer one: the hiss. Bandpass swept down hard is what makes it read as
-  // something released under tension rather than a plain noise burst.
+  // Layer one: the hiss.
   const noise = ctx.createBufferSource();
   noise.buffer = noiseBuffer;
   noise.playbackRate.value = vary;

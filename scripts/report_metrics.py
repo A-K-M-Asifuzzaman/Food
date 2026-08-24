@@ -1,11 +1,4 @@
-"""Compute the classification metrics the course report asks for.
-
-The evaluation scripts already saved per-split logits, so precision, recall,
-F1, per-class accuracy and the confusion matrix are all recoverable without
-re-running a single forward pass. Writing them out here keeps the report on the
-same footing as the rest of the project: every figure quoted is measured, and
-the file it came from is named.
-"""
+"""Compute the classification metrics the course report asks for."""
 
 from __future__ import annotations
 
@@ -63,8 +56,7 @@ def main() -> None:
         },
     }
 
-    # Per-class accuracy. With 250 test images in every class, recall per class
-    # is exactly per-class accuracy, so the ranking doubles as an error map.
+    # Per-class accuracy.
     cm = confusion_matrix(y, pred, labels=range(len(classes)))
     per_class = cm.diagonal() / cm.sum(axis=1)
     order = np.argsort(per_class)

@@ -9,9 +9,6 @@ import { SiteWeb } from "./components/SiteWeb";
 import { THEME_INIT_SCRIPT } from "./components/ThemeToggle";
 import { buildSearchIndex } from "@/lib/search";
 
-// Display is heavy and condensed for headings and SFX; body is a humanist sans
-// because this is a nutrition app and figures must read unambiguously; mono
-// carries tabular figures so nutrition columns align.
 const anton = Anton({ variable: "--font-anton", subsets: ["latin"], weight: "400" });
 const sourceSans = Source_Sans_3({ variable: "--font-source-sans", subsets: ["latin"] });
 const jetbrains = JetBrains_Mono({ variable: "--font-jetbrains", subsets: ["latin"] });

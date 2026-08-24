@@ -1,14 +1,4 @@
-"""Constants the served model depends on.
-
-Every value here was measured, and every one is read back from the report it was
-measured into rather than pasted as a literal. A calibration temperature or a
-conformal threshold that silently drifts from the run that produced it is worse
-than having none at all: the API would keep returning confident numbers that no
-longer mean what they claim.
-
-The fallbacks exist so the service still starts in a container that was built
-without `artifacts/`, and it says so loudly when that happens.
-"""
+"""Constants the served model depends on."""
 
 from __future__ import annotations
 
@@ -80,6 +70,6 @@ def load_constants() -> dict:
 
 CONSTANTS = load_constants()
 
-# LAC includes every class whose calibrated probability clears this, and the
-# top-1 class unconditionally so a set is never empty.
+# LAC includes every class whose calibrated probability clears this, and the top-1 class
+# unconditionally so a set is never empty.
 SET_THRESHOLD = 1.0 - CONSTANTS["conformal_qhat"]

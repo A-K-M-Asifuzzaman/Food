@@ -117,12 +117,7 @@ export function SiteHeader({ searchIndex }: { searchIndex: SearchItem[] }) {
   );
 }
 
-/** The account block at the foot of the mobile menu.
- *
- *  On a phone there is no room for a dropdown that has to be opened before it
- *  can be read, so the menu shows the whole thing at once: who you are, then
- *  the pages that belong to you, indented under it.
- */
+/** The account block at the foot of the mobile menu. */
 function AccountSection({ onNavigate }: { onNavigate: () => void }) {
   const { user, loading, isAdmin, signOut } = useAuth();
 

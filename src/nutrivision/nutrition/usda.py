@@ -1,9 +1,4 @@
-"""Thin reader over the USDA SR Legacy CSV release.
-
-SR Legacy is the last USDA release that ships complete micronutrient profiles
-for generic, unbranded foods, which is exactly what you want when the input is
-"this looks like lasagna" rather than a specific product barcode.
-"""
+"""Thin reader over the USDA SR Legacy CSV release."""
 
 from __future__ import annotations
 

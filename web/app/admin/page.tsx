@@ -10,13 +10,7 @@ import {
 } from "@/lib/reports";
 import { getKb } from "@/lib/kb";
 
-/** Operator overview.
- *
- *  Every tile is a number the system measured, and every one links to the page
- *  that explains it. A dashboard that shows a figure with nowhere to go is a
- *  poster; the value is in getting from "that looks wrong" to the evidence in one
- *  click.
- */
+/** Operator overview. */
 
 function Tile({
   value,

@@ -16,14 +16,7 @@ const GraphWeb = dynamic(() => import("./three/GraphWeb"), {
   ),
 });
 
-/** The explorer around the 3D scene.
- *
- *  A graph view that can only be orbited is a poster. What makes it a tool is
- *  being able to find a node by name, see exactly what it connects to, and step
- *  from there into the dish page — which is why selection is lifted out of the
- *  canvas and shared with a panel that renders real neighbours rather than a
- *  tooltip that vanishes.
- */
+/** The explorer around the 3D scene. */
 export function GraphExplorer({ data }: { data: GraphData }) {
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState<string | null>(null);

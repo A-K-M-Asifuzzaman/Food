@@ -11,8 +11,10 @@ import { NutrientHelix } from "./NutrientHelix";
 
 const nutrientMeta = getKb().nutrients;
 
-/** Confidence bands pair colour with a label and an icon, because colour is
- *  never allowed to be the sole carrier of meaning. */
+/**
+ *  Confidence bands pair colour with a label and an icon, because colour is never
+ *  allowed to be the sole carrier of meaning.
+ */
 function confidenceBand(p: number) {
   if (p >= 0.85) return { label: "High confidence", color: "var(--color-green)", mark: "✓" };
   if (p >= 0.65) return { label: "Moderate confidence", color: "var(--color-amber)", mark: "!" };

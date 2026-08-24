@@ -4,9 +4,8 @@ import { forwardAuth, relay } from "@/lib/upstream";
 
 const UPSTREAM = process.env.FOODGENOME_API;
 
-// Counters live in the model service's memory, so they are read on every
-// request rather than cached. A stale operations dashboard is worse than a slow
-// one: the whole point is seeing what is happening now.
+// Counters live in the model service's memory, so they are read on every request rather
+// than cached.
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 

@@ -1,48 +1,4 @@
-"""Durable storage for predictions, questions and feedback.
-
-The in-process counters in `metrics.py` answer "what is happening now" and lose
-everything when the container restarts — which, on a free Space that sleeps
-after two days idle, is often. This module answers the other question: what has
-happened over time, per dish, per visitor, and at what cost.
-
-Two backends are implemented behind one interface, chosen by whichever
-credential is present:
-
-* **Firestore** (`FIREBASE_CREDENTIALS`) — the deployed choice. The project
-  already exists, the free tier covers this traffic many times over, and it
-  needs no network allowlist, which matters because a Hugging Face Space has no
-  stable egress IP to allowlist.
-* **MongoDB** (`MONGODB_URI`) — kept because its aggregation pipeline does the
-  admin rollups server-side in one round trip, where Firestore has no GROUP BY
-  and the same rollups are computed here in Python over a capped window. If the
-  analytics ever outgrow that cap, this is the migration path and it is already
-  written.
-
-Three properties matter more than the choice:
-
-**It is optional.** With neither credential the whole module is a no-op and
-every endpoint still works. A reviewer cloning the repo gets a running service
-without signing up for anything.
-
-**Writes never block a response.** The database is a network round-trip away,
-sometimes a slow one, and a prediction that already cost seven seconds of
-inference should not wait on an insert. Documents go onto a bounded queue and a
-daemon thread drains it. If the queue is full or the write fails, the document
-is dropped and logged — losing an analytics row is strictly better than failing
-a user's request.
-
-**Rows belong to a verified account.** Every document carries the Firebase uid
-from the caller's ID token, not an id the request asked to be filed under. That
-is what lets `/history` return your predictions and nobody else's: the uid comes
-from the signature, so there is no value a caller can send to read another
-account's rows. Stored alongside it is the email, which is what the admin
-console shows.
-
-Nothing in the browser talks to the database directly. The security rules in
-`firestore.rules` deny all client access; every read goes through the API, where
-`/history` is scoped to the caller and `/analytics` is checked against the admin
-list.
-"""
+"""Durable storage for predictions, questions and feedback."""
 
 from __future__ import annotations
 
@@ -60,28 +16,20 @@ MONGO_URI = os.environ.get("MONGODB_URI", "").strip()
 FIREBASE_CREDENTIALS = os.environ.get("FIREBASE_CREDENTIALS", "").strip()
 DB_NAME = os.environ.get("MONGODB_DB", "foodgenome")
 
-# Bounded: if the database is unreachable the queue must not grow until the
-# container is killed for memory. 500 pending documents is far more than this
-# service can generate while a single write is in flight.
+# Bounded: if the database is unreachable the queue must not grow until the container is
+# killed for memory.
 QUEUE_SIZE = 500
 
-# Firestore has no aggregation pipeline, so analytics read documents and group
-# them here. The cap is what keeps that honest: past it, the numbers would
-# quietly describe a subset while looking like a total, so the payload says how
-# many rows it actually read.
+# Firestore has no aggregation pipeline, so analytics read documents and group them
+# here.
 SCAN_LIMIT = 5000
 
 
-# ── backends ────────────────────────────────────────────────────────────
+# ── backends ────────────────────────────────────────────────────────────.
 
 
 class FirestoreBackend:
-    """Google Firestore, via the Admin SDK.
-
-    The admin SDK bypasses security rules, which is why the rules can deny every
-    client operation outright. The only path to this data is through this
-    process.
-    """
+    """Google Firestore, via the Admin SDK."""
 
     name = "firestore"
 
@@ -92,8 +40,8 @@ class FirestoreBackend:
         info = json.loads(credentials_json)
         app = firebase_admin.initialize_app(credentials.Certificate(info))
         self.db = firestore.client(app)
-        # A cheap round-trip, so a bad key fails at startup rather than on the
-        # first prediction.
+        # A cheap round-trip, so a bad key fails at startup rather than on the first
+        # prediction.
         next(self.db.collection("predictions").limit(1).stream(), None)
 
     def insert(self, collection: str, document: dict) -> None:
@@ -101,19 +49,7 @@ class FirestoreBackend:
 
     def _read(self, collection: str, since: datetime | None = None,
               session: str | None = None, limit: int = SCAN_LIMIT) -> list[dict]:
-        """One filtered read.
-
-        Firestore will not combine an equality filter with an order_by on a
-        different field without a composite index, and a project that has to be
-        told to build three indexes before its history page works is a project
-        that does not work on a fresh clone. So the session query is sorted
-        here instead: it is capped at a hundred rows by the endpoint, and
-        sorting a hundred dictionaries costs nothing next to the round trip
-        that fetched them.
-
-        The time-range scan keeps its server-side sort — that one is a single
-        field, so it needs no index and can be limited before transfer.
-        """
+        """One filtered read."""
         query = self.db.collection(collection)
         if session:
             rows = [
@@ -148,7 +84,6 @@ class FirestoreBackend:
 
     def delete_session(self, collection: str, session: str) -> int:
         # Firestore has no "delete by query"; the documents have to be walked.
-        # Batched at 400, under the 500-operation limit on a write batch.
         removed = 0
         while True:
             docs = list(
@@ -214,7 +149,7 @@ class MongoBackend:
         return self.db[collection].delete_many({"session": session}).deleted_count
 
 
-# ── the store ───────────────────────────────────────────────────────────
+# ── the store ───────────────────────────────────────────────────────────.
 
 
 class Store:
@@ -246,9 +181,7 @@ class Store:
             log.info("store connected: %s", self.backend.name)
             threading.Thread(target=self._drain, daemon=True).start()
         except Exception as exc:  # noqa: BLE001 — any failure means "run without it"
-            # First line only. Google's PermissionDenied carries forty lines of
-            # protobuf metadata, and pasting that into a dashboard panel tells a
-            # reader nothing the first sentence did not.
+            # First line only.
             self.error = f"{type(exc).__name__}: {str(exc).splitlines()[0][:200]}"
             log.warning("store unavailable, running without persistence: %s", self.error)
 
@@ -270,7 +203,7 @@ class Store:
         except queue.Full:
             self.dropped += 1
 
-    # ── writes ──────────────────────────────────────────────────────────
+    # ── writes ──────────────────────────────────────────────────────────.
 
     def record_prediction(self, *, session: str | None, email: str | None,
                           food_class: str, title: str,
@@ -296,8 +229,8 @@ class Store:
             "at": datetime.now(timezone.utc),
             "session": session,
             "email": email,
-            # Truncated: the analytics need the shape of what people ask, not a
-            # verbatim log of it.
+            # Truncated: the analytics need the shape of what people ask, not a verbatim
+            # log of it.
             "question": question[:200],
             "food_class": food_class,
             "mode": mode,
@@ -318,7 +251,7 @@ class Store:
             "note": (note or "")[:200] or None,
         })
 
-    # ── reads ───────────────────────────────────────────────────────────
+    # ── reads ───────────────────────────────────────────────────────────.
 
     def history(self, session: str, limit: int = 40) -> dict:
         """One visitor's own record, keyed by the id their browser generated."""
@@ -347,12 +280,7 @@ class Store:
         }
 
     def erase(self, session: str) -> dict:
-        """Delete everything belonging to one account.
-
-        Offered because the history page promises it. A record a person cannot
-        remove is not a record they consented to keep, and "contact us to
-        delete your data" is not a delete button.
-        """
+        """Delete everything belonging to one account."""
         if not self.enabled:
             return {"enabled": False, "error": self.error}
         return {
@@ -364,11 +292,7 @@ class Store:
         }
 
     def analytics(self, days: int = 14) -> dict:
-        """Aggregates for the admin console: volume, dishes, cost, reliability.
-
-        Distinct from /stats, which reports the current container and is empty
-        after every restart. These survive.
-        """
+        """Aggregates for the admin console: volume, dishes, cost, reliability."""
         if not self.enabled:
             return {"enabled": False, "error": self.error}
 
@@ -401,8 +325,8 @@ class Store:
                 "mean_ms": round(bucket["ms"] / n),
             })
 
-        # Spend per day, which is the number that decides whether the generator
-        # stays on the hosted model or falls back to templates.
+        # Spend per day, which is the number that decides whether the generator stays on
+        # the hosted model or falls back to templates.
         spend: dict[str, dict] = {}
         for row in questions:
             bucket = spend.setdefault(row["at"][:10], {
@@ -428,10 +352,7 @@ class Store:
         for bucket in top_dishes:
             bucket["mean_confidence"] = round(bucket.pop("confidence") / bucket["count"], 4)
 
-        # Per account. This is the admin answer to "who is using it and what
-        # are they photographing" — one row per signed-in user rather than one
-        # per request, because thirty predictions from one person is a
-        # different fact from thirty people trying it once.
+        # Per account.
         people: dict[str, dict] = {}
         for row in predictions:
             uid = row.get("session") or "anonymous"
@@ -481,9 +402,8 @@ class Store:
             "daily": daily,
             "spend": sorted(spend.values(), key=lambda b: b["day"]),
             "top_dishes": top_dishes,
-            # The review queue: what the model declined, and what a person said
-            # it got wrong. Neither is visible in any metric computed on a
-            # labelled split.
+            # The review queue: what the model declined, and what a person said it got
+            # wrong.
             "review_queue": [r for r in predictions if r.get("abstained")][:20],
             "negative_feedback": [r for r in feedback if not r.get("helpful", True)][:20],
             "dropped_writes": self.dropped,

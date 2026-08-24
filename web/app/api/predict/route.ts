@@ -4,16 +4,13 @@ import { allClasses, getEntry, titleFor } from "@/lib/kb";
 import type { Candidate, PredictResponse } from "@/lib/types";
 import { forwardAuth, relay } from "@/lib/upstream";
 
-// Stage 11 will stand up the FastAPI service. Until FOODGENOME_API is set, this
-// route answers from the knowledge base alone and labels the response "demo" so
-// the interface can never present a fabricated classification as a real one.
+// Stage 11 will stand up the FastAPI service.
 const UPSTREAM = process.env.FOODGENOME_API;
 
 const MAX_BYTES = 12 * 1024 * 1024;
 const ACCEPTED = ["image/jpeg", "image/png", "image/webp", "image/heic"];
 
-/** FNV-1a over the image bytes. Only used in demo mode, so that the same photo
- *  always yields the same illustrative result instead of reshuffling on reload. */
+/** FNV-1a over the image bytes. */
 function hashBytes(bytes: Uint8Array): number {
   let h = 0x811c9dc5;
   const step = Math.max(1, Math.floor(bytes.length / 4096));
@@ -46,8 +43,8 @@ function demoResponse(bytes: Uint8Array, startedAt: number): PredictResponse {
     { class: picked, title: titleFor(picked), probability: top },
     ...others,
   ];
-  // Measured LAC behaviour at alpha = 0.01: 75.9% of test images get a singleton,
-  // the average set holds 1.54 candidates, and it is never empty.
+  // Measured LAC behaviour at alpha = 0.01: 75.9% of test images get a singleton, the
+  // average set holds 1.54 candidates, and it is never empty.
   const setSize = top > 0.8 ? 1 : top > 0.7 ? 2 : 3;
 
   return {
@@ -65,8 +62,8 @@ function demoResponse(bytes: Uint8Array, startedAt: number): PredictResponse {
       raw_confidence: Math.max(0.05, top - 0.06),
     },
     conformal: {
-      // 99% rather than 95%: with top-1 accuracy at 97.16%, any target below that
-      // is met by the single best guess alone, so a 95% "set" is never a set.
+      // 99% rather than 95%: with top-1 accuracy at 97.16%, any target below that is
+      // met by the single best guess alone, so a 95% "set" is never a set.
       alpha: 0.01,
       candidates: candidates.slice(0, setSize),
       guarantee:

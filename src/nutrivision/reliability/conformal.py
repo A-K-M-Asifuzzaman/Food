@@ -1,28 +1,4 @@
-"""Split-conformal prediction sets over the shipping ensemble.
-
-A top-1 label with a confidence attached is a claim about one image. A conformal
-set is a claim about the procedure: over repeated use, the true class lands inside
-the set at least (1 - alpha) of the time, and that holds without assuming anything
-about the model, the architecture or the shape of the score distribution. The only
-requirement is that calibration and test data are exchangeable.
-
-That is why the guarantee is worth showing to a user. "94% confident" is a number
-the model asserts about itself; "the right answer is in this set 95% of the time"
-is a number we have measured and can be held to.
-
-Two score functions are implemented because they trade off different things:
-
-- **LAC** (least ambiguous set-valued classifier) uses 1 - p(true class). It gives
-  the smallest average set size for a target coverage, but its coverage is only
-  marginal — averaged over all inputs, easy and hard alike.
-- **APS** (adaptive prediction sets) accumulates sorted probability mass until the
-  true class is reached. Sets are larger, but they grow on genuinely ambiguous
-  images and shrink on easy ones, which is the behaviour a user actually wants
-  from an interface that shows the set.
-
-Both calibrate on the held-out validation slice; the test split is only ever used
-to report empirical coverage.
-"""
+"""Split-conformal prediction sets over the shipping ensemble."""
 
 from __future__ import annotations
 
@@ -53,11 +29,7 @@ def load_labels(split: str) -> np.ndarray:
 
 
 def conformal_quantile(scores: np.ndarray, alpha: float) -> float:
-    """The finite-sample corrected quantile.
-
-    The (n + 1) correction is not cosmetic: without it the guarantee holds only
-    asymptotically, and at n = 3030 the difference is large enough to under-cover.
-    """
+    """The finite-sample corrected quantile."""
     n = len(scores)
     level = np.ceil((n + 1) * (1 - alpha)) / n
     if level > 1:
@@ -66,12 +38,7 @@ def conformal_quantile(scores: np.ndarray, alpha: float) -> float:
     return float(np.quantile(scores, level, method="higher"))
 
 
-# Calibration and deployment must apply the *identical* rule. Forcing the top-1
-# class into the set at test time while scoring without it during calibration
-# voids the guarantee — measured here as 99.1% empirical coverage against a 90%
-# target, because the forced class silently rescued the ~13% of images whose top
-# score exceeded qhat. Each score function below therefore takes the same
-# force_top1 flag as its set constructor, and both must be passed the same value.
+# Calibration and deployment must apply the *identical* rule.
 
 
 def lac_scores(probs: np.ndarray, y: np.ndarray, force_top1: bool = False) -> np.ndarray:
@@ -89,11 +56,7 @@ def aps_scores(
     rng: np.random.Generator,
     force_top1: bool = False,
 ) -> np.ndarray:
-    """Cumulative mass up to and including the true class, randomised.
-
-    The uniform term breaks the discreteness of the cumulative sum; without it
-    coverage overshoots the target and sets come out needlessly large.
-    """
+    """Cumulative mass up to and including the true class, randomised."""
     order = np.argsort(-probs, axis=1)
     sorted_p = np.take_along_axis(probs, order, axis=1)
     cumulative = np.cumsum(sorted_p, axis=1)

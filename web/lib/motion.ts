@@ -3,17 +3,7 @@
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
-/** Motion primitives for the comic-panel language.
- *
- *  Comic motion is staged and snappy, not floaty: short durations, ease-out,
- *  overshoot on entry. The tokens here mirror the CSS custom properties in
- *  globals.css so a panel animated by GSAP and one animated by a CSS transition
- *  read as the same system.
- *
- *  Everything checks `prefers-reduced-motion` at call time rather than at import
- *  time, because the user can change it while the page is open and a stale
- *  answer would leave someone with vestibular sensitivity watching parallax.
- */
+/** Motion primitives for the comic-panel language. */
 
 export const DUR = { instant: 0.09, snap: 0.18, panel: 0.32, stage: 0.5 } as const;
 export const EASE = {
@@ -36,8 +26,10 @@ export function prefersReducedMotion(): boolean {
   return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
 
-/** Panels arrive as a staggered volley rather than all at once — the reading
- *  order of a comic page, not a fade-in of the whole spread. */
+/**
+ *  Panels arrive as a staggered volley rather than all at once — the reading order of a
+ *  comic page, not a fade-in of the whole spread.
+ */
 export function revealPanels(
   targets: gsap.TweenTarget,
   options: { trigger?: Element; stagger?: number } = {},
@@ -64,9 +56,10 @@ export function revealPanels(
   );
 }
 
-/** The signature transition: a strand fires across the panel, and the content
- *  snaps in behind it. The line is drawn with SVG dash offset so it reads as a
- *  web-line being shot rather than a bar wiping. */
+/**
+ *  The signature transition: a strand fires across the panel, and the content snaps in
+ *  behind it.
+ */
 export function webShot(line: SVGPathElement, content: Element) {
   const g = ensureGsap();
   if (prefersReducedMotion()) {
@@ -88,8 +81,10 @@ export function webShot(line: SVGPathElement, content: Element) {
     .to(line, { opacity: 0, duration: DUR.instant }, "-=0.1");
 }
 
-/** SFX land on real events only, so they read as system feedback rather than
- *  decoration. Impact scale with a slight rotation, then hold. */
+/**
+ *  SFX land on real events only, so they read as system feedback rather than
+ *  decoration.
+ */
 export function impact(target: gsap.TweenTarget) {
   const g = ensureGsap();
   if (prefersReducedMotion()) {
@@ -103,9 +98,7 @@ export function impact(target: gsap.TweenTarget) {
   );
 }
 
-/** Counts up to a value. Nutrition figures are the product, so they animate to
- *  their number rather than appearing — but they land fast, because a reader
- *  waiting to find out how many calories something has is being annoyed. */
+/** Counts up to a value. */
 export function countTo(
   el: HTMLElement,
   value: number,

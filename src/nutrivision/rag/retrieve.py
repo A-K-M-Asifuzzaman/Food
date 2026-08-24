@@ -1,34 +1,4 @@
-"""Hybrid retrieval: BM25 + dense, fused by RRF, then cross-encoder reranked.
-
-Three stages, each fixing a failure the previous one cannot.
-
-**Fusion over score-mixing.** BM25 returns unbounded relevance scores; cosine
-similarity is bounded in [-1, 1]. Any weighted sum of the two needs a
-normalisation that is itself a tuned parameter, and it drifts the moment the
-corpus changes. Reciprocal Rank Fusion ignores magnitudes and combines *ranks*,
-so it has one constant, needs no calibration, and cannot be broken by one
-retriever's scores being on a different scale.
-
-**Reranking.** Both first-stage retrievers score a query against a document
-independently. A cross-encoder reads them together, which is what catches
-"is this high in sodium" retrieving the sodium document for the *wrong dish* -
-lexically and semantically near-identical, decisively wrong.
-
-**Dish conditioning, which is specific to this system.** Ordinary RAG starts
-from a text query alone. Here the vision model has already named the dish before
-a question is asked, so retrieval does not have to guess it.
-
-Conditioning is done by *rewriting the query*, not merely by boosting ranks. Real
-questions are asked about a photograph: "how much sodium is in this" contains a
-pronoun no retriever can resolve, and against a corpus holding 101 near-identical
-sodium documents it will confidently return one about the wrong dish. Naming the
-dish in the query fixes all three stages at once - BM25 gains the term, the
-bi-encoder gains the topic, and the cross-encoder can finally tell a document
-about the right food from one about a different food entirely.
-
-A rank bonus is kept as well, but it cannot do this job alone: reranking sorts
-purely by cross-encoder score and would discard any bonus applied before it.
-"""
+"""Hybrid retrieval: BM25 + dense, fused by RRF, then cross-encoder reranked."""
 
 from __future__ import annotations
 
@@ -144,10 +114,7 @@ class Retriever:
                 fused[idx] = fused.get(idx, 0.0) + 1.0 / (RRF_K + rank)
 
         if food_class:
-            # A rank-space bonus, deliberately not a hard filter. Questions like
-            # "which food has the most protein" are answered by the ranking
-            # documents, which belong to no single dish; filtering would delete
-            # the only documents that can answer them.
+            # A rank-space bonus, deliberately not a hard filter.
             for idx in list(fused):
                 if self.documents[idx].food_class == food_class:
                     fused[idx] += 1.0 / RRF_K
@@ -167,9 +134,6 @@ class Retriever:
             scores = self.reranker.predict([(query, h.document.text) for h in hits])
             for hit, score in zip(hits, scores):
                 hit.rerank_score = float(score)
-            # Sorting on the cross-encoder score alone would throw away the dish
-            # bonus computed above, so carry it through as a tie-break on the
-            # dish rather than letting reranking silently undo the conditioning.
             hits.sort(
                 key=lambda h: (
                     -h.rerank_score - (0.5 if food_class and h.document.food_class == food_class else 0.0)

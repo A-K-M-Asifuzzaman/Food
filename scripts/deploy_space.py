@@ -1,19 +1,5 @@
 #!/usr/bin/env python3
-"""Assemble and upload the inference service to its Hugging Face Space.
-
-The Space is not a checkout of this repository. It is a subset: the service,
-the two probe heads, the retrieval index, the knowledge base, and the report
-files the API quotes constants from. Training code, feature banks and the 100k
-extracted embeddings stay out — they are gigabytes, and the container has no
-use for them.
-
-Assembling that subset by hand is how a deployment ends up missing one file and
-returning 500 on a route nobody tested. This script builds it from a manifest
-and refuses to upload if anything named is absent.
-
-    python scripts/deploy_space.py            # build, verify, upload
-    python scripts/deploy_space.py --dry-run  # build and verify only
-"""
+"""Assemble and upload the inference service to its Hugging Face Space."""
 
 from __future__ import annotations
 
@@ -25,8 +11,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 REPO_ID = "AsifZaman1912/prac"
 
-# Everything the container needs, and nothing else. Directories are copied
-# whole minus the excludes below; files are copied as named.
+# Everything the container needs, and nothing else.
 PAYLOAD: list[str] = [
     "backend/app",
     "backend/requirements.txt",
@@ -45,9 +30,7 @@ PAYLOAD: list[str] = [
 
 EXCLUDE = shutil.ignore_patterns("__pycache__", "*.pyc", ".DS_Store", ".ipynb_checkpoints")
 
-# Routes that must exist in the uploaded service. A missing one means the
-# frontend's admin console or warm-up bar will silently fall back, which is
-# harder to notice than a failed deploy.
+# Routes that must exist in the uploaded service.
 REQUIRED_ROUTES = ["/predict", "/explain", "/ask", "/health", "/warm", "/stats", "/feedback"]
 
 
@@ -83,9 +66,6 @@ def verify(stage: Path) -> None:
     if absent:
         sys.exit(f"main.py declares no route for: {', '.join(absent)}")
 
-    # The /ask route died in production because the image had no sentence-
-    # transformers: the RAG imports are lazy, so nothing failed until a user
-    # asked a question. Check the requirements rather than trusting the import.
     reqs = (stage / "backend/requirements.txt").read_text()
     for pkg in ["sentence-transformers", "rank-bm25", "openai", "timm", "torch"]:
         if pkg not in reqs:
@@ -95,11 +75,7 @@ def verify(stage: Path) -> None:
     if index.stat().st_size < 10_000:
         sys.exit("retrieval index looks truncated")
 
-    # Uploading a file to the Space repo does not put it in the container. The
-    # Dockerfile has to COPY it, and the one time it did not, /ask returned 500
-    # in production while every other route stayed green — the RAG imports are
-    # lazy, so nothing failed until a user asked a question. Check that every
-    # data file in the payload is named by some COPY line.
+    # Uploading a file to the Space repo does not put it in the container.
     dockerfile = (stage / "Dockerfile").read_text()
     copied = " ".join(
         line for line in dockerfile.splitlines() if line.startswith("COPY")
@@ -133,7 +109,7 @@ pinned: false
 short_description: Food-101 classifier with conformal sets and grounded RAG
 ---
 
-# FoodGenome AI — inference service
+# FoodGenome AI — inference service.
 
 FastAPI service behind [the web app](https://food-red-omega.vercel.app).
 

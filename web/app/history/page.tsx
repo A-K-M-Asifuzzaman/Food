@@ -49,13 +49,7 @@ function when(iso: string): string {
   return d.toLocaleDateString(undefined, { day: "numeric", month: "short" });
 }
 
-/** A person's own record.
- *
- *  Scoped by the server to the uid in their token — there is no parameter for
- *  whose history to load, so this page can only ever show yours. The delete
- *  button is real and immediate, because a record you cannot remove is not one
- *  you agreed to keep.
- */
+/** A person's own record. */
 export default function HistoryPage() {
   const { user, loading, authFetch } = useAuth();
   const [data, setData] = useState<History | null>(null);

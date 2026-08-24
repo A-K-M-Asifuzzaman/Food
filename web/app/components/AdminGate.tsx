@@ -6,15 +6,7 @@ import { usePathname } from "next/navigation";
 import { useAuth } from "./AuthProvider";
 import { SpiderBar } from "./SpiderBar";
 
-/** Who is allowed to see the console.
- *
- *  This check is for the interface. It is not the security boundary and must
- *  not be mistaken for one: every endpoint behind this page checks the same
- *  admin list against a token verified with Google's public keys, and returns
- *  403 to anyone else regardless of what the browser decided to render. Someone
- *  editing this component in their devtools gets a dashboard full of error
- *  messages, which is the correct outcome.
- */
+/** Who is allowed to see the console. */
 export function AdminGate({ children }: { children: React.ReactNode }) {
   const { user, loading, isAdmin } = useAuth();
   const pathname = usePathname();

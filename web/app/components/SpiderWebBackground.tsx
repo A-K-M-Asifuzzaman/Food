@@ -2,59 +2,25 @@
 
 import { useEffect, useRef } from "react";
 
-/**
- * SpiderWebBackground — a real spider web drawn to canvas and plucked by the pointer.
- *
- * How it works
- * ------------
- * 1. Vertices sit on a POLAR lattice: `spokes` angles × `rings` radii, anchored at
- *    `origin`. Ring radii are eased (`^1.45`) so strands crowd near the origin, the
- *    way real silk does.
- * 2. Ring strands are drawn as QUADRATIC curves whose control point is pulled toward
- *    the origin (`sag`). That sag is the single detail that makes it read as a web
- *    instead of a radar chart — without it you get a polar grid.
- * 3. Each vertex is a lightly damped SPRING around its rest position. The pointer
- *    pushes vertices inside a falloff radius; the springs carry the disturbance
- *    outward, so moving across the hero visibly plucks the net.
- *
- * Theming
- * -------
- * Colours accept `var(--token)` and are resolved against the live stylesheet, because
- * canvas takes no CSS variables. `--line` inverts between themes here — near-black on
- * paper, cream on ink — so a hardcoded strand colour is invisible in one of them. The
- * resolved values are re-read when the theme attribute or the OS preference changes.
- *
- * Performance
- * -----------
- * One rAF loop, DPR-capped at 2, ResizeObserver for layout, IntersectionObserver to
- * stop drawing when scrolled out of view, and a single static frame under
- * prefers-reduced-motion. No libraries.
- *
- * Usage
- * -----
- *   <section className="relative overflow-hidden">
- *     <SpiderWebBackground className="absolute inset-0 h-full w-full" />
- *     <div className="relative">…your hero content…</div>
- *   </section>
- */
+/** SpiderWebBackground — a real spider web drawn to canvas and plucked by the pointer. */
 
 type Props = {
   className?: string;
-  /** Web origin as a fraction of the box, [x, y]. Corners read best. */
+  /** Web origin as a fraction of the box, [x, y]. */
   origin?: [number, number];
-  /** Sector the web spans, in TURNS. 1 = full web, 0.5 = half, 0.25 = corner. */
+  /** Sector the web spans, in TURNS. */
   arc?: number;
-  /** Rotation of the sector, in turns. 0 = pointing right, 0.25 = pointing down. */
+  /** Rotation of the sector, in turns. */
   rotate?: number;
   spokes?: number;
   rings?: number;
   /** Web radius as a multiple of the box diagonal. */
   reach?: number;
-  /** Strand colour. Accepts `var(--token)`. */
+  /** Strand colour. */
   color?: string;
-  /** Colour of strands near the pointer. Accepts `var(--token)`. */
+  /** Colour of strands near the pointer. */
   highlight?: string;
-  /** Junction-bead colour. Accepts `var(--token)`. */
+  /** Junction-bead colour. */
   nodeColor?: string;
   opacity?: number;
 };
@@ -76,9 +42,6 @@ export function SpiderWebBackground({
 }: Props) {
   const ref = useRef<HTMLCanvasElement | null>(null);
 
-  // Array and tuple props are fresh objects on every render, so putting `origin`
-  // itself in the dependency list tears the canvas down and rebuilds it — with new
-  // listeners — on every parent render. Depend on the numbers instead.
   const [originX, originY] = origin;
 
   useEffect(() => {
@@ -116,7 +79,7 @@ export function SpiderWebBackground({
       if (reduced) step(0);
     };
 
-    /** Rest lattice. Ring radii are eased so strands crowd near the origin. */
+    /** Rest lattice. */
     const build = () => {
       const cx = originX * w;
       const cy = originY * h;
@@ -175,7 +138,7 @@ export function SpiderWebBackground({
             }
           }
 
-          // Spring toward rest + damping. Cheap, stable, no solver needed.
+          // Spring toward rest + damping.
           const tx = v.bx + px + sway;
           const ty = v.by + py + sway * 0.6;
           v.vx = (v.vx + (tx - v.x) * 0.09) * 0.86;

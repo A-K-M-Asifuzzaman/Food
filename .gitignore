@@ -52,3 +52,6 @@ web/shot*.mjs
 # Local-only documents, never distributed
 docs/bangla/
 docs/report/
+
+# Local tooling
+.claude/

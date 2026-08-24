@@ -32,14 +32,7 @@ class MLPProbe(nn.Module):
 
 
 class GatedFusionProbe(nn.Module):
-    """Learns how much to trust each backbone, per input.
-
-    A plain concatenation forces one shared weight matrix to handle features
-    from very differently scaled embedding spaces. Projecting each backbone to a
-    common width and letting a gate weigh them per sample consistently beats
-    concatenation by a few tenths of a point, and the gate values are readable -
-    you can see which backbone the model leans on for which foods.
-    """
+    """Learns how much to trust each backbone, per input."""
 
     def __init__(
         self,
@@ -85,12 +78,7 @@ def soft_target_cross_entropy(logits: torch.Tensor, targets: torch.Tensor) -> to
 def mixup_features(
     x: torch.Tensor, y: torch.Tensor, num_classes: int, alpha: float, smoothing: float
 ) -> tuple[torch.Tensor, torch.Tensor]:
-    """Mixup in embedding space.
-
-    Pixel-space mixup is unavailable once features are frozen and cached, but
-    interpolating embeddings is a valid regulariser for the head and costs
-    nothing.
-    """
+    """Mixup in embedding space."""
     off = smoothing / num_classes
     on = 1.0 - smoothing + off
     targets = torch.full((y.size(0), num_classes), off, device=y.device)

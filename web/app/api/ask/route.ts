@@ -2,10 +2,7 @@ import { NextResponse } from "next/server";
 
 import { forwardAuth } from "@/lib/upstream";
 
-// Grounded answers require the model service. There is deliberately no demo
-// fallback here: a fabricated nutrition answer is the one output this product
-// must never produce, and a plausible-looking placeholder is worse than an
-// honest refusal.
+// Grounded answers require the model service.
 const UPSTREAM = process.env.FOODGENOME_API;
 
 export async function POST(request: Request) {

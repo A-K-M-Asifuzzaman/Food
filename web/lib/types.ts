@@ -1,8 +1,6 @@
 import type { Component, FoodEntry, Nutrients } from "./kb";
 
-/** Where the numbers came from. The UI must always say this out loud: a demo
- *  response is not a prediction, and presenting one as if it were would be a lie
- *  told by the interface. */
+/** Where the numbers came from. */
 export type ResponseSource = "model" | "demo";
 
 export type Candidate = {
@@ -12,8 +10,7 @@ export type Candidate = {
 };
 
 export type ConformalSet = {
-  /** Miscoverage rate. alpha = 0.05 means the set covers the true class 95% of
-   *  the time, over the calibration distribution. */
+  /** Miscoverage rate. */
   alpha: number;
   candidates: Candidate[];
   /** Plain-language restatement of the guarantee, shown to the user. */
@@ -46,8 +43,7 @@ export type PredictResponse = {
   prediction: {
     class: string;
     title: string;
-    /** Post-calibration. Stage 5 found the ensemble under-confident, so the raw
-     *  softmax and the calibrated value differ and both are worth showing. */
+    /** Post-calibration. */
     confidence: number;
     raw_confidence: number;
   };

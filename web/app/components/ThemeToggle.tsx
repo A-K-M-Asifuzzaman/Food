@@ -4,24 +4,7 @@ import { useEffect, useState } from "react";
 
 type Theme = "light" | "dark";
 
-/** Day / night as a spider on a strand.
- *
- *  The knob is a spider that rides a web-line from one end of the track to the
- *  other; the track carries a sun on the newsprint side and a moon on the night
- *  side. It reads as the strand motif rather than as a generic switch, which is
- *  the point — the site's whole identity is the strand.
- *
- *  Three things a theme toggle has to get right and most do not:
- *
- *  - **No flash.** The stored choice is applied by a blocking script in the
- *    document head, before first paint. Doing it in an effect means a dark-mode
- *    reader gets a full white frame on every navigation.
- *  - **Unset is not light.** Someone who has never touched the control should
- *    follow their operating system, and keep following it if they change it
- *    later. Only an explicit choice pins the theme.
- *  - **It is a real control.** A button with `aria-pressed` and a label, not a
- *    styled div — the state has to be announced, not inferred from a colour.
- */
+/** Day / night as a spider on a strand. */
 
 export const THEME_INIT_SCRIPT = `
 (function () {
@@ -59,9 +42,7 @@ export function ThemeToggle() {
     localStorage.setItem("foodgenome-theme", next);
   }
 
-  // Render nothing until the client knows which state to show. A button that
-  // renders "light" on the server and flips to "dark" on hydration is a worse
-  // flash than having no button for one frame.
+  // Render nothing until the client knows which state to show.
   if (theme === null) {
     return <div className="w-[4.25rem] h-8 shrink-0" aria-hidden="true" />;
   }

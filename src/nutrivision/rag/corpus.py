@@ -1,23 +1,4 @@
-"""Turn the structured nutrition KB into a retrievable document corpus.
-
-Retrieval quality is decided here, before any embedding model is involved. A
-naive approach dumps one JSON blob per food and hopes the encoder copes; it does
-not. A query like "which of these is lowest in sodium" has to compete with 100
-near-identical documents, and a single blob per dish buries the one relevant
-sentence among thirty irrelevant numbers.
-
-So each dish is decomposed into several short, single-topic documents - identity,
-macronutrients, micronutrients, ingredients, portion - each written as prose that
-states its subject explicitly. A document about sodium says "sodium" in a
-sentence, not as a JSON key, which is what lets both BM25 and a bi-encoder find
-it. Numbers are rendered with their units so that lexical search can match "310
-kcal" and dense search can match the concept.
-
-Comparison documents are generated separately: rankings across all 101 dishes for
-the nutrients users actually ask about. Those answer superlative questions
-("highest protein", "lowest calorie") that no per-dish document can, because the
-answer is a property of the whole set.
-"""
+"""Turn the structured nutrition KB into a retrievable document corpus."""
 
 from __future__ import annotations
 
@@ -30,8 +11,7 @@ from nutrivision.config import DATA_DIR
 KB_PATH = DATA_DIR / "nutrition" / "kb.json"
 CORPUS_PATH = DATA_DIR / "nutrition" / "corpus.jsonl"
 
-# Nutrients worth generating dedicated ranking documents for. These are the ones
-# people actually ask superlative questions about.
+# Nutrients worth generating dedicated ranking documents for.
 RANKED_NUTRIENTS = (
     ("energy_kcal", "calories", "kcal", 0),
     ("protein_g", "protein", "g", 1),
@@ -111,20 +91,14 @@ def _article(word: str) -> str:
     return "an" if word[:1].lower() in "aeiou" else "a"
 
 
-# SR Legacy descriptions lead with a taxonomic category, so naively taking the
-# first comma-segment turns "Fish, salmon, Atlantic, farmed, raw" into "fish" and
-# "Beverages, coffee, brewed" into "beverages". That is a retrieval bug, not just
-# an aesthetic one: a question asking whether sushi contains salmon would have no
-# lexical or semantic hook to match against.
 _GENERIC_HEADS = {
     "fish", "beverages", "nuts", "mollusks", "crustaceans", "cereals", "spices",
     "candies", "cookies", "desserts", "snacks", "soup",
     "leavening agents", "gelatins", "frostings", "salad dressing", "puddings",
 }
 
-# For these the head word carries the meaning and dropping it inverts the sense:
-# "Oil, soybean" reduced to "soybean" reads as the bean, not the oil. Keep both,
-# which also leaves the more common query term ("oil", "seaweed") searchable.
+# For these the head word carries the meaning and dropping it inverts the sense: "Oil,
+# soybean" reduced to "soybean" reads as the bean, not the oil.
 _COMPOUND_HEADS = {"cheese", "oil", "seaweed", "sauce", "vinegar", "flour", "milk"}
 
 
@@ -227,11 +201,7 @@ def micro_docs(entry: dict) -> Iterable[Document]:
         present = [(k, n[k]) for k in keys if k in n and n[k] > 0]
         if not present:
             continue
-        # Both bases are stated explicitly. Giving only per-100 g forces a reader
-        # — or a language model answering from these documents — to multiply by
-        # the serving ratio, and a derived figure is one that cannot be verified
-        # against any source. Writing both means every number a grounded answer
-        # needs is already present verbatim.
+        # Both bases are stated explicitly.
         parts = [
             f"{LABELS[k][0]} {_fmt(v, 2)} {LABELS[k][1]} per 100 g"
             + (
@@ -304,12 +274,7 @@ def portion_doc(entry: dict) -> Document:
 
 
 def ranking_docs(entries: list[dict], top_n: int = 12) -> Iterable[Document]:
-    """Superlative questions are properties of the whole set, not of any dish.
-
-    Without these, "which food has the most protein" can only be answered by
-    retrieving and comparing 101 documents, which no realistic top-k retrieval
-    will do correctly.
-    """
+    """Superlative questions are properties of the whole set, not of any dish."""
     for key, label, unit, digits in RANKED_NUTRIENTS:
         have = [(e, e["nutrients_per_100g"].get(key)) for e in entries]
         have = [(e, v) for e, v in have if v is not None]

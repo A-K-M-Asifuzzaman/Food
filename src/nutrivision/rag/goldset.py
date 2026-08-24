@@ -1,30 +1,4 @@
-"""Build the RAG evaluation set.
-
-Hand-writing questions and then judging the answers by eye is how RAG systems get
-declared good. The problem is not effort, it is that the grader and the system
-share an author, so the questions drift towards what the system already does and
-the verdict is unfalsifiable.
-
-This set is constructed so that ground truth is known *before* the system is
-asked, and known independently of it:
-
-- **Templated questions carry a derived answer.** "How much sodium is in
-  tiramisu" has a numeric answer read straight from the knowledge base and a
-  supporting document identified by construction, so both retrieval and the
-  figure in the answer can be scored exactly. No judge model, no rubric.
-- **Graph questions have set-valued answers.** "Which dishes contain walnuts" is
-  answered by inverting the recipe table, which is computed here rather than
-  retrieved, so the expected dish list is independent of the retriever.
-- **Out-of-scope questions have no answer at all.** The correct behaviour is
-  refusal, and a system that answers them fluently is worse than one that
-  fails loudly. These are the cases that catch a pipeline tuned to always
-  produce something.
-
-The templated questions are phrased the way a user would ask over a photograph -
-with "this" rather than the dish name - because that is the input the system
-actually receives, and evaluating on questions that name the dish would measure a
-much easier task than the product performs.
-"""
+"""Build the RAG evaluation set."""
 
 from __future__ import annotations
 
@@ -38,7 +12,7 @@ from .graph import load_graph
 
 GOLD_PATH = DATA_DIR / "nutrition" / "rag_gold.json"
 
-# (nutrient key, phrasing, document kind that should answer it)
+# (nutrient key, phrasing, document kind that should answer it).
 NUTRIENT_QUESTIONS = [
     ("sodium_mg", "how much sodium is in this", "minerals"),
     ("protein_g", "how much protein does this have", "macros"),
@@ -74,8 +48,7 @@ def build(seed: int = 1337, per_nutrient: int = 6) -> list[dict]:
     classes = sorted(entries)
     cases: list[dict] = []
 
-    # 1. Per-dish numeric lookups. The expected value is read from the KB, so a
-    #    wrong figure in an answer is detectable without a human.
+    # 1.
     for key, phrasing, kind in NUTRIENT_QUESTIONS:
         eligible = [c for c in classes if entries[c]["nutrients_per_100g"].get(key, 0) > 0]
         for cls in rng.sample(eligible, min(per_nutrient, len(eligible))):
@@ -95,7 +68,7 @@ def build(seed: int = 1337, per_nutrient: int = 6) -> list[dict]:
                 }
             )
 
-    # 2. Ingredient questions, answerable only from a composite's own document.
+    # 2.
     composites = [c for c in classes if entries[c].get("components")]
     for cls in rng.sample(composites, min(10, len(composites))):
         cases.append(
@@ -110,8 +83,7 @@ def build(seed: int = 1337, per_nutrient: int = 6) -> list[dict]:
             }
         )
 
-    # 3. Graph inversions. The expected dish set is computed from the recipe
-    #    table here, not retrieved, so it cannot inherit a retrieval error.
+    # 3.
     shared = [
         (k, v) for k, v in graph.ingredient_dishes.items() if 2 <= len(v) <= 8
     ]
@@ -131,7 +103,7 @@ def build(seed: int = 1337, per_nutrient: int = 6) -> list[dict]:
             }
         )
 
-    # 4. Superlatives, answerable only by the whole-set ranking documents.
+    # 4.
     for question, key, highest in SUPERLATIVES:
         ranked = sorted(
             ((c, entries[c]["nutrients_per_100g"].get(key, 0.0)) for c in classes),
@@ -151,7 +123,7 @@ def build(seed: int = 1337, per_nutrient: int = 6) -> list[dict]:
             }
         )
 
-    # 5. Refusals. A fluent answer here is a failure, not a near miss.
+    # 5.
     for question in OUT_OF_SCOPE:
         cases.append(
             {

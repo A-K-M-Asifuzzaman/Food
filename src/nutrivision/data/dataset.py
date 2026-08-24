@@ -30,12 +30,7 @@ class Sample:
 def holdout_mask(
     targets: np.ndarray, num_classes: int, val_fraction: float, seed: int = SEED
 ) -> np.ndarray:
-    """Deterministic class-stratified validation mask.
-
-    Shared by the image pipeline and the cached-feature pipeline so both agree
-    on which images are held out. Any drift here would leak validation samples
-    into training and quietly inflate every number downstream.
-    """
+    """Deterministic class-stratified validation mask."""
     rng = np.random.default_rng(seed)
     is_val = np.zeros(len(targets), dtype=bool)
     for label in range(num_classes):
@@ -47,13 +42,7 @@ def holdout_mask(
 
 
 class Food101Folder(Dataset):
-    """Food-101 as an image folder tree.
-
-    Food-101 ships only train and test. Reporting model-selection numbers on the
-    test split is the single most common way these projects overstate accuracy,
-    so we carve a fixed validation slice out of train and leave test untouched
-    until the final evaluation.
-    """
+    """Food-101 as an image folder tree."""
 
     def __init__(
         self,

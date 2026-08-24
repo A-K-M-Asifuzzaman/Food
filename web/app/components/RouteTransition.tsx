@@ -5,26 +5,13 @@ import { useEffect, useRef, useState } from "react";
 
 import { ensureGsap, prefersReducedMotion } from "@/lib/motion";
 
-/** The between-pages moment.
- *
- *  App Router navigations to a prerendered route are close to instant, so an
- *  unconditional overlay would be a delay we invented. This one is triggered by
- *  the click and cleared by the arrival: it appears only if the new page has
- *  not rendered within `THRESHOLD`, which on a fast connection means it is
- *  almost never seen, and on a slow one means the site does not sit there
- *  looking broken.
- *
- *  What it shows is a spider dropping on a strand and a web being spun behind
- *  it. GSAP drives the strand and the spider so the two stay in step — the
- *  spider rides the strand's own length rather than a parallel animation that
- *  drifts out of sync at a different frame rate.
- */
+/** The between-pages moment. */
 
-// Long enough that a prerendered route never flashes it, short enough that a
-// slow one does not feel unacknowledged.
+// Long enough that a prerendered route never flashes it, short enough that a slow one
+// does not feel unacknowledged.
 const THRESHOLD = 220;
-// The overlay holds briefly after arrival so it reads as a transition rather
-// than a flicker, but never long enough to be the reason you waited.
+// The overlay holds briefly after arrival so it reads as a transition rather than a
+// flicker, but never long enough to be the reason you waited.
 const MIN_VISIBLE = 480;
 
 export function RouteTransition() {
@@ -68,8 +55,7 @@ export function RouteTransition() {
     };
   }, []);
 
-  // Arrival. Cancel a pending overlay, or retire a visible one once it has had
-  // its minimum on screen.
+  // Arrival.
   useEffect(() => {
     if (first.current) {
       first.current = false;
@@ -84,9 +70,8 @@ export function RouteTransition() {
     const elapsed = Date.now() - shownAt.current;
     const t = setTimeout(() => setActive(false), Math.max(0, MIN_VISIBLE - elapsed));
     return () => clearTimeout(t);
-    // `active` is deliberately not a dependency: this must run on navigation,
-    // not when the overlay's own state settles.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // `active` is deliberately not a dependency: this must run on navigation, not when
+    // the overlay's own state settles.
   }, [pathname]);
 
   // The animation itself.
@@ -111,8 +96,8 @@ export function RouteTransition() {
         { strokeDashoffset: 0, duration: 0.34, ease: "power2.in" },
         0,
       )
-      // The spider rides the strand it just spun, so the drop cannot drift out
-      // of step with the line under it.
+      // The spider rides the strand it just spun, so the drop cannot drift out of step
+      // with the line under it.
       .fromTo(
         spider.current,
         { y: -120, opacity: 0 },

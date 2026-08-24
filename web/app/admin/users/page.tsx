@@ -50,12 +50,7 @@ function day(iso: string): string {
   return new Date(iso).toLocaleDateString(undefined, { day: "numeric", month: "short" });
 }
 
-/** Every account, and what each one has been analysing.
- *
- *  The rows are per account rather than per request on purpose: thirty
- *  predictions from one person is a different fact from thirty people trying it
- *  once, and a request count cannot tell them apart.
- */
+/** Every account, and what each one has been analysing. */
 export default function AdminUsers() {
   const { authFetch } = useAuth();
   const [data, setData] = useState<Analytics | null>(null);

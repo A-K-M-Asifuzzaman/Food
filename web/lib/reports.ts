@@ -10,11 +10,10 @@ import probeFusion from "@/data/reports/probe_fusion_siglip_eva02.json";
 import probeSiglip from "@/data/reports/probe_siglip_so400m.json";
 import ragEvaluation from "@/data/reports/rag_evaluation.json";
 
-/** Everything the public and admin pages render comes from the JSON the
- *  evaluation scripts actually wrote. Nothing on these pages is a figure typed
- *  in by hand — if a number changes upstream, `scripts/sync_web_data.sh` moves
- *  it here and the page changes with it. A dashboard whose numbers were pasted
- *  in is a screenshot with extra steps. */
+/**
+ *  Everything the public and admin pages render comes from the JSON the evaluation
+ *  scripts actually wrote.
+ */
 
 export type ProbeReport = {
   name: string;
@@ -109,15 +108,7 @@ export const ensembleReport = ensemble as unknown as {
   };
 };
 
-/** The sweep that includes the fine-tuned model.
- *
- *  Kept separate from `ensembleReport` rather than replacing it. The frozen pair
- *  is what the service actually runs — serving the fine-tune means a 304M
- *  parameter model against two small heads over cached features — so the site
- *  reports the shipped configuration as the headline and this one as the best
- *  measured result, with its significance stated. Collapsing the two would let
- *  the page claim an accuracy the API does not deliver.
- */
+/** The sweep that includes the fine-tuned model. */
 export const ensembleWithFinetuneReport = ensembleWithFinetune as unknown as typeof ensembleReport;
 
 export const finetune = finetuneResult as unknown as {
@@ -168,8 +159,7 @@ export const ragReport = ragEvaluation as unknown as {
   };
 };
 
-/** Display name for a backbone key. The keys are how the code refers to them;
- *  these are how the papers do. */
+/** Display name for a backbone key. */
 export const BACKBONE_LABELS: Record<string, string> = {
   siglip_so400m: "SigLIP-SO400M",
   eva02_large: "EVA-02-L",
@@ -182,8 +172,10 @@ export function labelFor(key: string): string {
   return BACKBONE_LABELS[key] ?? key;
 }
 
-/** The single headline number, derived rather than restated so it cannot drift
- *  from the ensemble sweep that produced it. */
+/**
+ *  The single headline number, derived rather than restated so it cannot drift from the
+ *  ensemble sweep that produced it.
+ */
 export function headlineAccuracy(): number {
   return ensembleReport.best.test_top1;
 }

@@ -1,14 +1,4 @@
-/** An anonymous, browser-generated visitor id.
- *
- *  There is no account system here and no server-side identity. This id is
- *  created in the browser, kept in localStorage, and sent as an `X-Session-Id`
- *  header so a visitor can see their own history and the admin console can
- *  count distinct sessions rather than raw requests.
- *
- *  It carries no personal data, it is not derived from anything about the
- *  device, and clearing site data ends it permanently — which the history page
- *  says, with a button that does exactly that.
- */
+/** An anonymous, browser-generated visitor id. */
 
 const KEY = "foodgenome.session";
 

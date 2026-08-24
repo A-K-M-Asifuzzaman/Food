@@ -6,9 +6,6 @@ import { useEffect, useRef, useState } from "react";
 import type { GraphData } from "./three/GraphWeb";
 import { WebLoader } from "./WebLoader";
 
-// The 3D bundle is large and the design system forbids it blocking anything on
-// the upload -> result path, so it is code-split and only requested once the
-// section is actually near the viewport.
 const GraphWeb = dynamic(() => import("./three/GraphWeb"), {
   ssr: false,
   loading: () => (

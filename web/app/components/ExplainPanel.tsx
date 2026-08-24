@@ -13,17 +13,7 @@ type ExplainResponse = {
   latency_ms: number;
 };
 
-/** Grad-CAM, presented with its own limitations attached.
- *
- *  Measured on this model, attribution lands in the outer ring of the frame at
- *  0.87x chance — better than random, but not sharply on the food. Showing a
- *  heatmap without that context invites a viewer to read precision into it that
- *  the method does not have, and the first time they notice it highlighting a
- *  tablecloth they will stop believing everything else on the page.
- *
- *  So `peak_fraction` is displayed rather than hidden, and a diffuse map is
- *  labelled diffuse.
- */
+/** Grad-CAM, presented with its own limitations attached. */
 export function ExplainPanel({ file, foodClass }: { file: File; foodClass: string }) {
   const { authFetch } = useAuth();
   const [result, setResult] = useState<ExplainResponse | null>(null);

@@ -1,14 +1,4 @@
-"""Evaluate a fine-tune checkpoint on the held-out splits and export its logits.
-
-The Kaggle notebook does this at the end of its own run. This exists for the
-case where a checkpoint arrives without that step having happened — an
-interrupted session, or a stage-1 checkpoint someone wants to measure before
-committing GPU hours to stage 2.
-
-Logits are written under a name of the caller's choosing so a partial model
-never overwrites the final one. `ensemble.py` and `conformal.py` pick them up by
-that name with no further changes.
-"""
+"""Evaluate a fine-tune checkpoint on the held-out splits and export its logits."""
 
 from __future__ import annotations
 
@@ -42,12 +32,7 @@ class Folder(Dataset):
 
 
 def build_lists(classes: list[str], val_fraction: float):
-    """Rebuild exactly the ordering the cached features and labels use.
-
-    Grouped by class in sorted order, files sorted within each class. Any drift
-    here would silently misalign the exported logits against `test_y.npy`, and
-    every downstream number would be wrong without anything erroring.
-    """
+    """Rebuild exactly the ordering the cached features and labels use."""
     train_paths, train_labels = [], []
     for label, cls in enumerate(classes):
         for p in sorted((IMAGE_DIR / "train" / cls).glob("*.jpg")):
@@ -105,11 +90,8 @@ def main() -> None:
     model.load_state_dict(ck[choice])
     model.to(DEVICE)
 
-    # Normalisation must match what the model was trained with, not what its
-    # config advertises. EVA-02's native config specifies OpenAI CLIP statistics,
-    # but the fine-tune ran with ImageNet defaults — evaluating with the native
-    # values cost 2.3 points of validation accuracy against the figure the
-    # checkpoint itself recorded, which is how the mismatch was caught.
+    # Normalisation must match what the model was trained with, not what its config
+    # advertises.
     transform = timm.data.create_transform(
         input_size=(3, args.size, args.size),
         is_training=False,

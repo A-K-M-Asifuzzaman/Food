@@ -14,18 +14,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 
 import { firebaseAuth } from "@/lib/firebase";
 
-/** Sign-in state for the whole app.
- *
- *  A prediction is attributed to an account, so the account has to be known
- *  before the analyser will run. This provider holds that state and, more
- *  usefully, hands out `authFetch` — a fetch that attaches a fresh ID token.
- *
- *  Tokens are the part that goes wrong quietly. Firebase ID tokens expire after
- *  an hour, so a page left open overnight would start getting 401s from an
- *  interface that still shows the user as signed in. `getIdToken()` refreshes
- *  on demand, which is why every request goes through here rather than caching
- *  a token at sign-in.
- */
+/** Sign-in state for the whole app. */
 
 type AuthState = {
   user: User | null;
@@ -42,14 +31,7 @@ type AuthState = {
 
 const Ctx = createContext<AuthState | null>(null);
 
-/** Accounts the interface offers the console to.
- *
- *  Mirrors ADMIN_EMAILS on the model service, which is the authority: it checks
- *  the same list against a verified token and answers 403 to everyone else. This
- *  copy exists only so the console link is not dangled in front of people it
- *  will refuse, and it is public by nature — the operator addresses ship in the
- *  client bundle either way.
- */
+/** Accounts the interface offers the console to. */
 const ADMIN_EMAILS = (
   process.env.NEXT_PUBLIC_ADMIN_EMAILS ?? "zasif855@gmail.com"
 )

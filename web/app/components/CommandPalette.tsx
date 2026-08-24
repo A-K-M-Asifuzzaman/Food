@@ -5,14 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { search, type SearchItem } from "@/lib/search";
 
-/** ⌘K navigation over every page and all 101 dishes.
- *
- *  Two details make the difference between this and a search box in a modal.
- *  Focus is trapped and restored to whatever opened it, so keyboard users are
- *  not dropped at the top of the document on close; and the highlighted row is
- *  scrolled into view as you arrow through it, which matters the moment the
- *  result list is longer than the box.
- */
+/** ⌘K navigation over every page and all 101 dishes. */
 
 const KIND_LABEL: Record<SearchItem["kind"], string> = {
   page: "Page",
@@ -52,8 +45,7 @@ export function CommandPalette({ index }: { index: SearchItem[] }) {
     [close, router],
   );
 
-  // Global shortcut. Ignored while typing somewhere else, so ⌘K in a text field
-  // does not hijack the browser's own behaviour.
+  // Global shortcut.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {

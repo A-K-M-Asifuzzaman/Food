@@ -1,20 +1,5 @@
 #!/usr/bin/env python
-"""Live terminal dashboard for every long-running job in this project.
-
-Training here happens in background processes that write to log files, because a
-20-hour extraction cannot live inside a foreground shell. That makes progress
-invisible unless you go tailing logs by hand. This reads the same artifacts the
-jobs already produce - tqdm lines, history JSON, feature meta - and renders them
-as one screen that answers "what is running, how far along, how good is it, and
-is this machine about to fall over".
-
-The swap gauge is not decoration. The first session of this project died when
-memory pressure took out the editor's tool channel mid-run, so swap is displayed
-with the same prominence as accuracy.
-
-    .venv/bin/python scripts/watch_training.py
-    .venv/bin/python scripts/watch_training.py --interval 5
-"""
+"""Live terminal dashboard for every long-running job in this project."""
 
 from __future__ import annotations
 
@@ -45,7 +30,7 @@ SPLITS = ("train", "test")
 
 SPARK = "▁▂▃▄▅▆▇█"
 
-# tqdm writes "desc: 12%|███  | 165/9469 [04:15<3:49:55, 1.48s/batch, loss=0.9]"
+# tqdm writes "desc: 12%|███ | 165/9469 [04:15<3:49:55, 1.48s/batch, loss=0.9]".
 TQDM = re.compile(
     r"(?P<desc>[^:]+):\s*(?P<pct>\d+)%\|[^|]*\|\s*(?P<cur>\d+)/(?P<total>\d+)\s*"
     r"\[(?P<elapsed>[\d:]+)<(?P<eta>[\d:?]+),\s*(?P<rate>[\d.]+)(?P<unit>s/batch|batch/s|it/s|s/it)"
@@ -76,12 +61,7 @@ def human_secs(seconds: float) -> str:
 
 
 def sparkline(values: list[float], width: int = 32) -> str:
-    """Render a value series as one line of block characters.
-
-    Scaled to the observed min/max rather than zero, because validation accuracy
-    lives in a narrow band near the top and a zero-based chart would render every
-    epoch as an identical full block.
-    """
+    """Render a value series as one line of block characters."""
     if not values:
         return ""
     vals = values[-width:]
@@ -98,11 +78,7 @@ def bar(fraction: float, width: int = 20, filled: str = "█", empty: str = "░
 
 
 def tail_text(path: Path, nbytes: int = 8000) -> str:
-    """Read the end of a log, treating carriage returns as line breaks.
-
-    tqdm redraws its bar with \\r, so a naive readlines() returns one enormous
-    line containing every frame the bar has ever drawn.
-    """
+    """Read the end of a log, treating carriage returns as line breaks."""
     try:
         with path.open("rb") as fh:
             fh.seek(0, 2)
@@ -351,8 +327,8 @@ def system_panel() -> Panel:
         Text(bar(swap_frac, 24), style=swap_style),
         Text(f"{sw.used / gib:.1f}/{sw.total / gib:.1f} GB", style=swap_style),
     )
-    # A bare cpu_percent() reports 0.0 until it has a previous call to diff
-    # against, so sample once over a short window and reuse the number.
+    # A bare cpu_percent() reports 0.0 until it has a previous call to diff against, so
+    # sample once over a short window and reuse the number.
     cpu = psutil.cpu_percent(interval=0.15)
     grid.add_row("cpu", Text(bar(cpu / 100, 24), style="magenta"), f"{cpu:.0f}%")
     grid.add_row("disk", Text(bar(disk.percent / 100, 24), style="blue"), f"{disk.free / gib:.0f} GB free")
@@ -363,14 +339,14 @@ def system_panel() -> Panel:
             cmd = " ".join(p.info["cmdline"] or [])
         except (psutil.NoSuchProcess, psutil.AccessDenied):
             continue
-        # Both names are matched during the nutrivision -> foodgenome package
-        # rename; the running extraction still uses the old module path.
+        # Both names are matched during the nutrivision -> foodgenome package rename;
+        # the running extraction still uses the old module path.
         if "nutrivision" in cmd or "foodgenome" in cmd:
             stage = next((s for s in ("features", "probe", "finetune") if s in cmd), "python")
             procs.append((stage, p.info["memory_info"].rss / gib))
     if procs:
-        # Dataloader workers share the parent's command line, so sort by
-        # resident size to surface the process actually holding the model.
+        # Dataloader workers share the parent's command line, so sort by resident size
+        # to surface the process actually holding the model.
         procs.sort(key=lambda p: p[1], reverse=True)
         grid.add_row("", Text(""), "")
         for stage, rss in procs[:4]:
@@ -437,9 +413,6 @@ def main() -> None:
     started = time.time()
 
     if args.once:
-        # Printed sequentially rather than as a Layout: a Layout resolves its
-        # flexible rows against the live terminal height, which collapses them
-        # to nothing in a one-shot render or when piped.
         for panel in (
             header_panel(started),
             feature_panel(),

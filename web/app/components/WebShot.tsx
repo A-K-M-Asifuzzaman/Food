@@ -4,22 +4,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { thwip } from "@/lib/sfx";
 
-/** Spider-Man anchoring a web strand to a corner of something on the page.
- *
- *  Drawn as one SVG spanning the section so the strand can start at his wrist
- *  and end exactly on the target element's corner. The end point is measured
- *  from the DOM rather than hard-coded, because the target moves with the
- *  viewport and a guessed coordinate is only right at one width.
- *
- *  Each pose lives in a 150x150 box with its own viewBox, which keeps the
- *  drawing in round numbers, and publishes the one point the page needs back
- *  out of it: `wrist`. Both the figure and the strand read that same constant,
- *  so adjusting a pose cannot leave the web starting in mid-air.
- *
- *  Decoration, so it is inert: `pointer-events: none` throughout, `aria-hidden`,
- *  and nothing renders below `lg` — a diagonal strand across a phone screen
- *  would cross the content it is meant to frame.
- */
+/** Spider-Man anchoring a web strand to a corner of something on the page. */
 
 const BOX = 150;
 
@@ -38,7 +23,7 @@ type Props = {
   inset?: number;
   top?: number;
   scale?: number;
-  /** The sound effect. Empty string for none. */
+  /** The sound effect. */
   sfx?: string;
 };
 
@@ -63,8 +48,8 @@ export function WebShot({
       const target = document.getElementById(targetId)?.getBoundingClientRect();
       if (!box || !target) return;
       setWidth(box.width);
-      // Just inside the corner, so the strand reads as stuck to the panel
-      // rather than floating beside it.
+      // Just inside the corner, so the strand reads as stuck to the panel rather than
+      // floating beside it.
       const pad = 5;
       const narrow = box.width < 1024;
       const corner = narrow ? "tr" : wideCorner;
@@ -88,8 +73,6 @@ export function WebShot({
     window.addEventListener("resize", measure);
 
     // Fire once the anchor is known, so the strand never animates to a stale point.
-    // The sound rides the same timer as the animation rather than the render, or
-    // it plays while the strand is still a point at his wrist.
     const t = setTimeout(() => {
       setFired(true);
       if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) thwip();
@@ -105,10 +88,8 @@ export function WebShot({
     return <div ref={host} className="absolute inset-0 pointer-events-none" />;
   }
 
-  // Narrow screens get a smaller figure docked directly above its target
-  // rather than the wide layout's long diagonal. On a phone the section header
-  // sits where that diagonal would travel, so the same composition that frames
-  // the content on a desktop draws a line straight through the headline.
+  // Narrow screens get a smaller figure docked directly above its target rather than
+  // the wide layout's long diagonal.
   const narrow = width < 1024;
   const scale = narrow ? (width < 480 ? 0.5 : 0.82) : wideScale;
   const inset = narrow ? 2 : wideInset;
@@ -128,8 +109,7 @@ export function WebShot({
     y: top + wrist.y * scale,
   };
 
-  // A slack line, not a ruler. The sag is a fraction of the span, so it stays
-  // proportional as the layout stretches.
+  // A slack line, not a ruler.
   const span = Math.hypot(anchor.x - hand.x, anchor.y - hand.y);
   const sag = Math.min(span * 0.055, 24);
   const mid = { x: (hand.x + anchor.x) / 2, y: (hand.y + anchor.y) / 2 + sag };
@@ -287,7 +267,7 @@ function Boot({ x, y, rotate = 0 }: { x: number; y: number; rotate?: number }) {
   );
 }
 
-/** The masked head. `tilt` in degrees, positive leans right. */
+/** The masked head. */
 function Head({
   cx,
   cy,
@@ -344,8 +324,7 @@ function Head({
   );
 }
 
-/** The torso: broad shoulders tapering to the waist, with chest webbing and
- *  the emblem. `d` differs per pose; the detail is placed off the same box. */
+/** The torso: broad shoulders tapering to the waist, with chest webbing and the emblem. */
 function Torso({
   d,
   webbing,
@@ -428,8 +407,10 @@ const POSES: Record<
     ),
   },
 
-  /** Hanging upside down from a lifeline that leaves the top of the frame —
-   *  the pose everyone pictures first, and the one that works over a heading. */
+  /**
+   *  Hanging upside down from a lifeline that leaves the top of the frame — the pose
+   *  everyone pictures first, and the one that works over a heading.
+   */
   hang: {
     wrist: { x: 30, y: 118 },
     figure: () => (
@@ -492,8 +473,10 @@ const POSES: Record<
     ),
   },
 
-  /** Clinging side-on, the way he crawls a wall — flatter, so it fits beside a
-   *  block of text without pushing into it. */
+  /**
+   *  Clinging side-on, the way he crawls a wall — flatter, so it fits beside a block of
+   *  text without pushing into it.
+   */
   crawl: {
     wrist: { x: 22, y: 92 },
     figure: () => (

@@ -1,23 +1,4 @@
-"""Confidence calibration for the classifier heads.
-
-Accuracy says how often the model is right. It says nothing about whether the
-number printed next to the answer means anything. A model that is 97% accurate
-but reports 99.9% confidence on everything is useless for a nutrition app,
-because the user has no way to tell the reliable answers from the guesses, and
-the downstream conformal and out-of-distribution stages both assume the scores
-are meaningful.
-
-Modern networks are systematically overconfident. Temperature scaling fixes most
-of it with a single scalar fitted on held-out data: it divides the logits by T
-before the softmax, which sharpens or softens the distribution without changing
-the arg-max, so **accuracy is mathematically unchanged** and only the confidence
-is recalibrated.
-
-Fitted on validation, applied to test. Fitting on test would be the same
-category of error as selecting a model on test.
-
-    .venv/bin/python -u -m nutrivision.reliability.calibration --name siglip_so400m
-"""
+"""Confidence calibration for the classifier heads."""
 
 from __future__ import annotations
 
@@ -42,12 +23,7 @@ def load(name: str, split: str) -> tuple[torch.Tensor, torch.Tensor]:
 def expected_calibration_error(
     probs: torch.Tensor, y: torch.Tensor, bins: int = 15
 ) -> tuple[float, float, list[dict]]:
-    """ECE and MCE over equal-width confidence bins.
-
-    ECE is the average gap between confidence and accuracy, weighted by how many
-    samples land in each bin. MCE is the worst single bin - it matters because a
-    small average can hide one badly broken confidence range.
-    """
+    """ECE and MCE over equal-width confidence bins."""
     conf, pred = probs.max(dim=-1)
     correct = pred.eq(y).float()
 
@@ -119,14 +95,7 @@ def summarise(logits: torch.Tensor, y: torch.Tensor, bins: int) -> dict:
 
 
 def load_ensemble(members: list[str], split: str) -> tuple[torch.Tensor, torch.Tensor]:
-    """Surrogate logits for a probability-averaged ensemble.
-
-    The ensemble is a mean of softmaxes, so it has no logits of its own to divide.
-    Taking the log of the averaged probability recovers a quantity that softmaxes
-    back to exactly that average, which is what temperature scaling needs to act
-    on. The additive constant a log leaves free is irrelevant — softmax is shift
-    invariant.
-    """
+    """Surrogate logits for a probability-averaged ensemble."""
     probs = None
     y = None
     for name in members:

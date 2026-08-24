@@ -1,13 +1,4 @@
-/** The inline loading indicator: a spider walking a strand.
- *
- *  The full-page `WebLoader` spins an entire orb web, which is right when a
- *  route is loading and wrong inside a panel that is waiting on one fetch — a
- *  132px web in a 40px gap is a decoration, not a status. This is the small
- *  form: one strand, one spider, and the label saying what is being waited on.
- *
- *  Pure SVG and CSS, rendered on the server and animated without hydrating.
- *  A loading indicator that costs a JavaScript bundle is self-defeating.
- */
+/** The inline loading indicator: a spider walking a strand. */
 export function SpiderBar({
   label = "Loading",
   className = "",

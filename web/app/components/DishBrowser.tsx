@@ -32,8 +32,8 @@ export function DishBrowser({ dishes }: { dishes: Dish[] }) {
     const filtered = dishes.filter((d) => {
       if (cuisine !== "all" && d.cuisine !== cuisine) return false;
       if (!q) return true;
-      // Tags are searched too, so "dessert" finds things whose title never says
-      // dessert — which is most of them.
+      // Tags are searched too, so "dessert" finds things whose title never says dessert
+      // — which is most of them.
       return (
         d.title.toLowerCase().includes(q) ||
         d.cuisine.toLowerCase().includes(q) ||

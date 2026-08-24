@@ -1,16 +1,4 @@
-"""Choose one representative photograph per dish and export it for the web.
-
-Picking the first file in each folder would be arbitrary, and arbitrary Food-101
-images are often bad photographs - the dataset's own documentation warns the
-training split is noisy. Instead each class is represented by the image closest
-to its centroid in SigLIP embedding space, which is as close as this repo can
-get to "the most typical example of this dish". The same embeddings already sit
-on disk from the feature bank, so this costs a matrix multiply rather than an
-inference pass.
-
-Provenance for every choice lands in the manifest, so a questionable image can
-be traced back to the file it came from.
-"""
+"""Choose one representative photograph per dish and export it for the web."""
 
 from __future__ import annotations
 
@@ -50,9 +38,6 @@ def centroid_pick(backbone: str, shortlist: int) -> dict[int, list[tuple[int, fl
 def export(path: Path, dest: Path, size: int, quality: int) -> tuple[int, int]:
     with Image.open(path) as im:
         im = ImageOps.exif_transpose(im).convert("RGB")
-        # Square crop about the centre: cards and the detail hero are both
-        # square-ish, and letterboxing a food photo wastes the only area a
-        # reader actually looks at.
         side = min(im.size)
         left = (im.width - side) // 2
         top = (im.height - side) // 2

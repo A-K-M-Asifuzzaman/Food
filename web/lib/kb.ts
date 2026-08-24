@@ -19,9 +19,10 @@ export type FoodEntry = {
   tags: string[];
   note: string;
   source: string;
-  /** "direct" when SR Legacy has the dish itself, "composite" when it was built
-   *  from weighted ingredient records. The distinction is shown to the user —
-   *  a composed figure carries more uncertainty than a measured one. */
+  /**
+   *  "direct" when SR Legacy has the dish itself, "composite" when it was built from
+   *  weighted ingredient records.
+   */
   method: "direct" | "composite";
   fdc_id?: number | null;
   description?: string;
@@ -59,9 +60,7 @@ export function allClasses(): string[] {
   return kb.entries.map((e) => e.class);
 }
 
-/** Macro split by calorie contribution, which is what a ring or bar should encode.
- *  Using gram mass instead would misrepresent fat, at 9 kcal/g against 4 for the
- *  other two. */
+/** Macro split by calorie contribution, which is what a ring or bar should encode. */
 export function macroSplit(n: Nutrients) {
   const protein = (n.protein_g ?? 0) * 4;
   const carbs = (n.carbs_g ?? 0) * 4;

@@ -1,15 +1,4 @@
-"""The served classifier: two frozen backbones, two MLP probes, averaged.
-
-This mirrors the offline evaluation exactly, because any divergence would make
-the 97.156% figure the API advertises a claim about a different system. The two
-places that matter:
-
-- Features are L2-normalised before the probe sees them, matching `to_tensor` in
-  `training/probe.py`. Skipping it does not error — it quietly degrades accuracy.
-- Members are combined by averaging *probabilities*, not logits. A parameter-free
-  probability average measurably beat both a logit average and a trained fusion
-  head on the test split.
-"""
+"""The served classifier: two frozen backbones, two MLP probes, averaged."""
 
 from __future__ import annotations
 
@@ -41,12 +30,7 @@ def pick_device() -> torch.device:
 
 
 class Classifier:
-    """Lazily loaded so the process can answer /health before weights are in RAM.
-
-    Loading is guarded by a lock because uvicorn will happily route a second
-    request into the same worker mid-load, and two concurrent loads of ~1.5 GB
-    of backbones is how a small container gets OOM-killed.
-    """
+    """Lazily loaded so the process can answer /health before weights are in RAM."""
 
     def __init__(self) -> None:
         self.device = pick_device()
@@ -101,24 +85,14 @@ class Classifier:
             stack.append(logits.softmax(dim=-1))
 
         mean = torch.stack(stack).mean(dim=0)
-        # Temperature acts on the surrogate logits of the averaged probability,
-        # which is how the constant was fitted offline.
+        # Temperature acts on the surrogate logits of the averaged probability, which is
+        # how the constant was fitted offline.
         calibrated = (mean.clamp_min(1e-12).log() / CONSTANTS["temperature"]).softmax(dim=-1)
         return calibrated.squeeze(0).cpu().numpy(), mean.squeeze(0).cpu().numpy()
 
 
     def explain(self, image: Image.Image, class_index: int | None = None) -> dict:
-        """Grad-CAM for the strongest single member.
-
-        Only SigLIP is attributed, not the ensemble. Averaging two heatmaps from
-        backbones with different patch grids (27x27 and 32x32) and different
-        pretraining would produce a picture that corresponds to no model anyone
-        can point at. SigLIP is the stronger member at 96.83% and its map is the
-        honest one to show.
-
-        This runs outside inference mode: Grad-CAM needs gradients, so it cannot
-        share the no_grad path used for prediction.
-        """
+        """Grad-CAM for the strongest single member."""
         from nutrivision.explain.gradcam import explain as run_gradcam
 
         self.load()
@@ -130,12 +104,7 @@ class Classifier:
 
 
 def conformal_set(probs: np.ndarray, k_max: int = 8) -> list[int]:
-    """LAC with a forced top-1, the configuration measured at 99.56% coverage.
-
-    k_max only bounds what the API returns; the guarantee is a property of the
-    threshold, and truncating a very large set would weaken it. Sets that big
-    mean the model is lost, which the OOD flag reports separately.
-    """
+    """LAC with a forced top-1, the configuration measured at 99.56% coverage."""
     top = int(probs.argmax())
     idx = np.flatnonzero(probs >= SET_THRESHOLD)
     ordered = sorted(idx.tolist(), key=lambda i: -probs[i])

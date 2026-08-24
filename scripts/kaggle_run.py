@@ -1,17 +1,4 @@
-"""Push, run and monitor the fine-tune kernel on Kaggle from the command line.
-
-A committed kernel is the reliable way to run this. An interactive session is
-tied to a browser tab and dies when it disconnects or idles — which is how a
-five-hour run was already lost once. A committed run executes headless, keeps
-its full twelve-hour budget, and is the only mode the API can report on:
-`kernels_status` returns 404 for a notebook that has never been committed.
-
-Commands:
-    push     upload the notebook and start a committed run
-    status   one-shot status check
-    watch    poll until the run finishes
-    fetch    download the outputs into artifacts/
-"""
+"""Push, run and monitor the fine-tune kernel on Kaggle from the command line."""
 
 from __future__ import annotations
 
@@ -26,8 +13,7 @@ from nutrivision.config import CHECKPOINT_DIR, REPORT_DIR
 KERNEL_DIR = Path(__file__).resolve().parents[1] / "notebooks" / "kaggle"
 REF = "asifxzaman/foodgenome-eva02-finetune"
 
-# Where each Kaggle output belongs locally. Keeping this beside the fetch logic
-# means the integration script never has to guess.
+# Where each Kaggle output belongs locally.
 PLACEMENT = {
     "probe_eva02_ft_val.npy": REPORT_DIR / "logits",
     "probe_eva02_ft_test.npy": REPORT_DIR / "logits",

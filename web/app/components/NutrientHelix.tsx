@@ -1,15 +1,6 @@
 import { macroSplit, type Nutrients } from "@/lib/kb";
 
-/** The macro profile drawn as a double strand — the "genome" reading of a dish.
- *
- *  Two strands cross like a helix; the rungs between them are coloured by which
- *  macro dominates at that point along the profile, and the strand thickness
- *  tracks calorie share. This is SVG rather than WebGL on purpose: the design
- *  system requires the critical path to work with zero 3D loaded.
- *
- *  Marked aria-hidden and paired with the nutrition table beside it, so a screen
- *  reader gets the figures rather than a decorative canvas.
- */
+/** The macro profile drawn as a double strand — the "genome" reading of a dish. */
 export function NutrientHelix({ nutrients }: { nutrients: Nutrients }) {
   const { protein, carbs, fat } = macroSplit(nutrients);
 
@@ -19,8 +10,8 @@ export function NutrientHelix({ nutrients }: { nutrients: Nutrients }) {
   const amplitude = 30;
   const midline = height / 2;
 
-  // Each rung is assigned to a macro by walking the three shares in order, so
-  // the coloured bands are proportional to calorie contribution.
+  // Each rung is assigned to a macro by walking the three shares in order, so the
+  // coloured bands are proportional to calorie contribution.
   const bands = [
     { key: "carbs", share: carbs, color: "var(--color-amber)" },
     { key: "protein", share: protein, color: "var(--color-blue)" },

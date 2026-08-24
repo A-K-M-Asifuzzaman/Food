@@ -10,15 +10,10 @@ const SlingerModel = dynamic(
   { ssr: false },
 );
 
-/** Drop a rigged humanoid glTF here to change the character.
- *
- *  A list rather than a constant so swapping is a file copy, not a code change.
- *  Nothing here is required — with no model present the flat figure renders
- *  instead, so the site never depends on the asset being in place. */
+/** Drop a rigged humanoid glTF here to change the character. */
 export const MODEL_CANDIDATES = ["/models/slinger.glb"];
 
-/** A malformed or half-uploaded model must not take the page with it.
- *  Three throws during parse, which React will happily propagate to the root. */
+/** A malformed or half-uploaded model must not take the page with it. */
 class Guard extends Component<{ children: ReactNode }, { failed: boolean }> {
   state = { failed: false };
   static getDerivedStateFromError() {
@@ -32,19 +27,7 @@ class Guard extends Component<{ children: ReactNode }, { failed: boolean }> {
   }
 }
 
-/**
- * The 3D character, if there is one.
- *
- * The model is not in the repository — it is somebody's artwork, and which one
- * to ship is a licensing decision rather than a code one. So this probes for
- * the file and renders nothing when it is absent, which is why the flat figure
- * is still wired up on every page: the site has to be complete without it.
- *
- * Three things keep a decorative WebGL canvas from taxing the page: it does not
- * mount for a reader who asked for reduced motion or on a screen too narrow to
- * spare the room, it does not render while scrolled out of view, and it never
- * downloads the model until both of those pass.
- */
+/** The 3D character, if there is one. */
 export function Spider3D({
   className = "",
   scale = 1,
@@ -57,34 +40,31 @@ export function Spider3D({
 }: {
   className?: string;
   scale?: number;
-  /** Resting attitude. Defaults to facing into the page from `side`. */
+  /** Resting attitude. */
   pose?: [number, number, number];
-  /** Which edge the figure sits on. Mirrors the pose and the throw with it. */
+  /** Which edge the figure sits on. */
   side?: "left" | "right";
   /** Drop meshes below this vertex count — rig widgets and prop geometry. */
   hideBelowVerts?: number;
-  /** Override the model path. Defaults to the first candidate that exists. */
+  /** Override the model path. */
   model?: string;
-  /** Let a reader drag the figure around. Costs the canvas its click-through,
-   *  so it is only worth it where the figure sits in empty margin. */
+  /** Let a reader drag the figure around. */
   interactive?: boolean;
-  /** Shown when there is no model, no WebGL, or the reader asked for stillness.
-   *  The flat figure is the fallback, so the page is never missing its
-   *  character just because an asset decision has not been made. */
+  /** Shown when there is no model, no WebGL, or the reader asked for stillness. */
   fallback?: ReactNode;
 }) {
   const host = useRef<HTMLDivElement>(null);
   const [url, setUrl] = useState<string | null>(null);
   const [decided, setDecided] = useState(false);
-  // Starts true: frameloop="never" renders zero frames, so a canvas that
-  // mounts before the observer reports in would simply stay empty.
+  // Starts true: frameloop="never" renders zero frames, so a canvas that mounts before
+  // the observer reports in would simply stay empty.
   const [active, setActive] = useState(true);
   const [wide, setWide] = useState(false);
 
   useEffect(() => {
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    // A few megabytes of character is not what someone on a metered connection
-    // asked for. Save-Data is the one signal a browser gives us for that.
+    // A few megabytes of character is not what someone on a metered connection asked
+    // for.
     const thrifty = Boolean(
       (navigator as Navigator & { connection?: { saveData?: boolean } }).connection?.saveData,
     );
@@ -99,8 +79,8 @@ export function Spider3D({
     desktop.addEventListener("change", onWidth);
 
     let alive = true;
-    // HEAD rather than GET: this only needs to know which files exist, and a
-    // character model runs to megabytes.
+    // HEAD rather than GET: this only needs to know which files exist, and a character
+    // model runs to megabytes.
     (async () => {
       for (const candidate of model ? [model] : MODEL_CANDIDATES) {
         try {
@@ -130,8 +110,6 @@ export function Spider3D({
   }, [model]);
 
   // Dragging is a pointer gesture on desktop and a scroll gesture on a phone.
-  // Leaving OrbitControls on for touch means the figure swallows the swipe and
-  // the page stops scrolling wherever it happens to sit.
   const draggable = interactive && wide;
 
   return (
@@ -152,8 +130,7 @@ export function Spider3D({
             <directionalLight position={[3, 4, 5]} intensity={2} />
             <directionalLight position={[-4, 1, -2]} intensity={0.5} color="#8fa8ff" />
             {draggable && (
-              // Rotation only. Zoom and pan on a decorative figure just let a
-              // reader lose it off the side of its own canvas with no way back.
+              // Rotation only.
               <OrbitControls
                 enableZoom={false}
                 enablePan={false}
@@ -167,9 +144,8 @@ export function Spider3D({
             <Suspense fallback={null}>
               <SlingerModel
                 url={url}
-                // A phone canvas is narrow enough that the frustum is
-                // narrower than the figure at the desktop scale, cropping him
-                // down one side.
+                // A phone canvas is narrow enough that the frustum is narrower than the
+                // figure at the desktop scale, cropping him down one side.
                 scale={wide ? scale : scale * 0.72}
                 pose={pose ?? (side === "left" ? [0.34, 0.6, -0.22] : [0.34, -0.6, 0.22])}
                 hideBelowVerts={hideBelowVerts}

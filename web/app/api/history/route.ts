@@ -1,8 +1,6 @@
 import { forwardAuth, relay, UPSTREAM } from "@/lib/upstream";
 
-// A person's own record, scoped server-side to the uid in their token. There
-// is no query parameter for whose history to fetch, deliberately: the only
-// answer this route can give is "yours".
+// A person's own record, scoped server-side to the uid in their token.
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 

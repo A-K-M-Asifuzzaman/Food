@@ -5,17 +5,7 @@ import { useId, useState } from "react";
 import type { CalibrationBin } from "@/lib/reports";
 import { AXIS, CATEGORICAL, GRID } from "./palette";
 
-/** Confidence against observed accuracy, with the diagonal a perfect model sits on.
- *
- *  This is the one chart where the reference line carries the meaning: distance
- *  below the diagonal is over-confidence, above it is under-confidence. Plotting
- *  the corrected series alongside the raw one is what makes temperature scaling
- *  legible — the numbers alone (ECE 0.051 → 0.006) say it worked but not how.
- *
- *  Bins holding almost no samples are noise, not evidence, so a minimum count is
- *  enforced; a bin with four images swings wildly and would imply a calibration
- *  failure the data cannot support.
- */
+/** Confidence against observed accuracy, with the diagonal a perfect model sits on. */
 
 const W = 460;
 const H = 340;

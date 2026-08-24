@@ -1,30 +1,4 @@
-"""Curated Food-101 to USDA SR Legacy mapping.
-
-Naive text matching of the 101 class names against SR Legacy fails badly and,
-worse, fails *confidently*: it resolves beef carpaccio to "Soup, stock, beef" at
-13 kcal per 100 g, chicken wings to "Soup, stock, chicken" at 36 kcal, filet
-mignon to a salmon product, and chocolate cake to a snack cake explicitly
-labelled "not chocolate". Roughly a quarter of the classes match no meaningful
-record at all. A nutrition app that ships those numbers is worse than one that
-ships nothing, so every class here is curated by hand.
-
-Two kinds of entry:
-
-*Direct* - SR Legacy contains the dish. The query is tuned with `require` and
-`avoid` terms until it resolves to the intended generic, prepared record rather
-than a baby food, a dry mix, or a branded restaurant item.
-
-*Composite* - SR Legacy has no entry for the dish, which is true of roughly
-thirty of these classes (tiramisu, bibimbap, takoyaki, poutine, pho...). The
-dish is instead declared as a weighted ingredient list and its profile is
-computed as the mass-weighted mean of the ingredient records. Component weights
-are grams per 100 g of *finished* dish, so they should sum to about 100. This is
-auditable in a way a wrong single match is not, and it produces the
-dish-to-ingredient edges the GraphRAG stage needs.
-
-Serving sizes are typical single servings as plated, used to convert the per-100 g
-USDA basis into the per-serving figures a user actually wants.
-"""
+"""Curated Food-101 to USDA SR Legacy mapping."""
 
 from __future__ import annotations
 
@@ -66,8 +40,7 @@ def C(query: str, grams: float, require: tuple = (), avoid: tuple = ()) -> Compo
     return Component(query=query, grams=grams, require=require, avoid=avoid)
 
 
-# Ingredient shorthands reused across composites. Defined once so that a fix to
-# how "flour" or "egg" resolves propagates to every dish that contains it.
+# Ingredient shorthands reused across composites.
 FLOUR = lambda g: C("wheat flour white all-purpose enriched", g, ("flour",), ("self-rising", "cake"))  # noqa: E731
 SUGAR = lambda g: C("sugars granulated", g, ("sugars",), ("brown", "powdered"))  # noqa: E731
 BUTTER = lambda g: C("butter salted", g, ("butter",), ("oil", "peanut", "whipped"))  # noqa: E731
@@ -99,8 +72,8 @@ POTATO = lambda g: C("potatoes flesh and skin raw", g, ("potatoes", "raw"), ("sw
 MAYO = lambda g: C("salad dressing mayonnaise regular", g, ("mayonnaise",), ("light", "low calorie", "imitation"))  # noqa: E731
 SOY_SAUCE = lambda g: C("soy sauce made from soy and wheat shoyu", g, ("soy sauce",), ("low sodium",))  # noqa: E731
 SESAME_OIL = lambda g: C("oil sesame salad or cooking", g, ("sesame",), ())  # noqa: E731
-# "water" alone matches "Watermelon, raw" on a substring, which silently put
-# watermelon into miso soup, churros and takoyaki. Pin the tap-water record.
+# "water" alone matches "Watermelon, raw" on a substring, which silently put watermelon
+# into miso soup, churros and takoyaki.
 WATER = lambda g: C("beverages water tap drinking", g, ("water", "tap"), ("melon",))  # noqa: E731
 FRIES = lambda g: C(  # noqa: E731
     "potatoes french fried all types salt added in processing frozen oven-heated",
@@ -109,7 +82,7 @@ FRIES = lambda g: C(  # noqa: E731
 
 
 SPECS: tuple[ClassSpec, ...] = (
-    # ---------------------------------------------------------------- desserts
+    # ---------------------------------------------------------------- desserts.
     ClassSpec("apple_pie", "Apple Pie", "American", 125, "1 slice (125 g)",
               query="pie apple prepared from recipe", require=("pie", "apple"),
               avoid=("fried", "snack", "baby"), tags=("dessert", "baked")),
@@ -200,7 +173,7 @@ SPECS: tuple[ClassSpec, ...] = (
               query="french toast prepared from recipe made with low fat milk",
               require=("french toast",), avoid=("frozen", "sticks"), tags=("breakfast",)),
 
-    # ------------------------------------------------------------------ salads
+    # ------------------------------------------------------------------ salads.
     ClassSpec("beet_salad", "Beet Salad", "European", 150, "1 bowl (150 g)",
               recipe=(C("beets cooked boiled drained", 65, ("beets", "cooked")), OLIVE_OIL(10),
                       C("cheese goat soft type", 15, ("goat",)),
@@ -227,7 +200,7 @@ SPECS: tuple[ClassSpec, ...] = (
                       C("vinegar rice", 6, ("vinegar",)), SOY_SAUCE(5)),
               tags=("salad", "vegetarian")),
 
-    # ------------------------------------------------------------------- soups
+    # ------------------------------------------------------------------- soups.
     ClassSpec("clam_chowder", "Clam Chowder", "American", 250, "1 bowl (250 g)",
               query="soup clam chowder new england canned ready-to-serve",
               require=("clam chowder",), avoid=("manhattan", "condensed", "dry"),
@@ -261,7 +234,7 @@ SPECS: tuple[ClassSpec, ...] = (
               note="SR Legacy has no pho record; the broth-dominant composition is what drives its "
                    "low energy density."),
 
-    # ------------------------------------------------------------- meat mains
+    # ------------------------------------------------------------- meat mains.
     ClassSpec("baby_back_ribs", "Baby Back Ribs", "American", 250, "3 ribs (250 g)",
               query="pork fresh backribs separable lean and fat cooked roasted",
               require=("backribs",), avoid=("raw",), tags=("meat", "grilled")),
@@ -311,7 +284,7 @@ SPECS: tuple[ClassSpec, ...] = (
                       C("spices curry powder", 2, ("curry powder",)), GARLIC(2)),
               tags=("meat", "curry")),
 
-    # ---------------------------------------------------------------- seafood
+    # ---------------------------------------------------------------- seafood.
     ClassSpec("ceviche", "Ceviche", "Peruvian", 150, "1 serving (150 g)",
               recipe=(C("fish tilapia raw", 60, ("tilapia", "raw")),
                       C("lime juice raw", 15, ("lime juice",)), ONION(10), TOMATO(10),
@@ -362,7 +335,7 @@ SPECS: tuple[ClassSpec, ...] = (
                       C("parsley fresh", 3, ("parsley",), ("dried",))),
               tags=("seafood",)),
 
-    # ------------------------------------------------------------- sandwiches
+    # ------------------------------------------------------------- sandwiches.
     ClassSpec("club_sandwich", "Club Sandwich", "American", 250, "1 sandwich (250 g)",
               recipe=(BREAD(35),
                       C("turkey breast meat only cooked roasted", 25, ("turkey", "cooked"), ("raw",)),
@@ -398,7 +371,7 @@ SPECS: tuple[ClassSpec, ...] = (
               query="fast foods breakfast burrito with egg cheese and sausage",
               require=("burrito",), tags=("breakfast", "mexican")),
 
-    # ---------------------------------------------------------- pasta & grains
+    # ---------------------------------------------------------- pasta & grains.
     ClassSpec("lasagna", "Lasagna", "Italian", 250, "1 slice (250 g)",
               recipe=(PASTA(30), GROUND_BEEF(20), C("sauce tomato canned", 22, ("sauce", "tomato")),
                       RICOTTA(14), MOZZARELLA(12), PARMESAN(2)),
@@ -464,7 +437,7 @@ SPECS: tuple[ClassSpec, ...] = (
                       C("seaweed wakame raw", 2, ("wakame",))),
               tags=("noodles", "soup")),
 
-    # ------------------------------------------------------------ small plates
+    # ------------------------------------------------------------ small plates.
     ClassSpec("bruschetta", "Bruschetta", "Italian", 90, "2 slices (90 g)",
               recipe=(C("bread italian", 48, ("bread", "italian")), TOMATO(32), OLIVE_OIL(14),
                       GARLIC(3), C("basil fresh", 3, ("basil",), ("dried",))),

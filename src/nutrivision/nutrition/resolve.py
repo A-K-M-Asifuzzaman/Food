@@ -1,11 +1,4 @@
-"""Resolve human readable food descriptions to SR Legacy rows.
-
-SR Legacy mixes generic foods with baby food, dry mixes and restaurant chain
-entries. A naive substring match for "carrot cake" returns strained baby carrots
-and a boxed pudding mix before it returns anything you would eat as carrot cake,
-so the scorer below is deliberately opinionated about what a generic food entry
-looks like.
-"""
+"""Resolve human readable food descriptions to SR Legacy rows."""
 
 from __future__ import annotations
 
@@ -83,8 +76,8 @@ class Resolver:
         score -= self.table["_penalty"]
         score -= self.table["description"].str.len() / 90.0
 
-        # itertuples() renames any column starting with an underscore to a
-        # positional name, so _score has to be read off the row directly.
+        # itertuples() renames any column starting with an underscore to a positional
+        # name, so _score has to be read off the row directly.
         out = self.table.assign(_score=score).nlargest(limit, "_score")
         return [
             Match(

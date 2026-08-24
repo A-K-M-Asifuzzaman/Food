@@ -3,14 +3,7 @@
 import Link from "next/link";
 import { useEffect } from "react";
 
-/** The error boundary.
- *
- *  It says what failed in plain language and offers a way out. What it
- *  deliberately does not do is print the exception: a stack trace tells a
- *  visitor nothing they can act on, and on a public deployment it leaks internal
- *  paths. The digest is shown instead, because that is the one string that lets
- *  someone report the problem usefully.
- */
+/** The error boundary. */
 export default function GlobalError({
   error,
   reset,

@@ -3,14 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-/** What a signed-out visitor sees where the analyser would be.
- *
- *  Deliberately not a wall. It says what an account buys, states plainly what
- *  is stored, and carries the same one-tap Google route as the login page, so
- *  the whole detour is a single press for most people. The `next` parameter
- *  brings them straight back here rather than dropping them on the home page,
- *  which is the difference between a gate and an obstacle.
- */
+/** What a signed-out visitor sees where the analyser would be. */
 export function SignInGate() {
   const pathname = usePathname();
   const href = `/login?next=${encodeURIComponent(pathname || "/analyze")}`;

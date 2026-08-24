@@ -1,9 +1,4 @@
-"""FastAPI service for FoodGenome AI.
-
-Implements the contract the frontend already consumes — see `web/lib/types.ts`.
-Setting FOODGENOME_API to this service's base URL is the only change the web app
-needs to switch from its demo responses to real predictions.
-"""
+"""FastAPI service for FoodGenome AI."""
 
 from __future__ import annotations
 
@@ -51,8 +46,7 @@ app.add_middleware(
 
 @app.middleware("http")
 async def track(request: Request, call_next):
-    """Time every request. The route template is recorded rather than the raw
-    path so that 101 dish lookups do not become 101 separate series."""
+    """Time every request."""
     started = time.time()
     try:
         response = await call_next(request)
@@ -68,14 +62,8 @@ async def track(request: Request, call_next):
 _kb = json.loads(KB_PATH.read_text())
 ENTRIES = {e["class"]: e for e in _kb["entries"]}
 
-# Class index order comes from the knowledge base's own entry order, which was
-# built against the dataset's label order and is verified equal to it.
-#
-# Do not substitute sorted(): the canonical order is NOT Python's string sort.
-# "cheesecake" precedes "cheese_plate" in the dataset, while sorted() reverses
-# them because "_" (0x5F) sorts before "c" (0x63). That single transposition
-# would make the API report cheesecake as a cheese plate, confidently, with the
-# right probability attached to the wrong name.
+# Class index order comes from the knowledge base's own entry order, which was built
+# against the dataset's label order and is verified equal to it.
 CLASS_ORDER = [e["class"] for e in _kb["entries"]]
 assert len(CLASS_ORDER) == 101, f"expected 101 classes, got {len(CLASS_ORDER)}"
 
@@ -91,13 +79,7 @@ async def explain(
     food_class: str | None = None,
     user: User = Depends(require_user),
 ) -> dict:
-    """Grad-CAM overlay for an uploaded image, returned inline as a data URI.
-
-    The overlay is composited server-side rather than shipping a raw heatmap for
-    the browser to colour. The colour ramp encodes the finding — monotonic in
-    lightness so the hottest region reads as hottest — and duplicating that in
-    client code is how the two drift apart.
-    """
+    """Grad-CAM overlay for an uploaded image, returned inline as a data URI."""
     started = time.time()
     raw = await image.read()
     if len(raw) > MAX_BYTES:
@@ -126,8 +108,7 @@ async def explain(
         "title": title_for(CLASS_ORDER[result["class_index"]]),
         "backbone": result["backbone"],
         "grid": result["grid"],
-        # Share of the map above half intensity. A map spread across the whole
-        # frame is not an explanation, and this is the number that admits it.
+        # Share of the map above half intensity.
         "peak_fraction": round(result["peak_fraction"], 4),
         "method": "Grad-CAM on the final transformer block",
         "latency_ms": int((time.time() - started) * 1000),
@@ -136,8 +117,7 @@ async def explain(
 
 class AskRequest(BaseModel):
     question: str = Field(min_length=2, max_length=400)
-    # Supplied by the client after a prediction. The vision model has already
-    # named the dish, so the question does not have to; see rag/retrieve.py.
+    # Supplied by the client after a prediction.
     food_class: str | None = None
 
 
@@ -157,8 +137,8 @@ def ask(body: AskRequest, user: User = Depends(require_user)) -> dict:
         citations=len(result.citations), cost_usd=cost, ms=result.latency_ms,
     )
     payload = result.as_dict()
-    # The retrieved documents are large and only useful for debugging; the
-    # citations carry everything the interface needs to attribute a claim.
+    # The retrieved documents are large and only useful for debugging; the citations
+    # carry everything the interface needs to attribute a claim.
     payload.pop("retrieved", None)
     return payload
 
@@ -176,13 +156,7 @@ def health() -> dict:
 
 @app.post("/warm")
 def warm() -> dict:
-    """Start loading the backbones without waiting for them.
-
-    A free Space sleeps, and the first request after that pays roughly thirty
-    seconds of model download. Letting the client trigger the load on page open
-    means the wait happens behind a progress indicator rather than behind an
-    apparently frozen upload button.
-    """
+    """Start loading the backbones without waiting for them."""
     if CLASSIFIER.ready:
         return {"status": "ready"}
     threading.Thread(target=CLASSIFIER.load, daemon=True).start()
@@ -191,11 +165,7 @@ def warm() -> dict:
 
 @app.get("/stats")
 def stats(_: User = Depends(require_admin)) -> dict:
-    """Operational counters for the admin console.
-
-    In-process, so they cover the current container only — which the payload
-    states rather than leaving a reader to assume otherwise.
-    """
+    """Operational counters for the admin console."""
     snap = METRICS.snapshot()
     snap["model"] = {
         "name": MODEL_NAME,
@@ -215,13 +185,7 @@ class Feedback(BaseModel):
 
 @app.post("/feedback")
 def feedback(body: Feedback, user: User = Depends(require_user)) -> dict:
-    """Thumbs up or down on a prediction.
-
-    A thumbs-down on a confident prediction is precisely the case worth
-    re-examining, and it appears in no accuracy metric computed on a labelled
-    split. Stored in the rolling feed rather than a database, so it survives the
-    container and no longer.
-    """
+    """Thumbs up or down on a prediction."""
     if body.food_class not in ENTRIES:
         raise HTTPException(400, f"Unknown food class: {body.food_class}")
     METRICS.record_feedback(
@@ -236,48 +200,25 @@ def feedback(body: Feedback, user: User = Depends(require_user)) -> dict:
 
 @app.get("/history")
 def history(limit: int = 40, user: User = Depends(require_user)) -> dict:
-    """One visitor's own record, keyed by the id their browser generated.
-
-    Scoped to the caller's own uid, taken from the verified token rather than
-    from anything the request asks for. There is deliberately no way to request
-    somebody else's history through this endpoint — the admin console reads that
-    through /analytics, which is a separate check.
-    """
+    """One visitor's own record, keyed by the id their browser generated."""
     return STORE.history(user.uid, limit=min(limit, 100))
 
 
 @app.delete("/history")
 def erase_history(user: User = Depends(require_user)) -> dict:
-    """Delete every row belonging to the caller.
-
-    Scoped to their own uid from the token, so this endpoint cannot be pointed
-    at anyone else's data — including by an admin, who has a console for
-    reading aggregates and no route for deleting a person's history from under
-    them.
-    """
+    """Delete every row belonging to the caller."""
     return STORE.erase(user.uid)
 
 
 @app.get("/analytics")
 def analytics(days: int = 14, _: User = Depends(require_admin)) -> dict:
-    """Aggregated history for the admin console.
-
-    Distinct from /stats: that one reports the current container's memory and is
-    empty after every restart. This one survives, and is where volume per day,
-    dish distribution, spend and the review queue come from.
-    """
+    """Aggregated history for the admin console."""
     return STORE.analytics(days=max(1, min(days, 90)))
 
 
 @app.get("/me")
 def me(request: Request) -> dict:
-    """Who the presented token belongs to, if anyone.
-
-    The frontend already knows the signed-in user from the Firebase SDK; this
-    exists so it can find out whether the *server* agrees, and whether that
-    account is on the admin list. A client deciding for itself that it is an
-    admin is not an authorisation check.
-    """
+    """Who the presented token belongs to, if anyone."""
     user = current_user(request)
     return {"signed_in": bool(user), "user": user.as_dict() if user else None}
 
@@ -328,18 +269,6 @@ async def predict(
     members = conformal_set(calibrated)
 
     # Abstention combines two signals, because neither is sufficient alone.
-    # Maximum softmax probability catches noise but a flat colour field scored
-    # 0.43 and slipped past. Conformal set size caught it at 8 candidates, while
-    # every correctly classified dish tested returned 1.
-    #
-    # Measured on the 25,250-image test split: the combined rule flags 2.28% of
-    # real food, and accuracy on what it keeps rises from 97.16% to 97.94%. MSP
-    # alone flags 0.72% and reaches only 97.6%.
-    #
-    # This is still an abstention rule, not a trained OOD detector — it reports
-    # "the model is lost here", which correlates with but is not the same as
-    # "this is not food". A real detector needs non-food negatives, which is
-    # stage 5's remaining work.
     LOST_SET_SIZE = 5
     uncertain = msp < threshold or len(members) >= LOST_SET_SIZE
 

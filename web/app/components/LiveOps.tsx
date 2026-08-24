@@ -36,14 +36,7 @@ function duration(s: number): string {
   return `${Math.floor(s / 3600)}h ${Math.floor((s % 3600) / 60)}m`;
 }
 
-/** Live operational data from the running model service.
- *
- *  These are the counters the console previously listed as pending. They are
- *  in-process rather than in a time-series database, which is stated on the
- *  panel: the figures cover the current container, and the container restarts.
- *  That is a genuine limitation and showing it beats implying a history the
- *  service does not keep.
- */
+/** Live operational data from the running model service. */
 export function LiveOps() {
   const { authFetch } = useAuth();
   const [stats, setStats] = useState<Stats | null>(null);

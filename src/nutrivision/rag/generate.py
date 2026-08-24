@@ -1,27 +1,4 @@
-"""Grounded answer generation with corrective retrieval and a spend ceiling.
-
-Three guards, in the order they fire.
-
-**CRAG — grade the evidence before generating.** Retrieval always returns
-something; the reranker score says whether it returned anything *useful*. When
-the best document scores below the threshold, generating anyway produces the
-most dangerous output this system can make: a fluent answer built on documents
-that do not address the question. Instead the query is relaxed and retried, and
-if that also fails the pipeline says it cannot answer from its sources.
-
-**Grounding — verify the numbers after generating.** See `ground.py`. Every
-quantity in the answer must appear in the retrieved context. A failure is not
-logged and ignored; the answer is withheld and the deterministic summary is
-returned in its place.
-
-**Budget — a hard daily ceiling.** When it is reached the pipeline degrades to
-template answers assembled directly from the knowledge base rather than
-erroring. The app stays up, costs nothing, and still answers correctly, because
-the templates read from the same records the citations point at.
-
-The fallback is genuinely useful rather than an apology, which is what makes the
-ceiling safe to set low.
-"""
+"""Grounded answer generation with corrective retrieval and a spend ceiling."""
 
 from __future__ import annotations
 
@@ -37,16 +14,13 @@ from nutrivision.config import REPORT_DIR
 from . import ground
 from .retrieve import Hit, get_retriever
 
-# USD per million tokens for gpt-4.1-mini. Used only for the local ceiling; the
-# authority on billing is the account, and this is deliberately an overestimate.
+# USD per million tokens for gpt-4.1-mini.
 PRICE_IN = 0.40
 PRICE_OUT = 1.60
 
 SPEND_LOG = REPORT_DIR / "rag_spend.json"
 
-# Below this reranker score the retrieved set is treated as not addressing the
-# question. Calibrated against observed scores: on-topic hits land above +4,
-# wrong-dish matches around -1.
+# Below this reranker score the retrieved set is treated as not addressing the question.
 RELEVANCE_FLOOR = 0.0
 
 SYSTEM = """You answer questions about food nutrition using ONLY the numbered sources provided.
@@ -122,11 +96,7 @@ def format_sources(hits: list[Hit]) -> str:
 
 
 def template_answer(hits: list[Hit]) -> str:
-    """Deterministic fallback assembled from the sources themselves.
-
-    Returns the retrieved text rather than a paraphrase of it, so it is correct
-    by construction and needs no grounding check.
-    """
+    """Deterministic fallback assembled from the sources themselves."""
     if not hits:
         return "No matching information was found in the nutrition knowledge base."
     lead = hits[0].document
@@ -155,8 +125,7 @@ def answer(
     best = max((h.rerank_score or 0.0) for h in hits) if hits else -99.0
     if best < RELEVANCE_FLOOR:
         # Retry without dish conditioning; the question may be general, and the
-        # rewritten query can pull retrieval towards a dish the user never asked
-        # about.
+        # rewritten query can pull retrieval towards a dish the user never asked about.
         relaxed = retriever.search(question, food_class=None, k=k)
         relaxed_best = max((h.rerank_score or 0.0) for h in relaxed) if relaxed else -99.0
         if relaxed_best > best:
@@ -221,8 +190,7 @@ def answer(
 
     report = ground.check(text, context)
     if not report.grounded:
-        # Withheld, not annotated. An answer carrying an unverifiable nutrition
-        # figure must not be displayed as though it were checked.
+        # Withheld, not annotated.
         return Answer(
             text=template_answer(hits),
             citations=citations,

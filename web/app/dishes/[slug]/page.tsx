@@ -15,8 +15,7 @@ import {
 
 type Params = { params: Promise<{ slug: string }> };
 
-// All 101 pages are prerendered. The knowledge base is fixed at build time, so
-// rendering these on demand would buy nothing and cost a cold start each.
+// All 101 pages are prerendered.
 export function generateStaticParams() {
   return getKb().entries.map((e) => ({ slug: e.class }));
 }
@@ -45,8 +44,8 @@ export default async function DishPage({ params }: Params) {
   const prev = all[(index - 1 + all.length) % all.length];
   const next = all[(index + 1) % all.length];
 
-  // Where this dish sits against the other 100 on calories, which is the
-  // comparison a reader actually wants and no single record can give.
+  // Where this dish sits against the other 100 on calories, which is the comparison a
+  // reader actually wants and no single record can give.
   const sortedKcal = [...all].sort(
     (a, b) => (b.nutrients_per_100g.energy_kcal ?? 0) - (a.nutrients_per_100g.energy_kcal ?? 0),
   );

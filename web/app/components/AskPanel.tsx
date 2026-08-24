@@ -22,10 +22,7 @@ const SUGGESTIONS = [
   "What dishes are similar to this?",
 ];
 
-/** How the answer was produced. Stating this is not a technical detail — a
- *  reader deciding whether to trust a nutrition figure needs to know whether a
- *  model wrote it, whether its numbers were checked, and what happened if they
- *  failed the check. */
+/** How the answer was produced. */
 const MODES = {
   generated: {
     label: "Verified against sources",

@@ -4,17 +4,7 @@ import { useEffect, useState } from "react";
 
 import { armAudio, isMuted, loadPreference, setMuted, thwip } from "@/lib/sfx";
 
-/** Mute control for the web-shot sound.
- *
- *  Sound that cannot be switched off is a bug, and one buried in a settings page
- *  is barely better — the control belongs next to the sound. Toggling it on
- *  fires a thwip, because a mute button that goes quiet when you enable audio
- *  gives you no way to know it worked.
- *
- *  Nothing plays until the reader has interacted with the page regardless:
- *  browsers refuse to open an AudioContext before a gesture, and `armAudio`
- *  waits for one.
- */
+/** Mute control for the web-shot sound. */
 export function SoundToggle() {
   const [ready, setReady] = useState(false);
   const [off, setOff] = useState(false);
@@ -25,8 +15,8 @@ export function SoundToggle() {
     return armAudio();
   }, []);
 
-  // Same reasoning as the theme control: a button that renders one state on the
-  // server and flips on hydration is worse than a held space for one frame.
+  // Same reasoning as the theme control: a button that renders one state on the server
+  // and flips on hydration is worse than a held space for one frame.
   if (!ready) {
     return <div className="w-8 h-8 shrink-0" aria-hidden="true" />;
   }

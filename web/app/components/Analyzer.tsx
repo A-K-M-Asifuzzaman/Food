@@ -25,9 +25,7 @@ export function Analyzer() {
   const inputRef = useRef<HTMLInputElement>(null);
 
   const analyze = useCallback(async (file: File) => {
-    // Every createObjectURL holds its blob until revoked. Analysing six photos
-    // in a session without this pins six full-size images in memory for as long
-    // as the tab is open.
+    // Every createObjectURL holds its blob until revoked.
     const preview = URL.createObjectURL(file);
     setState((previous) => {
       const old = "preview" in previous ? previous.preview : undefined;
@@ -67,10 +65,7 @@ export function Analyzer() {
 
   const preview = "preview" in state ? state.preview : undefined;
 
-  // A prediction is filed against an account, so the account comes first. The
-  // gate is here rather than on the route so the page's explanation, the
-  // warm-up bar and the disclaimer all still render — a signed-out visitor
-  // should be able to read what this does before being asked to join.
+  // A prediction is filed against an account, so the account comes first.
   if (!loading && !user) return <SignInGate />;
 
   return (
@@ -98,7 +93,8 @@ export function Analyzer() {
             </p>
 
             {preview ? (
-              // eslint-disable-next-line @next/next/no-img-element -- blob: preview, not an optimisable asset
+              // eslint-disable-next-line @next/next/no-img-element -- blob: preview,
+              // not an optimisable asset.
               <img
                 src={preview}
                 alt="The dish you uploaded"

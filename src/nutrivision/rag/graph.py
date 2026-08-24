@@ -1,30 +1,4 @@
-"""GraphRAG: a dish -> ingredient -> nutrient graph over the knowledge base.
-
-Flat retrieval answers questions *about a document*. It cannot answer questions
-about relationships between documents, because the relationship is not written
-in any of them. "What else contains walnuts" is not a fact stored anywhere in
-this corpus — it is an inversion of sixty separate ingredient lists, and no
-top-k over those lists reconstructs it. That gap is what a graph closes.
-
-The edges are already in the data and cost nothing to derive. Sixty composite
-dishes were built from weighted USDA ingredient records because SR Legacy had no
-entry for the dish itself; each of those weights is a typed, quantified
-`CONTAINS` edge with a source id attached. What was originally a workaround for
-missing data turns out to be the most structurally interesting thing in the
-knowledge base.
-
-Three query shapes are supported, chosen because each is impossible for flat
-retrieval rather than merely awkward:
-
-- **Inversion** — every dish containing a given ingredient.
-- **Comparison** — what two dishes share, and what distinguishes them.
-- **Neighbourhood** — dishes closest to this one by ingredient overlap, which is
-  a similarity no embedding of the text would reproduce, since two recipes can
-  share ingredients while reading nothing alike.
-
-Answers are emitted as prose documents so they enter the same grounded pipeline
-as everything else and can be cited the same way.
-"""
+"""GraphRAG: a dish -> ingredient -> nutrient graph over the knowledge base."""
 
 from __future__ import annotations
 
@@ -37,8 +11,7 @@ from nutrivision.config import DATA_DIR, INDEX_DIR
 
 KB_PATH = DATA_DIR / "nutrition" / "kb.json"
 
-# Nutrients worth an explicit HIGH_IN edge. Restricted to the ones people ask
-# superlatives about; edges for all 32 would add noise without adding answers.
+# Nutrients worth an explicit HIGH_IN edge.
 RANKED_NUTRIENTS = (
     ("energy_kcal", "calories", "kcal"),
     ("protein_g", "protein", "g"),
@@ -71,17 +44,11 @@ class NutritionGraph:
         self.nutrient_top: dict[str, list[tuple[str, float]]] = {}
         self._build()
 
-    # ── construction ────────────────────────────────────────────────────
+    # ── construction ────────────────────────────────────────────────────.
 
     @staticmethod
     def _ingredient_key(component: dict) -> str:
-        """Group by USDA record where there is one, else by description.
-
-        The `query` field is the search string that found the record, so two
-        dishes reaching the same ingredient by different phrasings would
-        otherwise become two disconnected nodes and the inversion would miss
-        half its answers.
-        """
+        """Group by USDA record where there is one, else by description."""
         fdc = component.get("fdc_id")
         return f"fdc:{fdc}" if fdc else "desc:" + component["description"].lower()
 
@@ -127,7 +94,7 @@ class NutritionGraph:
                     )
                 )
 
-    # ── queries ─────────────────────────────────────────────────────────
+    # ── queries ─────────────────────────────────────────────────────────.
 
     def find_ingredient(self, term: str) -> list[str]:
         term = term.lower().strip()
@@ -147,10 +114,8 @@ class NutritionGraph:
 
     def shared(self, a: str, b: str) -> dict:
         ia, ib = self.dish_ingredients.get(a, {}), self.dish_ingredients.get(b, {})
-        # Only the 60 composite dishes have recipes; the other 41 matched a USDA
-        # record directly and have no ingredient breakdown to compare. Saying so
-        # beats returning an empty intersection that reads like "nothing in
-        # common".
+        # Only the 60 composite dishes have recipes; the other 41 matched a USDA record
+        # directly and have no ingredient breakdown to compare.
         missing = [c for c, ing in ((a, ia), (b, ib)) if not ing]
         if missing:
             return {
@@ -174,14 +139,7 @@ class NutritionGraph:
         }
 
     def _idf(self, key: str) -> float:
-        """Rarity weight for an ingredient.
-
-        Unweighted overlap is dominated by hub ingredients. Butter is in a
-        quarter of the recipes, so a plain Jaccard reports that baklava's nearest
-        neighbour is escargots — true, useless, and the kind of answer that makes
-        a system look unserious. Weighting by inverse dish frequency lets walnuts
-        or phyllo, which appear in two dishes, outweigh a shared staple.
-        """
+        """Rarity weight for an ingredient."""
         import math
 
         total = max(1, len(self.dish_ingredients))
@@ -195,17 +153,7 @@ class NutritionGraph:
     def neighbours(
         self, cls: str, k: int = 5, floor: float = 0.02
     ) -> list[tuple[str, float, list[str]]]:
-        """Dishes closest by TF-IDF cosine over ingredients.
-
-        Weighting grams by rarity directly is not enough: masses span an order of
-        magnitude while IDF spans a factor of about two, so mass still decides.
-        Normalising each recipe to proportions first, then taking the cosine,
-        puts both on a comparable footing — which is what lets walnuts, in two
-        dishes, outrank butter, in fifteen.
-
-        `floor` suppresses spurious neighbours. Some dishes genuinely have none;
-        listing the least-bad match for them is worse than saying so.
-        """
+        """Dishes closest by TF-IDF cosine over ingredients."""
         mine_raw = self.dish_ingredients.get(cls, {})
         if not mine_raw:
             return []
@@ -229,7 +177,7 @@ class NutritionGraph:
             scored.append((other, score, [self.ingredient_titles[i] for i in drivers]))
         return sorted(scored, key=lambda t: -t[1])[:k]
 
-    # ── documents ───────────────────────────────────────────────────────
+    # ── documents ───────────────────────────────────────────────────────.
 
     def as_documents(self) -> list[dict]:
         """Graph facts as prose, so they join the same grounded pipeline."""
@@ -282,14 +230,7 @@ class NutritionGraph:
         return docs
 
     def layout(self, seed: int = 1337, iterations: int = 220) -> dict[str, list[float]]:
-        """Force-directed positions in 3D, computed here rather than in the browser.
-
-        Running the simulation client-side means the first seconds of the most
-        visually important view are spent watching nodes settle, on whatever
-        device the viewer happens to have. Baking the layout makes the scene
-        correct on the first frame and deterministic across reloads, which also
-        means a screenshot in the paper matches what a reader sees.
-        """
+        """Force-directed positions in 3D, computed here rather than in the browser."""
         import networkx as nx
         import numpy as np
 
@@ -299,17 +240,13 @@ class NutritionGraph:
                 g.add_edge(e.source, e.target, weight=max(e.weight, 1.0))
         if not g:
             return {}
-        # k is the target distance between nodes. The default, 1/sqrt(n), is far
-        # too small for this graph: 63 of the 181 nodes are leaves hanging off a
-        # single dish, and the hubs pull them into a ball. Measured on this data,
-        # the default leaves 98% of nodes inside radius 3 of a radius-10 sphere —
-        # a blob. At k=1.0 that drops to 11% and the structure becomes readable.
+        # k is the target distance between nodes.
         pos = nx.spring_layout(
             g, dim=3, seed=seed, iterations=iterations, weight="weight", k=1.0
         )
 
-        # Scale against a high percentile, not the maximum, so a single outlying
-        # node cannot shrink the whole graph away from the camera.
+        # Scale against a high percentile, not the maximum, so a single outlying node
+        # cannot shrink the whole graph away from the camera.
         coords = np.array(list(pos.values()))
         span = float(max(np.percentile(np.abs(coords), 96), 1e-6))
         return {

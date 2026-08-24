@@ -1,16 +1,4 @@
-"""Validate and integrate the Kaggle fine-tune, then say whether it actually helped.
-
-Run this after dropping the Kaggle outputs into `artifacts/`. It refuses to
-report anything until the exported logits are proven to describe the same images
-in the same order as the local labels.
-
-That check is the point of the script. Row-order drift between two machines is
-silent: the arrays have the right shape, every downstream script runs happily,
-and the ensemble numbers are meaningless. Recomputing accuracy from the logits
-and comparing it against the figure Kaggle printed catches it immediately —
-misaligned rows collapse accuracy to roughly chance, which is impossible to
-mistake for a real result.
-"""
+"""Validate and integrate the Kaggle fine-tune, then say whether it actually helped."""
 
 from __future__ import annotations
 

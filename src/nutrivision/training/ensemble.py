@@ -1,11 +1,4 @@
-"""Combine cached probe logits into an ensemble and test whether the gain is real.
-
-Every method here is parameter-free or fits at most a couple of blend weights on the
-validation slice, so the whole file runs in seconds against `artifacts/reports/logits/`.
-Accuracy differences of a few tenths of a point on 25,250 test images are well inside
-the range where two systems can differ by luck, so each headline comparison is paired
-with an exact McNemar test rather than reported as a bare number.
-"""
+"""Combine cached probe logits into an ensemble and test whether the gain is real."""
 
 from __future__ import annotations
 

@@ -1,19 +1,4 @@
-"""Build the hybrid retrieval index over the nutrition corpus.
-
-Two indexes, because the two failure modes are different. BM25 matches surface
-form, so it finds "310 kcal" and the exact word "riboflavin" but is helpless
-when the question says "how fatty is this" and the document says "total fat". A
-bi-encoder matches meaning, so it handles the paraphrase but will happily rank a
-document about calcium above one about calories because they read alike.
-
-Neither is reliable alone on this corpus, which is 577 short documents with 101
-near-identical variants of each kind. Fusing them is the point; see `retrieve`.
-
-The index is small enough - 577 x 384 floats is under a megabyte - that exact
-search beats an approximate structure. FAISS is not used: a plain matrix product
-over normalised embeddings is faster at this scale than any index build, and it
-removes a dependency from the serving path.
-"""
+"""Build the hybrid retrieval index over the nutrition corpus."""
 
 from __future__ import annotations
 
@@ -64,11 +49,7 @@ _TOKEN = re.compile(r"[a-z0-9]+")
 
 
 def tokenize(text: str) -> list[str]:
-    """Lowercase alphanumeric tokens, keeping numbers.
-
-    Numbers are kept deliberately: "how many calories" answered against a corpus
-    where "331" is a token lets BM25 match a figure the user quotes back.
-    """
+    """Lowercase alphanumeric tokens, keeping numbers."""
     return _TOKEN.findall(text.lower())
 
 
@@ -80,11 +61,8 @@ def build(out_dir=INDEX_DIR, model_name: str = EMBED_MODEL) -> dict:
     docs = load_corpus()
     started = time.time()
 
-    # Graph facts are indexed alongside the per-dish documents rather than kept
-    # in a separate store. A question like "what else has walnuts in it" should
-    # not require the caller to know in advance that it is a graph question; the
-    # retriever ranks the inversion document against the flat ones and the best
-    # match wins on its merits.
+    # Graph facts are indexed alongside the per-dish documents rather than kept in a
+    # separate store.
     from .graph import load_graph
 
     graph_docs = [Document(**d) for d in load_graph().as_documents()]
@@ -93,8 +71,8 @@ def build(out_dir=INDEX_DIR, model_name: str = EMBED_MODEL) -> dict:
     bm25 = BM25Okapi([tokenize(d.text) for d in docs])
 
     model = SentenceTransformer(model_name)
-    # bge models are trained with a query-side instruction and a bare passage
-    # side; embedding passages with the query prefix measurably hurts.
+    # bge models are trained with a query-side instruction and a bare passage side;
+    # embedding passages with the query prefix measurably hurts.
     embeddings = model.encode(
         [d.text for d in docs],
         batch_size=32,

@@ -1,21 +1,4 @@
-"""Score the RAG pipeline against the gold set.
-
-Retrieval and generation are reported separately, because they fail separately
-and a single end-to-end score hides which one is broken. A pipeline that
-retrieves the right document and then writes a wrong number needs a different
-fix from one that answers fluently off the wrong document, and an aggregate
-"accuracy" cannot tell them apart.
-
-Answers are scored by exact numeric match against a value read from the
-knowledge base, not by a judge model. A judge would introduce a second system
-whose errors are correlated with the first — both are language models reading the
-same text — and would turn a checkable question into an opinion.
-
-Refusal is scored as its own metric rather than folded into accuracy. On the
-out-of-scope cases the correct output is nothing, and a system that answers them
-fluently is worse than one that fails loudly, so averaging them into a single
-number would reward exactly the behaviour this pipeline is built to avoid.
-"""
+"""Score the RAG pipeline against the gold set."""
 
 from __future__ import annotations
 
@@ -38,20 +21,7 @@ def dcg(relevances: list[int]) -> float:
 
 
 def answer_bearing(doc, case: dict) -> bool:
-    """Does this document actually contain what the question asks for?
-
-    Strict doc-id matching understates retrieval here, and the reason is a
-    property of the corpus rather than a excuse. Several documents legitimately
-    carry the same figure: protein appears in a dish's macros document *and* in
-    its portion document. Measured on this gold set, every single strict miss in
-    the nutrient category was a portion document returned where a macros
-    document was labelled - and all of them contained the correct number.
-
-    Penalising that measures which document an annotator happened to name, not
-    whether the pipeline can answer. Both metrics are reported: strict doc-id
-    recall for comparability with standard IR numbers, and this one for whether
-    the retrieved context can actually support the answer.
-    """
+    """Does this document actually contain what the question asks for?"""
     if doc.doc_id in set(case["expected_doc_ids"]):
         return True
     if case["food_class"] and doc.food_class != case["food_class"]:
@@ -105,12 +75,7 @@ def score_retrieval(cases: list[dict], k: int = 5) -> dict:
 
 
 def numeric_match(answer: str, expected: list[float], tolerance: float = 0.02) -> bool:
-    """True when the answer states one of the acceptable figures.
-
-    Both the per-100 g and per-serving values are acceptable: the question does
-    not specify a basis, so either is a correct response and penalising one would
-    be scoring phrasing rather than correctness.
-    """
+    """True when the answer states one of the acceptable figures."""
     if not expected:
         return True
     values = [v for v, _ in extract_quantities(answer)]

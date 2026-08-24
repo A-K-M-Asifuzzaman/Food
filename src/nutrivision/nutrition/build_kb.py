@@ -1,27 +1,4 @@
-"""Build the nutrition knowledge base for all 101 Food-101 categories.
-
-Resolves every curated spec in `mapping.py` against USDA SR Legacy and writes a
-single JSON knowledge base plus a human-readable audit report. Nothing here is
-allowed to fail silently: a class that resolves to a suspicious record should
-show up in the report rather than quietly ship a wrong calorie count.
-
-Three checks run over every entry:
-
-*Coverage* - every one of the 101 classes must produce an entry.
-
-*Energy plausibility* - a cooked dish outside roughly 20-600 kcal/100 g is
-almost certainly a bad match. Broth-heavy soups sit near the floor and pure fats
-near the ceiling, so the band is deliberately wide; anything outside it is a
-genuine red flag.
-
-*Macronutrient consistency* - Atwater factors say 4 kcal/g of protein and carbs
-and 9 kcal/g of fat. If the reconstructed energy disagrees with the reported
-energy by a wide margin, the record is internally inconsistent or the composite
-weights are wrong.
-
-    .venv/bin/python -u -m nutrivision.nutrition.build_kb
-    .venv/bin/python -u -m nutrivision.nutrition.build_kb --review
-"""
+"""Build the nutrition knowledge base for all 101 Food-101 categories."""
 
 from __future__ import annotations
 
@@ -156,13 +133,7 @@ def _tokens(text: str) -> set[str]:
 
 
 def provenance_problems(entry: dict[str, Any]) -> list[str]:
-    """Flag components whose resolved record shares no whole word with the query.
-
-    Substring matching is what let `water` resolve to "Watermelon, raw" and put
-    watermelon into miso soup. Comparing whole tokens instead of substrings is
-    what catches it - a check written with the same flaw as the resolver would
-    have passed that silently, as an earlier version of this one did.
-    """
+    """Flag components whose resolved record shares no whole word with the query."""
     problems = []
     for comp in entry.get("components", []):
         query_tokens = _tokens(comp["query"])

@@ -1,12 +1,4 @@
-"""Frozen feature bank.
-
-Fine-tuning a 300M+ parameter backbone on a laptop is a multi-hour commitment
-per experiment. Running each backbone over the corpus exactly once and caching
-the pooled embeddings turns every downstream experiment - head architecture,
-calibration, conformal sets, OOD scoring, ensembling - into something that
-finishes in seconds instead. The cache is the reason this project can afford to
-be rigorous.
-"""
+"""Frozen feature bank."""
 
 from __future__ import annotations
 

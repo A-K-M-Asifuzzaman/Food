@@ -16,9 +16,7 @@ export const metadata: Metadata = {
 export default function DishesPage() {
   const kb = getKb();
 
-  // Sent to the client as a trimmed projection. The full knowledge base is
-  // 300 kB and the browser only needs what the grid filters and sorts on;
-  // shipping the rest would be a third of a megabyte of unread nutrient tables.
+  // Sent to the client as a trimmed projection.
   const dishes = kb.entries.map((e) => ({
     slug: e.class,
     title: e.title,
@@ -48,9 +46,6 @@ export default function DishesPage() {
           className="absolute right-1 top-0 z-10 w-[128px] h-[170px] opacity-70 sm:w-[170px] sm:h-[210px] sm:opacity-100 xl:right-2 xl:w-[330px] xl:h-[340px]"
           scale={0.8}
           side="right"
-          // Not draggable here: this page's controls sit under the figure, and
-          // an invisible canvas that swallows a click on the sort button is a
-          // worse bug than a figure you cannot spin.
           interactive={false}
           model="/models/slinger-b.glb"
           pose={[0.1, -0.45, 0.06]}

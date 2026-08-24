@@ -2,17 +2,7 @@
 
 import { useEffect, useId, useRef, useState } from "react";
 
-/** A mermaid diagram, themed to match the page it sits on.
- *
- *  Mermaid is ~500 kB and only needed on the pages that draw diagrams, so it is
- *  imported dynamically inside the effect rather than at module scope — nothing
- *  downloads it until a diagram is actually about to render.
- *
- *  The theme is supplied by CSS variables read at render time rather than by
- *  mermaid's own light/dark presets. Its presets do not know about this site's
- *  ink-and-newsprint palette, and a diagram that ignores the surrounding theme
- *  reads as an embedded screenshot rather than part of the page.
- */
+/** A mermaid diagram, themed to match the page it sits on. */
 export function Mermaid({ chart, className = "" }: { chart: string; className?: string }) {
   const host = useRef<HTMLDivElement>(null);
   const [svg, setSvg] = useState("");
@@ -69,8 +59,8 @@ export function Mermaid({ chart, className = "" }: { chart: string; className?: 
 
     void render();
 
-    // Re-render on theme change: the colours are baked into the SVG at render
-    // time, so a diagram drawn in light mode stays light until it is redrawn.
+    // Re-render on theme change: the colours are baked into the SVG at render time, so
+    // a diagram drawn in light mode stays light until it is redrawn.
     const observer = new MutationObserver(() => void render());
     observer.observe(document.documentElement, {
       attributes: true,
@@ -97,9 +87,6 @@ export function Mermaid({ chart, className = "" }: { chart: string; className?: 
     <div
       ref={host}
       className={`mermaid-host overflow-x-auto ${className}`}
-      // Mermaid returns a complete SVG document; there is no React tree to build
-      // from it, and the input is authored in this repository rather than by a
-      // user, so injecting it is safe here.
       dangerouslySetInnerHTML={{ __html: svg }}
     />
   );
