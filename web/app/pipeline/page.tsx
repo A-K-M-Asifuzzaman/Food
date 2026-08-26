@@ -111,7 +111,7 @@ const RAG = `flowchart TD
   B --> D["Dense retrieval<br/>bge-small · 384-d"]
   C --> E["Reciprocal Rank Fusion<br/>combines ranks, not scores"]
   D --> E
-  E --> F["Cross-encoder rerank<br/>reads query and document together"]
+  E --> F["Rerank<br/>reads query and document together"]
   F --> G{"Anything<br/>relevant?"}
   G -->|"no"| H["Refuse — 70 ms<br/>no LLM call"]
   G -->|"yes"| I["Generate with citations"]
@@ -200,7 +200,7 @@ const STAGES = [
     title: "GROUNDED RETRIEVAL",
     lede: "Three retrieval stages, then a check that no number reaches the reader unsupported.",
     chart: RAG,
-    note: "Out-of-scope questions never reach the language model at all, which is why they are refused in 70 ms and cost nothing.",
+    note: "Out-of-scope questions never reach the language model at all, which is why they are refused in 70 ms and cost nothing. Every box here is a node in a LangGraph state machine, so the path a given answer took is recorded rather than reconstructed.",
   },
   {
     id: "serving",

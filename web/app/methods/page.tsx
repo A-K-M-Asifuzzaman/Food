@@ -48,7 +48,7 @@ const STAGES = [
     id: "retrieval",
     n: "06",
     title: "RETRIEVAL THAT KNOWS THE DISH",
-    body: "BM25 and a bi-encoder fail differently, so their ranks are fused rather than their scores, then reranked by a cross-encoder. Crucially, the question is rewritten to name the dish the vision model already identified — real questions say \"how much sodium is in this\", and against 101 near-identical sodium documents no retriever can resolve that pronoun on its own.",
+    body: "BM25 and a bi-encoder fail differently, so their ranks are fused rather than their scores, then reranked — by a local cross-encoder, or by Cohere where a key is configured. Crucially, the question is rewritten to name the dish the vision model already identified — real questions say \"how much sodium is in this\", and against 101 near-identical sodium documents no retriever can resolve that pronoun on its own.",
   },
   {
     id: "grounding",

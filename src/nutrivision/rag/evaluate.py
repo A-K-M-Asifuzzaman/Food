@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import pathlib
 import time
 
 from nutrivision.config import DATA_DIR, REPORT_DIR
@@ -20,36 +21,35 @@ def dcg(relevances: list[int]) -> float:
     return sum(r / math.log2(i + 2) for i, r in enumerate(relevances))
 
 
-def answer_bearing(doc, case: dict) -> bool:
+def answer_bearing(hit, case: dict) -> bool:
     """Does this document actually contain what the question asks for?"""
-    if doc.doc_id in set(case["expected_doc_ids"]):
+    if hit.doc_id in set(case["expected_doc_ids"]):
         return True
-    if case["food_class"] and doc.food_class != case["food_class"]:
+    if case["food_class"] and hit.food_class != case["food_class"]:
         return False
     expected = case.get("expected_values") or []
     if not expected:
         return False
-    values = [v for v, _ in extract_quantities(doc.text)]
+    values = [v for v, _ in extract_quantities(hit.text)]
     return any(
         any(abs(v - e) <= max(abs(e) * 0.02, 0.51) for v in values) for e in expected
     )
 
 
-def score_retrieval(cases: list[dict], k: int = 5) -> dict:
-    retriever = get_retriever()
+def score_retrieval(cases: list[dict], k: int = 5, reranker: str | None = None) -> dict:
+    retriever = get_retriever(reranker)
     per_category: dict[str, list[dict]] = {}
 
     for case in cases:
         if case["must_refuse"]:
             continue
         hits = retriever.search(case["question"], food_class=case["food_class"], k=k)
-        docs = [h.document for h in hits]
-        ids = [d.doc_id for d in docs]
+        ids = [h.doc_id for h in hits]
         expected = set(case["expected_doc_ids"])
 
         rank = next((i for i, d in enumerate(ids) if d in expected), None)
         relevances = [1 if d in expected else 0 for d in ids]
-        useful = [answer_bearing(d, case) for d in docs]
+        useful = [answer_bearing(h, case) for h in hits]
         per_category.setdefault(case["category"], []).append(
             {
                 "hit@1": bool(ids and ids[0] in expected),
@@ -84,13 +84,17 @@ def numeric_match(answer: str, expected: list[float], tolerance: float = 0.02) -
     )
 
 
-def score_answers(cases: list[dict], limit: int | None = None) -> dict:
-    from .generate import answer as generate_answer
+def score_answers(
+    cases: list[dict], limit: int | None = None, reranker: str | None = None
+) -> dict:
+    from .pipeline import answer as generate_answer
 
     rows = []
     started = time.time()
     for case in cases[:limit] if limit else cases:
-        result = generate_answer(case["question"], food_class=case["food_class"])
+        result = generate_answer(
+            case["question"], food_class=case["food_class"], reranker=reranker
+        )
         refused = result.mode == "insufficient"
         correct = (
             refused
@@ -150,12 +154,14 @@ def main() -> None:
     p.add_argument("--k", type=int, default=5)
     p.add_argument("--retrieval-only", action="store_true")
     p.add_argument("--limit", type=int, default=None)
+    p.add_argument("--reranker", default=None, help="cohere | cross-encoder")
+    p.add_argument("--out", default=None, help="where to write the report")
     args = p.parse_args()
 
     cases = json.loads(GOLD_PATH.read_text())
     print(f"gold set: {len(cases)} cases\n")
 
-    retrieval = score_retrieval(cases, k=args.k)
+    retrieval = score_retrieval(cases, k=args.k, reranker=args.reranker)
     print("── retrieval ──")
     head = (f"{'category':<18} {'n':>3} {'R@1':>7} {'R@' + str(args.k):>7} "
             f"{'answerable@1':>13} {'MRR':>7} {'nDCG':>7}")
@@ -168,10 +174,14 @@ def main() -> None:
             f"{m['mrr']:>7.3f} {m['ndcg']:>7.3f}"
         )
 
-    report = {"gold_cases": len(cases), "retrieval": retrieval}
+    report = {
+        "gold_cases": len(cases),
+        "reranker": get_retriever(args.reranker).reranker.model_name,
+        "retrieval": retrieval,
+    }
 
     if not args.retrieval_only:
-        answers = score_answers(cases, limit=args.limit)
+        answers = score_answers(cases, limit=args.limit, reranker=args.reranker)
         print("\n── answers ──")
         head = f"{'category':<18} {'n':>3} {'correct':>9} {'refused':>9} {'grounded':>9}"
         print(head)
@@ -189,7 +199,7 @@ def main() -> None:
         print(f"  cost                 ${o['total_cost_usd']:.4f} over {o['wall_seconds']:.0f}s")
         report["answers"] = answers
 
-    out = REPORT_DIR / "rag_evaluation.json"
+    out = pathlib.Path(args.out) if args.out else REPORT_DIR / "rag_evaluation.json"
     out.write_text(json.dumps(report, indent=2))
     print(f"\nwrote {out}")
 

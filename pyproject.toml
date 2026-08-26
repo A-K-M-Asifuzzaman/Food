@@ -37,12 +37,15 @@ train = [
     "tensorboard>=2.18",
 ]
 rag = [
+    "langchain>=1.0",
+    "langchain-core>=1.0",
+    "langchain-openai>=1.0",
+    "langchain-cohere>=0.6",
+    "langchain-huggingface>=1.0",
+    "langgraph>=1.0",
     "sentence-transformers>=3.2",
-    "faiss-cpu>=1.9",
     "rank-bm25>=0.2.2",
     "networkx>=3.4",
-    "openai>=1.54",
-    "tiktoken>=0.8",
 ]
 serve = [
     "fastapi>=0.115",

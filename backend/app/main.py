@@ -126,7 +126,7 @@ def ask(body: AskRequest, user: User = Depends(require_user)) -> dict:
     if body.food_class and body.food_class not in ENTRIES:
         raise HTTPException(400, f"Unknown food class: {body.food_class}")
 
-    from nutrivision.rag.generate import answer
+    from nutrivision.rag.pipeline import answer
 
     result = answer(body.question, food_class=body.food_class)
     cost = result.usage.get("cost_usd", 0.0)

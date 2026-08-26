@@ -5,7 +5,6 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 
-# A number optionally followed by a unit.
 _QUANTITY = re.compile(
     r"(?<![\w.])(\d+(?:\.\d+)?)\s*(kcal|calories|cal|kj|mg|µg|ug|mcg|g\b|grams?|%)?",
     re.IGNORECASE,
@@ -20,7 +19,6 @@ _UNIT_ALIASES = {
     "ug": "µg",
 }
 
-# Numbers that are almost never nutritional claims: list markers, small counts, years.
 _IGNORE_BARE = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 100, 1000}
 
 

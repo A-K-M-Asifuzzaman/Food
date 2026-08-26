@@ -219,7 +219,7 @@ flowchart TD
         HYB --> DEN["Dense bi-encoder"]
         BM --> RRF["Reciprocal Rank Fusion"]
         DEN --> RRF
-        RRF --> RR["Cross-encoder rerank<br/>top-k only → caps prompt size"]
+        RRF --> RR["Rerank · cross-encoder or Cohere<br/>top-k only → caps prompt size"]
     end
 
     RR --> CRAG{"CRAG<br/>retrieval quality?"}
@@ -249,6 +249,11 @@ flowchart TD
 **~85% of traffic never reaches OpenAI.** Controls on the remainder: semantic answer cache,
 hard daily budget that degrades to templates rather than erroring, context capped to
 reranked top-k, prompt-prefix caching, and the Batch API for offline evaluation.
+
+The shipped subset of this design lives in `src/nutrivision/rag/`: the retrieval stages are
+LangChain retrievers and a document compressor, and the control flow — CRAG gate, relaxed
+retry, budget gate, grounding check, template fallback — is a compiled LangGraph in
+`pipeline.py`. `python -m nutrivision.rag.pipeline --graph` prints what is actually wired.
 
 ---
 

@@ -11,7 +11,6 @@ from nutrivision.config import DATA_DIR, INDEX_DIR
 
 KB_PATH = DATA_DIR / "nutrition" / "kb.json"
 
-# Nutrients worth an explicit HIGH_IN edge.
 RANKED_NUTRIENTS = (
     ("energy_kcal", "calories", "kcal"),
     ("protein_g", "protein", "g"),
@@ -44,7 +43,6 @@ class NutritionGraph:
         self.nutrient_top: dict[str, list[tuple[str, float]]] = {}
         self._build()
 
-    # ── construction ────────────────────────────────────────────────────.
 
     @staticmethod
     def _ingredient_key(component: dict) -> str:
@@ -94,7 +92,6 @@ class NutritionGraph:
                     )
                 )
 
-    # ── queries ─────────────────────────────────────────────────────────.
 
     def find_ingredient(self, term: str) -> list[str]:
         term = term.lower().strip()
@@ -114,8 +111,6 @@ class NutritionGraph:
 
     def shared(self, a: str, b: str) -> dict:
         ia, ib = self.dish_ingredients.get(a, {}), self.dish_ingredients.get(b, {})
-        # Only the 60 composite dishes have recipes; the other 41 matched a USDA record
-        # directly and have no ingredient breakdown to compare.
         missing = [c for c, ing in ((a, ia), (b, ib)) if not ing]
         if missing:
             return {
@@ -177,7 +172,6 @@ class NutritionGraph:
             scored.append((other, score, [self.ingredient_titles[i] for i in drivers]))
         return sorted(scored, key=lambda t: -t[1])[:k]
 
-    # ── documents ───────────────────────────────────────────────────────.
 
     def as_documents(self) -> list[dict]:
         """Graph facts as prose, so they join the same grounded pipeline."""
@@ -185,7 +179,7 @@ class NutritionGraph:
 
         for key, dishes in self.ingredient_dishes.items():
             if len(dishes) < 2:
-                continue  # an ingredient in one dish is already in that dish's document
+                continue
             label = self.ingredient_titles[key]
             listed = ", ".join(
                 f"{self.entries[c]['title']} ({g:g} g per 100 g)"
@@ -240,13 +234,10 @@ class NutritionGraph:
                 g.add_edge(e.source, e.target, weight=max(e.weight, 1.0))
         if not g:
             return {}
-        # k is the target distance between nodes.
         pos = nx.spring_layout(
             g, dim=3, seed=seed, iterations=iterations, weight="weight", k=1.0
         )
 
-        # Scale against a high percentile, not the maximum, so a single outlying node
-        # cannot shrink the whole graph away from the camera.
         coords = np.array(list(pos.values()))
         span = float(max(np.percentile(np.abs(coords), 96), 1e-6))
         return {

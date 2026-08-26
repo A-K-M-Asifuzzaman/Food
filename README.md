@@ -222,8 +222,9 @@ flowchart LR
     RW["rewrite to name the dish"]
     HYB["BM25 + bi-encoder"]
     RRF["reciprocal rank fusion"]
-    RR["cross-encoder rerank"]
+    RR["rerank"]
     CRAG{"evidence relevant?"}
+    RELAX["retry without the dish"]
     GEN["generate from sources only"]
     GATE{"every number in a source?"}
     ANS(["answer with citations"])
@@ -232,7 +233,9 @@ flowchart LR
 
     Q --> RW --> HYB --> RRF --> RR --> CRAG
     CRAG -- "yes" --> GEN --> GATE
-    CRAG -- "no" --> NONE
+    CRAG -- "no" --> RELAX
+    RELAX -- "better" --> GEN
+    RELAX -- "no better" --> NONE
     GATE -- "yes" --> ANS
     GATE -- "no" --> TPL
 
@@ -241,11 +244,13 @@ flowchart LR
     classDef term fill:#ffffff,stroke:#0b0b0f,stroke-width:3px,color:#0b0b0f
     classDef refuse fill:#0b0b0f,stroke:#0b0b0f,stroke-width:2px,color:#f4f1e8
 
-    class RW,HYB,RRF,RR,GEN prep
+    class RW,HYB,RRF,RR,RELAX,GEN prep
     class CRAG,GATE gate
     class Q,ANS,TPL term
     class NONE refuse
 ```
+
+This is a [LangGraph](https://langchain-ai.github.io/langgraph/) state machine, not a function with early returns — every box above is a node and every arrow an edge, so the path an answer took is inspectable rather than inferred. `python -m nutrivision.rag.pipeline --graph` prints the compiled graph.
 
 A failed grounding check does not refuse — it serves the retrieved record verbatim, which is correct by construction and needs no verification.
 
@@ -294,7 +299,7 @@ The winner has no parameters. The trained fusion head and the three-way average 
 
 **Reliability.** Temperature fitted on held-out data cut expected calibration error eightfold. Split-conformal prediction gives a coverage guarantee that holds without assuming anything about the model. Abstention combines calibrated confidence with conformal set size, because neither is sufficient alone.
 
-**Retrieval.** 693 documents — 577 written from the knowledge base plus 116 graph facts — indexed for both lexical and semantic search, fused by Reciprocal Rank Fusion, reranked by a cross-encoder, and conditioned on the dish the vision model identified.
+**Retrieval.** 693 documents — 577 written from the knowledge base plus 116 graph facts — indexed for both lexical and semantic search, fused by Reciprocal Rank Fusion, reranked, and conditioned on the dish the vision model identified. The stages are LangChain retrievers, so the reranker is swappable: a local cross-encoder by default, Cohere's hosted `rerank-v3.5` with `RAG_RERANKER=cohere`. The relevance floor that decides a refusal is expressed in the reranker's own score units and travels with it, because a cross-encoder logit and a Cohere relevance score are not the same scale.
 
 **Grounding.** Every quantity in a generated answer must appear in the retrieved context, matched per unit so milligrams can never be supported by the same digits in grams. An answer that fails is withheld, not annotated.
 
@@ -311,6 +316,7 @@ src/nutrivision/
   explain/      Grad-CAM and attribution comparison
   nutrition/    USDA resolution and the 101-class knowledge base
   rag/          corpus, index, retrieval, graph, generation, grounding, evaluation
+                pipeline.py is the LangGraph state machine that joins them
 backend/app/
   main.py       the API surface
   inference.py  ensemble, calibration, conformal sets
@@ -341,7 +347,7 @@ python -m venv .venv && .venv/bin/pip install -e .
 cd web && npm install && FOODGENOME_API=http://127.0.0.1:8000 npm run dev
 ```
 
-Copy `.env.example` to `.env` for the OpenAI key. Without it the RAG pipeline serves deterministic template answers assembled from the same records — correct by construction, and free.
+Copy `.env.example` to `.env` for the OpenAI key. Without it the RAG pipeline serves deterministic template answers assembled from the same records — correct by construction, and free. `COHERE_API_KEY` with `RAG_RERANKER=cohere` switches the rerank stage to Cohere; leave it unset and the local cross-encoder runs instead, which needs no network and no key.
 
 #### Optional services
 
@@ -383,7 +389,22 @@ reads go through the API where they can be scoped to the caller.
     --name ensemble --members siglip_so400m eva02_large
 .venv/bin/python -m nutrivision.reliability.conformal      # coverage vs set size
 .venv/bin/python -m nutrivision.rag.evaluate               # retrieval + answers
+.venv/bin/python scripts/calibrate_rerank_floor.py \
+    --reranker cohere                                     # re-derive the refusal threshold
 ```
+
+`--reranker cohere|cross-encoder` selects the rerank backend. On the gold set Cohere's `rerank-v3.5` wins on the one category that is not already at ceiling, and separates the refusals far more decisively:
+
+| | cross-encoder | Cohere rerank-v3.5 |
+|---|---|---|
+| nutrient lookup R@1 | 64.6% | **68.8%** |
+| nutrient lookup MRR | 0.823 | **0.844** |
+| nutrient lookup nDCG | 0.869 | **0.885** |
+| answerable@1, all categories | 100% | 100% |
+| refusal margin | logit 0, cases within 1.2 of it | **0.030 → 0.553, an 18× gap** |
+| cost and rate | free, offline, unlimited | a network call per question |
+
+The shipped default is the cross-encoder, because the top document already answers the question either way — `answerable@1` is 100% on both — and a hosted reranker puts a rate limit and a network dependency in the path of every question. The refusal threshold is not portable between the two, so each carries its own floor and `calibrate_rerank_floor.py` is how a new one is derived.
 
 ---
 

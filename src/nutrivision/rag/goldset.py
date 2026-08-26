@@ -12,7 +12,6 @@ from .graph import load_graph
 
 GOLD_PATH = DATA_DIR / "nutrition" / "rag_gold.json"
 
-# (nutrient key, phrasing, document kind that should answer it).
 NUTRIENT_QUESTIONS = [
     ("sodium_mg", "how much sodium is in this", "minerals"),
     ("protein_g", "how much protein does this have", "macros"),
@@ -48,7 +47,6 @@ def build(seed: int = 1337, per_nutrient: int = 6) -> list[dict]:
     classes = sorted(entries)
     cases: list[dict] = []
 
-    # 1.
     for key, phrasing, kind in NUTRIENT_QUESTIONS:
         eligible = [c for c in classes if entries[c]["nutrients_per_100g"].get(key, 0) > 0]
         for cls in rng.sample(eligible, min(per_nutrient, len(eligible))):
@@ -68,7 +66,6 @@ def build(seed: int = 1337, per_nutrient: int = 6) -> list[dict]:
                 }
             )
 
-    # 2.
     composites = [c for c in classes if entries[c].get("components")]
     for cls in rng.sample(composites, min(10, len(composites))):
         cases.append(
@@ -83,7 +80,6 @@ def build(seed: int = 1337, per_nutrient: int = 6) -> list[dict]:
             }
         )
 
-    # 3.
     shared = [
         (k, v) for k, v in graph.ingredient_dishes.items() if 2 <= len(v) <= 8
     ]
@@ -103,7 +99,6 @@ def build(seed: int = 1337, per_nutrient: int = 6) -> list[dict]:
             }
         )
 
-    # 4.
     for question, key, highest in SUPERLATIVES:
         ranked = sorted(
             ((c, entries[c]["nutrients_per_100g"].get(key, 0.0)) for c in classes),
@@ -123,7 +118,6 @@ def build(seed: int = 1337, per_nutrient: int = 6) -> list[dict]:
             }
         )
 
-    # 5.
     for question in OUT_OF_SCOPE:
         cases.append(
             {

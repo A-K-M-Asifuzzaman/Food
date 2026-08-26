@@ -11,7 +11,6 @@ from nutrivision.config import DATA_DIR
 KB_PATH = DATA_DIR / "nutrition" / "kb.json"
 CORPUS_PATH = DATA_DIR / "nutrition" / "corpus.jsonl"
 
-# Nutrients worth generating dedicated ranking documents for.
 RANKED_NUTRIENTS = (
     ("energy_kcal", "calories", "kcal", 0),
     ("protein_g", "protein", "g", 1),
@@ -97,8 +96,6 @@ _GENERIC_HEADS = {
     "leavening agents", "gelatins", "frostings", "salad dressing", "puddings",
 }
 
-# For these the head word carries the meaning and dropping it inverts the sense: "Oil,
-# soybean" reduced to "soybean" reads as the bean, not the oil.
 _COMPOUND_HEADS = {"cheese", "oil", "seaweed", "sauce", "vinegar", "flour", "milk"}
 
 
@@ -201,7 +198,6 @@ def micro_docs(entry: dict) -> Iterable[Document]:
         present = [(k, n[k]) for k in keys if k in n and n[k] > 0]
         if not present:
             continue
-        # Both bases are stated explicitly.
         parts = [
             f"{LABELS[k][0]} {_fmt(v, 2)} {LABELS[k][1]} per 100 g"
             + (

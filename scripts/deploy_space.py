@@ -21,8 +21,7 @@ PAYLOAD: list[str] = [
     "artifacts/checkpoints/probe_siglip_so400m.pt",
     "artifacts/checkpoints/probe_eva02_large.pt",
     "artifacts/index/documents.jsonl",
-    "artifacts/index/embeddings.npy",
-    "artifacts/index/bm25.pkl",
+    "artifacts/index/vectorstore.json",
     "artifacts/index/manifest.json",
     "artifacts/reports/conformal.json",
     "artifacts/reports/calibration_ensemble_siglip_eva02.json",
@@ -67,13 +66,21 @@ def verify(stage: Path) -> None:
         sys.exit(f"main.py declares no route for: {', '.join(absent)}")
 
     reqs = (stage / "backend/requirements.txt").read_text()
-    for pkg in ["sentence-transformers", "rank-bm25", "openai", "timm", "torch"]:
+    for pkg in [
+        "sentence-transformers",
+        "rank-bm25",
+        "langchain-openai",
+        "langgraph",
+        "timm",
+        "torch",
+    ]:
         if pkg not in reqs:
             sys.exit(f"requirements.txt does not pin {pkg}")
 
-    index = stage / "artifacts/index/documents.jsonl"
-    if index.stat().st_size < 10_000:
-        sys.exit("retrieval index looks truncated")
+    for name in ("documents.jsonl", "vectorstore.json"):
+        index = stage / "artifacts/index" / name
+        if not index.exists() or index.stat().st_size < 10_000:
+            sys.exit(f"retrieval index looks truncated: {name}")
 
     # Uploading a file to the Space repo does not put it in the container.
     dockerfile = (stage / "Dockerfile").read_text()
