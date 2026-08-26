@@ -1,5 +1,3 @@
-"""FastAPI service for FoodGenome AI."""
-
 from __future__ import annotations
 
 import base64
@@ -46,7 +44,6 @@ app.add_middleware(
 
 @app.middleware("http")
 async def track(request: Request, call_next):
-    """Time every request."""
     started = time.time()
     try:
         response = await call_next(request)
@@ -62,8 +59,6 @@ async def track(request: Request, call_next):
 _kb = json.loads(KB_PATH.read_text())
 ENTRIES = {e["class"]: e for e in _kb["entries"]}
 
-# Class index order comes from the knowledge base's own entry order, which was built
-# against the dataset's label order and is verified equal to it.
 CLASS_ORDER = [e["class"] for e in _kb["entries"]]
 assert len(CLASS_ORDER) == 101, f"expected 101 classes, got {len(CLASS_ORDER)}"
 
@@ -79,7 +74,6 @@ async def explain(
     food_class: str | None = None,
     user: User = Depends(require_user),
 ) -> dict:
-    """Grad-CAM overlay for an uploaded image, returned inline as a data URI."""
     started = time.time()
     raw = await image.read()
     if len(raw) > MAX_BYTES:
@@ -108,7 +102,6 @@ async def explain(
         "title": title_for(CLASS_ORDER[result["class_index"]]),
         "backbone": result["backbone"],
         "grid": result["grid"],
-        # Share of the map above half intensity.
         "peak_fraction": round(result["peak_fraction"], 4),
         "method": "Grad-CAM on the final transformer block",
         "latency_ms": int((time.time() - started) * 1000),
@@ -117,7 +110,6 @@ async def explain(
 
 class AskRequest(BaseModel):
     question: str = Field(min_length=2, max_length=400)
-    # Supplied by the client after a prediction.
     food_class: str | None = None
 
 
@@ -137,8 +129,6 @@ def ask(body: AskRequest, user: User = Depends(require_user)) -> dict:
         citations=len(result.citations), cost_usd=cost, ms=result.latency_ms,
     )
     payload = result.as_dict()
-    # The retrieved documents are large and only useful for debugging; the citations
-    # carry everything the interface needs to attribute a claim.
     payload.pop("retrieved", None)
     return payload
 
@@ -156,7 +146,6 @@ def health() -> dict:
 
 @app.post("/warm")
 def warm() -> dict:
-    """Start loading the backbones without waiting for them."""
     if CLASSIFIER.ready:
         return {"status": "ready"}
     threading.Thread(target=CLASSIFIER.load, daemon=True).start()
@@ -165,7 +154,6 @@ def warm() -> dict:
 
 @app.get("/stats")
 def stats(_: User = Depends(require_admin)) -> dict:
-    """Operational counters for the admin console."""
     snap = METRICS.snapshot()
     snap["model"] = {
         "name": MODEL_NAME,
@@ -185,7 +173,6 @@ class Feedback(BaseModel):
 
 @app.post("/feedback")
 def feedback(body: Feedback, user: User = Depends(require_user)) -> dict:
-    """Thumbs up or down on a prediction."""
     if body.food_class not in ENTRIES:
         raise HTTPException(400, f"Unknown food class: {body.food_class}")
     METRICS.record_feedback(
@@ -200,25 +187,21 @@ def feedback(body: Feedback, user: User = Depends(require_user)) -> dict:
 
 @app.get("/history")
 def history(limit: int = 40, user: User = Depends(require_user)) -> dict:
-    """One visitor's own record, keyed by the id their browser generated."""
     return STORE.history(user.uid, limit=min(limit, 100))
 
 
 @app.delete("/history")
 def erase_history(user: User = Depends(require_user)) -> dict:
-    """Delete every row belonging to the caller."""
     return STORE.erase(user.uid)
 
 
 @app.get("/analytics")
 def analytics(days: int = 14, _: User = Depends(require_admin)) -> dict:
-    """Aggregated history for the admin console."""
     return STORE.analytics(days=max(1, min(days, 90)))
 
 
 @app.get("/me")
 def me(request: Request) -> dict:
-    """Who the presented token belongs to, if anyone."""
     user = current_user(request)
     return {"signed_in": bool(user), "user": user.as_dict() if user else None}
 
@@ -268,7 +251,6 @@ async def predict(
     threshold = CONSTANTS["ood_threshold"]
     members = conformal_set(calibrated)
 
-    # Abstention combines two signals, because neither is sufficient alone.
     LOST_SET_SIZE = 5
     uncertain = msp < threshold or len(members) >= LOST_SET_SIZE
 

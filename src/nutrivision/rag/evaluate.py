@@ -1,5 +1,3 @@
-"""Score the RAG pipeline against the gold set."""
-
 from __future__ import annotations
 
 import argparse
@@ -22,7 +20,6 @@ def dcg(relevances: list[int]) -> float:
 
 
 def answer_bearing(hit, case: dict) -> bool:
-    """Does this document actually contain what the question asks for?"""
     if hit.doc_id in set(case["expected_doc_ids"]):
         return True
     if case["food_class"] and hit.food_class != case["food_class"]:
@@ -75,7 +72,6 @@ def score_retrieval(cases: list[dict], k: int = 5, reranker: str | None = None) 
 
 
 def numeric_match(answer: str, expected: list[float], tolerance: float = 0.02) -> bool:
-    """True when the answer states one of the acceptable figures."""
     if not expected:
         return True
     values = [v for v, _ in extract_quantities(answer)]

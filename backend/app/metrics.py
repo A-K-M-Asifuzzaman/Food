@@ -1,5 +1,3 @@
-"""In-process request metrics and a rolling prediction feed."""
-
 from __future__ import annotations
 
 import threading
@@ -7,8 +5,6 @@ import time
 from collections import deque
 from dataclasses import dataclass, field
 
-# Kept small on purpose: this lives in the same memory as two 300M-parameter backbones,
-# and an unbounded history is how a long-lived container runs out.
 FEED_SIZE = 40
 LATENCY_SAMPLES = 500
 
@@ -23,8 +19,6 @@ class EndpointStats:
         if not self.latencies_ms:
             return None
         ordered = sorted(self.latencies_ms)
-        # Nearest-rank, which needs no interpolation and is exact for the small sample
-        # sizes a demo deployment produces.
         k = max(0, min(len(ordered) - 1, int(round(p / 100 * len(ordered))) - 1))
         return round(ordered[k], 1)
 
@@ -78,7 +72,6 @@ class Metrics:
             self.openai_cost_usd += cost
 
     def record_feedback(self, *, food_class: str, helpful: bool, note: str | None) -> None:
-        """Thumbs up or down on a prediction."""
         with self.lock:
             self.feedback.appendleft({
                 "at": round(time.time()),
@@ -93,7 +86,6 @@ class Metrics:
 
     @staticmethod
     def _memory() -> dict:
-        """Resident set of this process, read from /proc where it exists."""
         try:
             with open("/proc/self/status") as fh:
                 for line in fh:
@@ -104,7 +96,6 @@ class Metrics:
         try:
             import resource
             rss = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
-            # Linux reports kilobytes, macOS bytes.
             return {"rss_mb": round(rss / (1024 if rss > 10**7 else 1) / 1024, 1)}
         except Exception:
             return {}
@@ -132,8 +123,6 @@ class Metrics:
                 "error_rate": round(errors / total * 100, 2) if total else 0.0,
                 "endpoints": endpoints,
                 "predictions": {
-                    # Completed predictions, not requests to /predict: a GET to that
-                    # route is a 405 and belongs in neither figure.
                     "total": self.prediction_count,
                     "abstained": self.abstentions,
                     "recent": predictions,

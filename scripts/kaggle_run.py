@@ -1,5 +1,3 @@
-"""Push, run and monitor the fine-tune kernel on Kaggle from the command line."""
-
 from __future__ import annotations
 
 import argparse
@@ -13,7 +11,6 @@ from nutrivision.config import CHECKPOINT_DIR, REPORT_DIR
 KERNEL_DIR = Path(__file__).resolve().parents[1] / "notebooks" / "kaggle"
 REF = "asifxzaman/foodgenome-eva02-finetune"
 
-# Where each Kaggle output belongs locally.
 PLACEMENT = {
     "probe_eva02_ft_val.npy": REPORT_DIR / "logits",
     "probe_eva02_ft_test.npy": REPORT_DIR / "logits",
@@ -35,7 +32,7 @@ def api():
 def status_of(client) -> tuple[str, str | None]:
     try:
         s = client.kernels_status(REF)
-    except Exception as exc:  # noqa: BLE001 - surfacing the API message is the point
+    except Exception as exc:
         if "404" in str(exc):
             return "not-committed", (
                 "no committed version exists. An interactive run is invisible to the API; "
@@ -108,7 +105,9 @@ def cmd_fetch(client, args) -> None:
 
 
 def main() -> None:
-    p = argparse.ArgumentParser(description=__doc__)
+    p = argparse.ArgumentParser(
+        description="Push, run and monitor the fine-tune kernel on Kaggle."
+    )
     sub = p.add_subparsers(dest="command", required=True)
     sub.add_parser("push")
     sub.add_parser("status")

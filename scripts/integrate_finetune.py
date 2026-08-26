@@ -1,5 +1,3 @@
-"""Validate and integrate the Kaggle fine-tune, then say whether it actually helped."""
-
 from __future__ import annotations
 
 import argparse

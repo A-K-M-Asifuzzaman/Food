@@ -1,5 +1,3 @@
-"""GraphRAG: a dish -> ingredient -> nutrient graph over the knowledge base."""
-
 from __future__ import annotations
 
 import argparse
@@ -46,7 +44,6 @@ class NutritionGraph:
 
     @staticmethod
     def _ingredient_key(component: dict) -> str:
-        """Group by USDA record where there is one, else by description."""
         fdc = component.get("fdc_id")
         return f"fdc:{fdc}" if fdc else "desc:" + component["description"].lower()
 
@@ -98,7 +95,6 @@ class NutritionGraph:
         return [k for k, title in self.ingredient_titles.items() if term in title.lower()]
 
     def dishes_with(self, term: str) -> list[tuple[str, float, str]]:
-        """Inversion: every dish containing an ingredient matching `term`."""
         out: dict[str, tuple[float, str]] = {}
         for key in self.find_ingredient(term):
             label = self.ingredient_titles[key]
@@ -134,7 +130,6 @@ class NutritionGraph:
         }
 
     def _idf(self, key: str) -> float:
-        """Rarity weight for an ingredient."""
         import math
 
         total = max(1, len(self.dish_ingredients))
@@ -148,7 +143,6 @@ class NutritionGraph:
     def neighbours(
         self, cls: str, k: int = 5, floor: float = 0.02
     ) -> list[tuple[str, float, list[str]]]:
-        """Dishes closest by TF-IDF cosine over ingredients."""
         mine_raw = self.dish_ingredients.get(cls, {})
         if not mine_raw:
             return []
@@ -174,7 +168,6 @@ class NutritionGraph:
 
 
     def as_documents(self) -> list[dict]:
-        """Graph facts as prose, so they join the same grounded pipeline."""
         docs = []
 
         for key, dishes in self.ingredient_dishes.items():
@@ -224,7 +217,6 @@ class NutritionGraph:
         return docs
 
     def layout(self, seed: int = 1337, iterations: int = 220) -> dict[str, list[float]]:
-        """Force-directed positions in 3D, computed here rather than in the browser."""
         import networkx as nx
         import numpy as np
 
@@ -246,7 +238,6 @@ class NutritionGraph:
         }
 
     def export(self, path=None) -> dict:
-        """Node/link JSON for the frontend's 3D graph view."""
         positions = self.layout()
 
         nodes = [

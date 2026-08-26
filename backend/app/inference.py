@@ -1,5 +1,3 @@
-"""The served classifier: two frozen backbones, two MLP probes, averaged."""
-
 from __future__ import annotations
 
 import logging
@@ -30,7 +28,6 @@ def pick_device() -> torch.device:
 
 
 class Classifier:
-    """Lazily loaded so the process can answer /health before weights are in RAM."""
 
     def __init__(self) -> None:
         self.device = pick_device()
@@ -72,27 +69,22 @@ class Classifier:
 
     @torch.no_grad()
     def probabilities(self, image: Image.Image) -> np.ndarray:
-        """Calibrated class probabilities for one image."""
         self.load()
         stack = []
         for key in MEMBERS:
             model, transform = self.backbones[key]
             x = transform(image).unsqueeze(0).to(self.device)
             feats = model(x)
-            # Must match training; see module docstring.
             feats = F.normalize(feats.float(), dim=-1)
             logits = self.probes[key](feats)
             stack.append(logits.softmax(dim=-1))
 
         mean = torch.stack(stack).mean(dim=0)
-        # Temperature acts on the surrogate logits of the averaged probability, which is
-        # how the constant was fitted offline.
         calibrated = (mean.clamp_min(1e-12).log() / CONSTANTS["temperature"]).softmax(dim=-1)
         return calibrated.squeeze(0).cpu().numpy(), mean.squeeze(0).cpu().numpy()
 
 
     def explain(self, image: Image.Image, class_index: int | None = None) -> dict:
-        """Grad-CAM for the strongest single member."""
         from nutrivision.explain.gradcam import explain as run_gradcam
 
         self.load()
@@ -104,7 +96,6 @@ class Classifier:
 
 
 def conformal_set(probs: np.ndarray, k_max: int = 8) -> list[int]:
-    """LAC with a forced top-1, the configuration measured at 99.56% coverage."""
     top = int(probs.argmax())
     idx = np.flatnonzero(probs >= SET_THRESHOLD)
     ordered = sorted(idx.tolist(), key=lambda i: -probs[i])

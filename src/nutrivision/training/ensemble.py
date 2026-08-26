@@ -1,5 +1,3 @@
-"""Combine cached probe logits into an ensemble and test whether the gain is real."""
-
 from __future__ import annotations
 
 import argparse
@@ -36,13 +34,11 @@ def top5(scores: np.ndarray, y: np.ndarray) -> float:
 
 
 def combine(members: list[np.ndarray], weights: np.ndarray, space: str) -> np.ndarray:
-    """Weighted average in probability or logit space."""
     parts = [softmax(m, axis=1) if space == "prob" else m for m in members]
     return sum(w * p for w, p in zip(weights, parts))
 
 
 def mcnemar(a_correct: np.ndarray, b_correct: np.ndarray) -> dict:
-    """Exact McNemar test on paired predictions — only the disagreements carry signal."""
     b = int((a_correct & ~b_correct).sum())
     c = int((~a_correct & b_correct).sum())
     if b + c == 0:
@@ -52,7 +48,6 @@ def mcnemar(a_correct: np.ndarray, b_correct: np.ndarray) -> dict:
 
 
 def simplex_grid(k: int, step: float = 0.05) -> list[np.ndarray]:
-    """All weight vectors on the k-simplex at a fixed resolution."""
     ticks = int(round(1 / step))
     out = []
     for cut in itertools.combinations(range(ticks + k - 1), k - 1):
@@ -83,7 +78,6 @@ def evaluate_subsets(tags: list[str], val: dict, test: dict, val_y, test_y) -> l
                     }
                 )
             if size > 1:
-                # Blend weights are chosen on validation only; test stays untouched.
                 members_val = [val[t] for t in subset]
                 best_w, best_acc = None, -1.0
                 for w in simplex_grid(size):

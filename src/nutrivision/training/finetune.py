@@ -1,5 +1,3 @@
-"""End-to-end fine-tuning of a timm backbone on Food-101."""
-
 from __future__ import annotations
 
 import argparse
@@ -269,7 +267,6 @@ def run_stage(
 
 
 def resize_state_dict(sd: dict, model) -> dict:
-    """Match a state dict to a model that may use a different input resolution."""
     out = {k: v for k, v in sd.items()}
     key = "pos_embed"
     if key in out and out[key].shape != model.pos_embed.shape:
@@ -302,8 +299,6 @@ def main() -> None:
     p = argparse.ArgumentParser(description="Fine-tune a backbone on Food-101")
     p.add_argument("--backbone", default=FinetuneConfig.backbone)
     p.add_argument("--out-name", default=FinetuneConfig.out_name)
-    # Batch sizes are set from measured peak memory on an 18 GB M3 Pro: bs 24 at 224
-    # needed 22.6 GB and died.
     p.add_argument("--stage1-size", type=int, default=224)
     p.add_argument("--stage1-epochs", type=int, default=6)
     p.add_argument("--stage1-bs", type=int, default=16)

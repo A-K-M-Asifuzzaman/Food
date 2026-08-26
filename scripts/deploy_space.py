@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-"""Assemble and upload the inference service to its Hugging Face Space."""
 
 from __future__ import annotations
 
@@ -11,7 +10,6 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 REPO_ID = "AsifZaman1912/prac"
 
-# Everything the container needs, and nothing else.
 PAYLOAD: list[str] = [
     "backend/app",
     "backend/requirements.txt",
@@ -29,7 +27,6 @@ PAYLOAD: list[str] = [
 
 EXCLUDE = shutil.ignore_patterns("__pycache__", "*.pyc", ".DS_Store", ".ipynb_checkpoints")
 
-# Routes that must exist in the uploaded service.
 REQUIRED_ROUTES = ["/predict", "/explain", "/ask", "/health", "/warm", "/stats", "/feedback"]
 
 
@@ -59,7 +56,6 @@ def build(stage: Path) -> None:
 
 
 def verify(stage: Path) -> None:
-    """Cheap checks that catch the failures actually seen on this deployment."""
     main = (stage / "backend/app/main.py").read_text()
     absent = [r for r in REQUIRED_ROUTES if f'"{r}"' not in main]
     if absent:
@@ -82,7 +78,6 @@ def verify(stage: Path) -> None:
         if not index.exists() or index.stat().st_size < 10_000:
             sys.exit(f"retrieval index looks truncated: {name}")
 
-    # Uploading a file to the Space repo does not put it in the container.
     dockerfile = (stage / "Dockerfile").read_text()
     copied = " ".join(
         line for line in dockerfile.splitlines() if line.startswith("COPY")
@@ -152,7 +147,7 @@ def main() -> None:
         repo_id=REPO_ID,
         repo_type="space",
         commit_message="Deploy inference service",
-        delete_patterns="*",  # remove files no longer in the payload
+        delete_patterns="*",
     )
     print(f"done — https://huggingface.co/spaces/{REPO_ID}")
 

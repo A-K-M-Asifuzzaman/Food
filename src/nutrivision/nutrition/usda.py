@@ -1,5 +1,3 @@
-"""Thin reader over the USDA SR Legacy CSV release."""
-
 from __future__ import annotations
 
 import functools
@@ -79,7 +77,6 @@ class UsdaDatabase:
 
     @property
     def wide(self) -> pd.DataFrame:
-        """One row per food, one column per tracked nutrient, amounts per 100 g."""
         if self._wide is None:
             fn = pd.read_csv(
                 self.root / "food_nutrient.csv",

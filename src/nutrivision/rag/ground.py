@@ -1,5 +1,3 @@
-"""Verify that every number in a generated answer came from the sources."""
-
 from __future__ import annotations
 
 import re
@@ -72,7 +70,6 @@ def extract_quantities(text: str) -> list[tuple[float, str | None]]:
 
 
 def check(answer: str, context: str, rel_tolerance: float = 0.02) -> GroundingReport:
-    """Every quantity in `answer` must appear in `context`."""
     source_quantities = extract_quantities(context)
     by_unit: dict[str | None, list[float]] = {}
     for value, unit in source_quantities:

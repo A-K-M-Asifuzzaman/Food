@@ -1,5 +1,3 @@
-"""Hybrid retrieval as LangChain retrievers: BM25 + dense, fused by RRF, then reranked."""
-
 from __future__ import annotations
 
 import argparse
@@ -79,7 +77,6 @@ class Hit:
 
 
 class BM25Retriever(BaseRetriever):
-    """The lexical half of the hybrid, over the corpus tokenizer that keeps numbers."""
 
     documents: list[Document]
     k: int = CANDIDATES
@@ -106,13 +103,6 @@ class BM25Retriever(BaseRetriever):
 
 
 class Reranker(BaseDocumentCompressor):
-    """A LangChain compressor that also exposes its raw scores.
-
-    The scale of `score` is the reranker's own, and two things downstream are
-    expressed in it: `relevance_floor`, below which the pipeline treats the
-    evidence as not addressing the question, and `dish_bonus`, the prior for the
-    dish the vision model identified. Each backend therefore carries its own.
-    """
 
     model_name: str = ""
     top_n: int = 5
@@ -145,7 +135,6 @@ class Reranker(BaseDocumentCompressor):
 
 
 class CrossEncoderRerank(Reranker):
-    """Local cross-encoder. Emits unbounded logits centred near zero."""
 
     model_name: str = CROSS_ENCODER_MODEL
     relevance_floor: float = 0.0
@@ -169,13 +158,6 @@ class CrossEncoderRerank(Reranker):
 
 
 class CohereRerank(Reranker):
-    """Cohere's hosted reranker. Emits relevance in [0, 1], so the floor and the
-    dish prior are an order of magnitude smaller than the cross-encoder's.
-
-    A Cohere trial key allows ten calls a minute and answers a 429 otherwise, so
-    calls are paced client-side rather than retried into the limit. Set
-    `COHERE_REQUESTS_PER_MINUTE` to whatever the key actually permits.
-    """
 
     model_name: str = COHERE_MODEL
     relevance_floor: float = 0.1
@@ -231,11 +213,6 @@ def get_reranker(name: str | None = None) -> Reranker:
 
 
 class HybridRetriever(BaseRetriever):
-    """BM25 and dense retrieval, fused by reciprocal rank fusion and reranked.
-
-    Accepts a `food_class` at query time: the dish the vision model identified is
-    named inside the query and given a prior at both fusion and rerank.
-    """
 
     lexical: BM25Retriever
     dense: BaseRetriever
@@ -252,7 +229,6 @@ class HybridRetriever(BaseRetriever):
         return food_class.replace("_", " ")
 
     def contextualise(self, query: str, food_class: str | None) -> str:
-        """Name the dish inside the query so every stage can use it."""
         if not food_class:
             return query
         return f"{self._title_for(food_class)}: {query}"

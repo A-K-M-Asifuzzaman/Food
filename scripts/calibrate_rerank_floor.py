@@ -1,17 +1,4 @@
 #!/usr/bin/env python3
-"""Measure a reranker's relevance floor against the gold set.
-
-The floor is the score below which the CRAG gate refuses. It is in the reranker's
-own units — a cross-encoder logit and a Cohere relevance score are not the same
-scale — so switching rerankers means re-deriving it rather than reusing a number.
-
-For each gold case this records the top score with and without dish conditioning,
-which is exactly the pair the gate compares, then reports the gap between the
-worst in-scope question and the best out-of-scope one. Any floor inside that gap
-refuses perfectly; pick one clear of both ends.
-
-    .venv/bin/python scripts/calibrate_rerank_floor.py --reranker cohere
-"""
 
 from __future__ import annotations
 
@@ -86,7 +73,9 @@ def report(rows: list[dict]) -> None:
 
 
 def main() -> None:
-    p = argparse.ArgumentParser(description=__doc__)
+    p = argparse.ArgumentParser(
+        description="Measure a reranker's relevance floor against the gold set."
+    )
     p.add_argument("--reranker", default=None, help="cohere | cross-encoder")
     p.add_argument("--k", type=int, default=4)
     p.add_argument("--out", default=None)

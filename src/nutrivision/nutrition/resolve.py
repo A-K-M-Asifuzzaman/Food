@@ -1,5 +1,3 @@
-"""Resolve human readable food descriptions to SR Legacy rows."""
-
 from __future__ import annotations
 
 import re
@@ -76,8 +74,6 @@ class Resolver:
         score -= self.table["_penalty"]
         score -= self.table["description"].str.len() / 90.0
 
-        # itertuples() renames any column starting with an underscore to a positional
-        # name, so _score has to be read off the row directly.
         out = self.table.assign(_score=score).nlargest(limit, "_score")
         return [
             Match(

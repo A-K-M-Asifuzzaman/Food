@@ -1,5 +1,3 @@
-"""The generation half of the RAG: a grounded prompt over ChatOpenAI, under a spend ceiling."""
-
 from __future__ import annotations
 
 import json
@@ -43,7 +41,6 @@ PROMPT = ChatPromptTemplate.from_messages(
 
 @lru_cache(maxsize=4)
 def get_chain(model: str = DEFAULT_MODEL) -> Runnable:
-    """Prompt into model. Cached because the client holds a connection pool."""
     from langchain_openai import ChatOpenAI
 
     return PROMPT | ChatOpenAI(model=model, temperature=0, max_tokens=MAX_TOKENS)
@@ -80,7 +77,6 @@ def format_sources(hits: Sequence[Hit]) -> str:
 
 
 def template_answer(hits: Sequence[Hit]) -> str:
-    """Deterministic fallback assembled from the sources themselves."""
     if not hits:
         return "No matching information was found in the nutrition knowledge base."
     body = " ".join(h.text for h in hits[:2])

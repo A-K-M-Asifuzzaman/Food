@@ -1,5 +1,3 @@
-"""Compute the classification metrics the course report asks for."""
-
 from __future__ import annotations
 
 import json
@@ -30,7 +28,6 @@ def main() -> None:
     classes = load_classes()
     y = np.load(LOGITS / "test_y.npy")
 
-    # The shipping model: a uniform probability average over the two members.
     probs = np.mean([softmax(np.load(LOGITS / f"probe_{m}_test.npy")) for m in MEMBERS], axis=0)
     pred = probs.argmax(1)
 
@@ -56,7 +53,6 @@ def main() -> None:
         },
     }
 
-    # Per-class accuracy.
     cm = confusion_matrix(y, pred, labels=range(len(classes)))
     per_class = cm.diagonal() / cm.sum(axis=1)
     order = np.argsort(per_class)
@@ -70,7 +66,6 @@ def main() -> None:
         for i in order[::-1][:8]
     ]
 
-    # The pairs the model actually confuses, which is what error analysis needs.
     off = cm.copy()
     np.fill_diagonal(off, 0)
     pairs = []

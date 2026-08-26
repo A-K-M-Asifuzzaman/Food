@@ -1,5 +1,3 @@
-"""Confidence calibration for the classifier heads."""
-
 from __future__ import annotations
 
 import argparse
@@ -23,7 +21,6 @@ def load(name: str, split: str) -> tuple[torch.Tensor, torch.Tensor]:
 def expected_calibration_error(
     probs: torch.Tensor, y: torch.Tensor, bins: int = 15
 ) -> tuple[float, float, list[dict]]:
-    """ECE and MCE over equal-width confidence bins."""
     conf, pred = probs.max(dim=-1)
     correct = pred.eq(y).float()
 
@@ -65,8 +62,7 @@ def negative_log_likelihood(logits: torch.Tensor, y: torch.Tensor) -> float:
 
 
 def fit_temperature(logits: torch.Tensor, y: torch.Tensor, max_iter: int = 200) -> float:
-    """Optimise a single scalar T minimising NLL on the validation split."""
-    log_t = torch.zeros(1, requires_grad=True)  # optimise in log space to keep T > 0
+    log_t = torch.zeros(1, requires_grad=True)
     opt = torch.optim.LBFGS([log_t], lr=0.1, max_iter=max_iter)
 
     def closure():
@@ -95,7 +91,6 @@ def summarise(logits: torch.Tensor, y: torch.Tensor, bins: int) -> dict:
 
 
 def load_ensemble(members: list[str], split: str) -> tuple[torch.Tensor, torch.Tensor]:
-    """Surrogate logits for a probability-averaged ensemble."""
     probs = None
     y = None
     for name in members:

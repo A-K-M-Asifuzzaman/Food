@@ -1,14 +1,3 @@
-"""Render every figure in the paper from the evaluation artifacts.
-
-Nothing here is drawn by hand or transcribed. Each figure reads the JSON that
-the evaluation scripts wrote, so a rerun of the pipeline regenerates the paper's
-plots with whatever the new numbers are — and a figure can never quietly drift
-from the result it claims to show.
-
-Output is PDF because LaTeX embeds vector cleanly and a raster plot in a
-submitted paper looks like a screenshot of a plot.
-"""
-
 from __future__ import annotations
 
 import json
@@ -24,9 +13,6 @@ REPORTS = ROOT / "artifacts" / "reports"
 OUT = Path(__file__).parent / "figures"
 OUT.mkdir(exist_ok=True)
 
-# Palette validated for the lightness band, chroma floor, colour-vision
-# separation and contrast against a white surface. Order is load-bearing: green
-# beside amber fails deuteranope separation, so teal sits between them.
 INK, DIM, GRID = "#0b0b0f", "#4b4b55", "#dedbd2"
 C = ["#e62429", "#1b4ce0", "#c07708", "#0e8fa3", "#16a34a"]
 
@@ -54,7 +40,6 @@ def load(name: str) -> dict:
 
 
 def fig_reliability() -> None:
-    """Confidence against observed accuracy, before and after temperature."""
     cal = load("calibration_ensemble_siglip_eva02.json")
     fig, ax = plt.subplots(figsize=(3.4, 3.2))
     ax.plot([0, 100], [0, 100], "--", color=DIM, lw=1.1, zorder=1)
@@ -62,7 +47,6 @@ def fig_reliability() -> None:
 
     for key, label, colour in [("test_before", "Raw softmax", C[1]),
                                ("test_after", "Calibrated", C[0])]:
-        # Bins holding a handful of images swing wildly and are not evidence.
         b = [x for x in cal[key]["bins"] if x["count"] >= 25]
         ax.plot([x["confidence"] * 100 for x in b], [x["accuracy"] * 100 for x in b],
                 "-o", color=colour, lw=1.6, ms=3.6, mec="white", mew=0.8,
@@ -76,7 +60,6 @@ def fig_reliability() -> None:
 
 
 def fig_ablation() -> None:
-    """Every combination, with the winner marked."""
     ens = load("ensemble_with_finetune.json")
     rows = ens["results"][:10][::-1]
     fig, ax = plt.subplots(figsize=(6.2, 3.4))
@@ -103,12 +86,6 @@ def fig_ablation() -> None:
 
 
 def fig_ablation_slide() -> None:
-    """A reduced ablation for projection.
-
-    The paper's version carries ten rows at 7pt, which is right for a page held
-    at reading distance and illegible on a screen across a room. Same data, five
-    rows, type that survives a projector.
-    """
     ens = load("ensemble_with_finetune.json")
     rows = ens["results"][:5][::-1]
     fig, ax = plt.subplots(figsize=(5.0, 2.6))
@@ -138,7 +115,6 @@ def fig_ablation_slide() -> None:
 
 
 def fig_decorrelation() -> None:
-    """Shared-error rate: the quantity that decides whether ensembling pays."""
     frozen = load("ensemble.json")["agreement"]["pairs"]
     withft = load("ensemble_with_finetune.json")["agreement"]["pairs"]
 
@@ -159,7 +135,6 @@ def fig_decorrelation() -> None:
 
 
 def fig_attribution() -> None:
-    """Border-mass ratio: below 1 is centre-focused, above 1 is edge-drawn."""
     methods = [("Grad-CAM", 0.87, C[4]), ("Token-CAM", 1.00, "#c9c6bd"),
                ("Attention pooling", 1.14, C[0])]
     fig, ax = plt.subplots(figsize=(3.4, 2.1))
@@ -177,7 +152,6 @@ def fig_attribution() -> None:
 
 
 def fig_rag() -> None:
-    """Answer correctness by question category, refusals marked separately."""
     rag = load("rag_evaluation.json")["answers"]["by_category"]
     order = ["nutrient_lookup", "ingredients", "graph_inversion", "superlative", "out_of_scope"]
     cats = [c for c in order if c in rag]
@@ -197,7 +171,6 @@ def fig_rag() -> None:
 
 
 def fig_training() -> None:
-    """The fine-tune curve, with the resolution change marked."""
     hist = load("eva02_ft_result.json")["history"]
     fig, ax = plt.subplots(figsize=(3.4, 2.4))
     x = range(1, len(hist) + 1)

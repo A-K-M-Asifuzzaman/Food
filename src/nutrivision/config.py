@@ -18,7 +18,6 @@ ROOT = _project_root()
 DATA_DIR = ROOT / "data"
 ARTIFACT_DIR = ROOT / "artifacts"
 
-# Weights are large and the boot volume is not where this project lives.
 os.environ.setdefault("HF_HOME", str(DATA_DIR / "hf"))
 os.environ.setdefault("TOKENIZERS_PARALLELISM", "false")
 
@@ -52,7 +51,6 @@ DEVICE = pick_device()
 
 @dataclass(frozen=True)
 class BackboneSpec:
-    """One entry in the frozen-feature bank."""
 
     key: str
     timm_name: str

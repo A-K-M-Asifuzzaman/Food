@@ -1,5 +1,3 @@
-"""Evaluate a fine-tune checkpoint on the held-out splits and export its logits."""
-
 from __future__ import annotations
 
 import argparse
@@ -32,7 +30,6 @@ class Folder(Dataset):
 
 
 def build_lists(classes: list[str], val_fraction: float):
-    """Rebuild exactly the ordering the cached features and labels use."""
     train_paths, train_labels = [], []
     for label, cls in enumerate(classes):
         for p in sorted((IMAGE_DIR / "train" / cls).glob("*.jpg")):
@@ -62,7 +59,9 @@ def infer(model, loader) -> np.ndarray:
 
 
 def main() -> None:
-    p = argparse.ArgumentParser(description=__doc__)
+    p = argparse.ArgumentParser(
+        description="Evaluate a fine-tune checkpoint on the held-out splits and export its logits."
+    )
     p.add_argument("--checkpoint", default=str(CHECKPOINT_DIR / "eva02_large_448_last.pt"))
     p.add_argument("--name", default="eva02_ft_s1", help="logit file stem")
     p.add_argument("--size", type=int, default=224, help="must match the stage the checkpoint ended on")
@@ -77,7 +76,6 @@ def main() -> None:
     print(f"checkpoint : stage={ck.get('stage')} epoch={ck.get('epoch')}")
     print(f"last epoch : val {last.get('val_top1')}  ema {last.get('ema_top1')}")
 
-    # Pick whichever won on validation — never on test.
     choice = args.weights
     if choice == "auto":
         choice = "ema" if (last.get("ema_top1") or 0) > (last.get("val_top1") or 0) else "model"
@@ -90,8 +88,6 @@ def main() -> None:
     model.load_state_dict(ck[choice])
     model.to(DEVICE)
 
-    # Normalisation must match what the model was trained with, not what its config
-    # advertises.
     transform = timm.data.create_transform(
         input_size=(3, args.size, args.size),
         is_training=False,

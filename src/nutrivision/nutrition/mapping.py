@@ -1,5 +1,3 @@
-"""Curated Food-101 to USDA SR Legacy mapping."""
-
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -7,7 +5,6 @@ from dataclasses import dataclass, field
 
 @dataclass(frozen=True)
 class Component:
-    """One ingredient, in grams per 100 g of finished dish."""
 
     query: str
     grams: float
@@ -40,49 +37,45 @@ def C(query: str, grams: float, require: tuple = (), avoid: tuple = ()) -> Compo
     return Component(query=query, grams=grams, require=require, avoid=avoid)
 
 
-# Ingredient shorthands reused across composites.
-FLOUR = lambda g: C("wheat flour white all-purpose enriched", g, ("flour",), ("self-rising", "cake"))  # noqa: E731
-SUGAR = lambda g: C("sugars granulated", g, ("sugars",), ("brown", "powdered"))  # noqa: E731
-BUTTER = lambda g: C("butter salted", g, ("butter",), ("oil", "peanut", "whipped"))  # noqa: E731
-EGG = lambda g: C("egg whole raw fresh", g, ("egg", "raw"), ("white", "yolk", "dried"))  # noqa: E731
-MILK = lambda g: C("milk whole 3.25% milkfat", g, ("milk",), ("dry", "condensed", "evaporated", "goat"))  # noqa: E731
-CREAM = lambda g: C("cream fluid heavy whipping", g, ("cream", "whipping"), ("sour", "whipped topping"))  # noqa: E731
-OLIVE_OIL = lambda g: C("oil olive salad or cooking", g, ("olive",), ())  # noqa: E731
-VEG_OIL = lambda g: C("oil soybean salad or cooking", g, ("soybean",), ("hydrogenated",))  # noqa: E731
-TOMATO = lambda g: C("tomatoes red ripe raw year round average", g, ("tomatoes", "raw"), ("sun-dried", "green"))  # noqa: E731
-ONION = lambda g: C("onions raw", g, ("onions", "raw"), ("dehydrated", "young green"))  # noqa: E731
-GARLIC = lambda g: C("garlic raw", g, ("garlic", "raw"), ("powder",))  # noqa: E731
-RICE = lambda g: C("rice white long-grain regular enriched cooked", g, ("rice", "cooked"), ("brown", "wild"))  # noqa: E731
-PASTA = lambda g: C("pasta cooked enriched", g, ("pasta", "cooked"), ("whole-wheat", "spinach", "corn"))  # noqa: E731
-BREAD = lambda g: C("bread white commercially prepared", g, ("bread", "white"), ("crumbs", "reduced"))  # noqa: E731
-MOZZARELLA = lambda g: C("cheese mozzarella whole milk", g, ("mozzarella",), ("low moisture", "part skim"))  # noqa: E731
-PARMESAN = lambda g: C("cheese parmesan grated", g, ("parmesan",), ("low sodium",))  # noqa: E731
-CHEDDAR = lambda g: C("cheese cheddar", g, ("cheddar",), ("low fat", "nonfat", "sauce"))  # noqa: E731
-CREAM_CHEESE = lambda g: C("cheese cream", g, ("cheese", "cream"), ("low fat", "fat free"))  # noqa: E731
-RICOTTA = lambda g: C("cheese ricotta whole milk", g, ("ricotta",), ("part skim",))  # noqa: E731
-GROUND_BEEF = lambda g: C(  # noqa: E731
+FLOUR = lambda g: C("wheat flour white all-purpose enriched", g, ("flour",), ("self-rising", "cake"))
+SUGAR = lambda g: C("sugars granulated", g, ("sugars",), ("brown", "powdered"))
+BUTTER = lambda g: C("butter salted", g, ("butter",), ("oil", "peanut", "whipped"))
+EGG = lambda g: C("egg whole raw fresh", g, ("egg", "raw"), ("white", "yolk", "dried"))
+MILK = lambda g: C("milk whole 3.25% milkfat", g, ("milk",), ("dry", "condensed", "evaporated", "goat"))
+CREAM = lambda g: C("cream fluid heavy whipping", g, ("cream", "whipping"), ("sour", "whipped topping"))
+OLIVE_OIL = lambda g: C("oil olive salad or cooking", g, ("olive",), ())
+VEG_OIL = lambda g: C("oil soybean salad or cooking", g, ("soybean",), ("hydrogenated",))
+TOMATO = lambda g: C("tomatoes red ripe raw year round average", g, ("tomatoes", "raw"), ("sun-dried", "green"))
+ONION = lambda g: C("onions raw", g, ("onions", "raw"), ("dehydrated", "young green"))
+GARLIC = lambda g: C("garlic raw", g, ("garlic", "raw"), ("powder",))
+RICE = lambda g: C("rice white long-grain regular enriched cooked", g, ("rice", "cooked"), ("brown", "wild"))
+PASTA = lambda g: C("pasta cooked enriched", g, ("pasta", "cooked"), ("whole-wheat", "spinach", "corn"))
+BREAD = lambda g: C("bread white commercially prepared", g, ("bread", "white"), ("crumbs", "reduced"))
+MOZZARELLA = lambda g: C("cheese mozzarella whole milk", g, ("mozzarella",), ("low moisture", "part skim"))
+PARMESAN = lambda g: C("cheese parmesan grated", g, ("parmesan",), ("low sodium",))
+CHEDDAR = lambda g: C("cheese cheddar", g, ("cheddar",), ("low fat", "nonfat", "sauce"))
+CREAM_CHEESE = lambda g: C("cheese cream", g, ("cheese", "cream"), ("low fat", "fat free"))
+RICOTTA = lambda g: C("cheese ricotta whole milk", g, ("ricotta",), ("part skim",))
+GROUND_BEEF = lambda g: C(
     "beef ground 85% lean meat 15% fat cooked pan-browned", g, ("beef", "ground", "cooked"), ("raw",)
 )
-CHICKEN = lambda g: C(  # noqa: E731
+CHICKEN = lambda g: C(
     "chicken broilers or fryers breast meat only cooked roasted", g, ("chicken", "cooked"), ("raw", "soup", "stock")
 )
-BACON = lambda g: C("pork cured bacon cooked", g, ("bacon", "cooked"), ("raw", "turkey", "canadian"))  # noqa: E731
-SHRIMP = lambda g: C("crustaceans shrimp cooked", g, ("shrimp", "cooked"), ("raw", "breaded", "imitation"))  # noqa: E731
-POTATO = lambda g: C("potatoes flesh and skin raw", g, ("potatoes", "raw"), ("sweet",))  # noqa: E731
-MAYO = lambda g: C("salad dressing mayonnaise regular", g, ("mayonnaise",), ("light", "low calorie", "imitation"))  # noqa: E731
-SOY_SAUCE = lambda g: C("soy sauce made from soy and wheat shoyu", g, ("soy sauce",), ("low sodium",))  # noqa: E731
-SESAME_OIL = lambda g: C("oil sesame salad or cooking", g, ("sesame",), ())  # noqa: E731
-# "water" alone matches "Watermelon, raw" on a substring, which silently put watermelon
-# into miso soup, churros and takoyaki.
-WATER = lambda g: C("beverages water tap drinking", g, ("water", "tap"), ("melon",))  # noqa: E731
-FRIES = lambda g: C(  # noqa: E731
+BACON = lambda g: C("pork cured bacon cooked", g, ("bacon", "cooked"), ("raw", "turkey", "canadian"))
+SHRIMP = lambda g: C("crustaceans shrimp cooked", g, ("shrimp", "cooked"), ("raw", "breaded", "imitation"))
+POTATO = lambda g: C("potatoes flesh and skin raw", g, ("potatoes", "raw"), ("sweet",))
+MAYO = lambda g: C("salad dressing mayonnaise regular", g, ("mayonnaise",), ("light", "low calorie", "imitation"))
+SOY_SAUCE = lambda g: C("soy sauce made from soy and wheat shoyu", g, ("soy sauce",), ("low sodium",))
+SESAME_OIL = lambda g: C("oil sesame salad or cooking", g, ("sesame",), ())
+WATER = lambda g: C("beverages water tap drinking", g, ("water", "tap"), ("melon",))
+FRIES = lambda g: C(
     "potatoes french fried all types salt added in processing frozen oven-heated",
     g, ("french fried",), ("toast",),
 )
 
 
 SPECS: tuple[ClassSpec, ...] = (
-    # ---------------------------------------------------------------- desserts.
     ClassSpec("apple_pie", "Apple Pie", "American", 125, "1 slice (125 g)",
               query="pie apple prepared from recipe", require=("pie", "apple"),
               avoid=("fried", "snack", "baby"), tags=("dessert", "baked")),
@@ -173,7 +166,6 @@ SPECS: tuple[ClassSpec, ...] = (
               query="french toast prepared from recipe made with low fat milk",
               require=("french toast",), avoid=("frozen", "sticks"), tags=("breakfast",)),
 
-    # ------------------------------------------------------------------ salads.
     ClassSpec("beet_salad", "Beet Salad", "European", 150, "1 bowl (150 g)",
               recipe=(C("beets cooked boiled drained", 65, ("beets", "cooked")), OLIVE_OIL(10),
                       C("cheese goat soft type", 15, ("goat",)),
@@ -200,7 +192,6 @@ SPECS: tuple[ClassSpec, ...] = (
                       C("vinegar rice", 6, ("vinegar",)), SOY_SAUCE(5)),
               tags=("salad", "vegetarian")),
 
-    # ------------------------------------------------------------------- soups.
     ClassSpec("clam_chowder", "Clam Chowder", "American", 250, "1 bowl (250 g)",
               query="soup clam chowder new england canned ready-to-serve",
               require=("clam chowder",), avoid=("manhattan", "condensed", "dry"),
@@ -234,7 +225,6 @@ SPECS: tuple[ClassSpec, ...] = (
               note="SR Legacy has no pho record; the broth-dominant composition is what drives its "
                    "low energy density."),
 
-    # ------------------------------------------------------------- meat mains.
     ClassSpec("baby_back_ribs", "Baby Back Ribs", "American", 250, "3 ribs (250 g)",
               query="pork fresh backribs separable lean and fat cooked roasted",
               require=("backribs",), avoid=("raw",), tags=("meat", "grilled")),
@@ -284,7 +274,6 @@ SPECS: tuple[ClassSpec, ...] = (
                       C("spices curry powder", 2, ("curry powder",)), GARLIC(2)),
               tags=("meat", "curry")),
 
-    # ---------------------------------------------------------------- seafood.
     ClassSpec("ceviche", "Ceviche", "Peruvian", 150, "1 serving (150 g)",
               recipe=(C("fish tilapia raw", 60, ("tilapia", "raw")),
                       C("lime juice raw", 15, ("lime juice",)), ONION(10), TOMATO(10),
@@ -335,7 +324,6 @@ SPECS: tuple[ClassSpec, ...] = (
                       C("parsley fresh", 3, ("parsley",), ("dried",))),
               tags=("seafood",)),
 
-    # ------------------------------------------------------------- sandwiches.
     ClassSpec("club_sandwich", "Club Sandwich", "American", 250, "1 sandwich (250 g)",
               recipe=(BREAD(35),
                       C("turkey breast meat only cooked roasted", 25, ("turkey", "cooked"), ("raw",)),
@@ -371,7 +359,6 @@ SPECS: tuple[ClassSpec, ...] = (
               query="fast foods breakfast burrito with egg cheese and sausage",
               require=("burrito",), tags=("breakfast", "mexican")),
 
-    # ---------------------------------------------------------- pasta & grains.
     ClassSpec("lasagna", "Lasagna", "Italian", 250, "1 slice (250 g)",
               recipe=(PASTA(30), GROUND_BEEF(20), C("sauce tomato canned", 22, ("sauce", "tomato")),
                       RICOTTA(14), MOZZARELLA(12), PARMESAN(2)),
@@ -437,7 +424,6 @@ SPECS: tuple[ClassSpec, ...] = (
                       C("seaweed wakame raw", 2, ("wakame",))),
               tags=("noodles", "soup")),
 
-    # ------------------------------------------------------------ small plates.
     ClassSpec("bruschetta", "Bruschetta", "Italian", 90, "2 slices (90 g)",
               recipe=(C("bread italian", 48, ("bread", "italian")), TOMATO(32), OLIVE_OIL(14),
                       GARLIC(3), C("basil fresh", 3, ("basil",), ("dried",))),
@@ -548,7 +534,6 @@ SPECS: tuple[ClassSpec, ...] = (
 )
 
 
-# The placeholder above keeps the tuple readable while editing; drop it.
 SPECS = tuple(s for s in SPECS if s.title)
 
 BY_CLASS: dict[str, ClassSpec] = {s.cls: s for s in SPECS}

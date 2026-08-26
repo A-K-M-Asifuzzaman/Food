@@ -1,5 +1,3 @@
-"""Choose one representative photograph per dish and export it for the web."""
-
 from __future__ import annotations
 
 import argparse

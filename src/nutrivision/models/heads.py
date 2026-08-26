@@ -32,7 +32,6 @@ class MLPProbe(nn.Module):
 
 
 class GatedFusionProbe(nn.Module):
-    """Learns how much to trust each backbone, per input."""
 
     def __init__(
         self,
@@ -78,7 +77,6 @@ def soft_target_cross_entropy(logits: torch.Tensor, targets: torch.Tensor) -> to
 def mixup_features(
     x: torch.Tensor, y: torch.Tensor, num_classes: int, alpha: float, smoothing: float
 ) -> tuple[torch.Tensor, torch.Tensor]:
-    """Mixup in embedding space."""
     off = smoothing / num_classes
     on = 1.0 - smoothing + off
     targets = torch.full((y.size(0), num_classes), off, device=y.device)

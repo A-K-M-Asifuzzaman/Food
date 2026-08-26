@@ -1,5 +1,3 @@
-"""Build the nutrition knowledge base for all 101 Food-101 categories."""
-
 from __future__ import annotations
 
 import argparse
@@ -22,7 +20,7 @@ AUDIT_PATH = KB_DIR / "audit.md"
 
 ENERGY_FLOOR = 20.0
 ENERGY_CEIL = 600.0
-ATWATER_TOLERANCE = 0.30  # 30% disagreement before we flag it
+ATWATER_TOLERANCE = 0.30
 
 
 def nutrients_for(db: UsdaDatabase, fdc_id: int) -> dict[str, float]:
@@ -33,7 +31,7 @@ def nutrients_for(db: UsdaDatabase, fdc_id: int) -> dict[str, float]:
     out = {}
     for key in NUTRIENTS:
         value = row[key]
-        if value == value and value is not None:  # NaN-safe
+        if value == value and value is not None:
             out[key] = float(value)
     return out
 
@@ -96,7 +94,6 @@ def build_entry(spec: ClassSpec, resolver: Resolver, db: UsdaDatabase) -> dict[s
 
 
 def check(entry: dict[str, Any]) -> list[str]:
-    """Return a list of problems with this entry, empty if it looks sound."""
     problems: list[str] = []
     n = entry["nutrients_per_100g"]
 
@@ -133,7 +130,6 @@ def _tokens(text: str) -> set[str]:
 
 
 def provenance_problems(entry: dict[str, Any]) -> list[str]:
-    """Flag components whose resolved record shares no whole word with the query."""
     problems = []
     for comp in entry.get("components", []):
         query_tokens = _tokens(comp["query"])

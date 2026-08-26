@@ -1,5 +1,3 @@
-"""Split-conformal prediction sets over the shipping ensemble."""
-
 from __future__ import annotations
 
 import argparse
@@ -16,7 +14,6 @@ DEFAULT_MEMBERS = ["siglip_so400m", "eva02_large"]
 
 
 def load_probs(members: list[str], split: str, temperature: float = 1.0) -> np.ndarray:
-    """Probability average of the ensemble members, optionally temperature-scaled."""
     stack = []
     for name in members:
         logits = np.load(LOGIT_DIR / f"probe_{name}_{split}.npy").astype(np.float64)
@@ -29,23 +26,16 @@ def load_labels(split: str) -> np.ndarray:
 
 
 def conformal_quantile(scores: np.ndarray, alpha: float) -> float:
-    """The finite-sample corrected quantile."""
     n = len(scores)
     level = np.ceil((n + 1) * (1 - alpha)) / n
     if level > 1:
-        # Too few calibration points to certify this alpha at all.
         return float(scores.max())
     return float(np.quantile(scores, level, method="higher"))
-
-
-# Calibration and deployment must apply the *identical* rule.
 
 
 def lac_scores(probs: np.ndarray, y: np.ndarray, force_top1: bool = False) -> np.ndarray:
     scores = 1.0 - probs[np.arange(len(y)), y]
     if force_top1:
-        # Under the forced rule the true class is covered for free whenever it is
-        # already the argmax, so those points score zero.
         scores = np.where(probs.argmax(axis=1) == y, 0.0, scores)
     return scores
 
@@ -56,7 +46,6 @@ def aps_scores(
     rng: np.random.Generator,
     force_top1: bool = False,
 ) -> np.ndarray:
-    """Cumulative mass up to and including the true class, randomised."""
     order = np.argsort(-probs, axis=1)
     sorted_p = np.take_along_axis(probs, order, axis=1)
     cumulative = np.cumsum(sorted_p, axis=1)

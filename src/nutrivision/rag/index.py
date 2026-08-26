@@ -1,5 +1,3 @@
-"""Build the hybrid retrieval index: a LangChain vector store plus the document rows."""
-
 from __future__ import annotations
 
 import argparse
@@ -26,7 +24,6 @@ QUERY_INSTRUCTION = "Represent this sentence for searching relevant passages: "
 
 
 class BgeEmbeddings(HuggingFaceEmbeddings):
-    """HuggingFaceEmbeddings carrying the bge query-side instruction."""
 
     def embed_query(self, text: str) -> list[float]:
         return super().embed_query(QUERY_INSTRUCTION + text)
@@ -42,7 +39,6 @@ def get_embeddings(model_name: str = EMBED_MODEL, show_progress: bool = False) -
 
 @dataclass
 class CorpusRow:
-    """One line of the corpus, before it becomes a LangChain document."""
 
     doc_id: str
     kind: str
@@ -84,7 +80,6 @@ def load_corpus(path=CORPUS_PATH) -> list[CorpusRow]:
 
 
 def load_documents(path: Path | None = None) -> list[Document]:
-    """The indexed documents, as LangChain documents."""
     path = path or INDEX_DIR / DOCUMENTS_NAME
     with open(path) as fh:
         return [CorpusRow(**json.loads(line)).as_document() for line in fh]
@@ -94,7 +89,6 @@ _TOKEN = re.compile(r"[a-z0-9]+")
 
 
 def tokenize(text: str) -> list[str]:
-    """Lowercase alphanumeric tokens, keeping numbers."""
     return _TOKEN.findall(text.lower())
 
 

@@ -1,5 +1,3 @@
-"""Build the RAG evaluation set."""
-
 from __future__ import annotations
 
 import argparse

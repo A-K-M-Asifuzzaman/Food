@@ -1,5 +1,3 @@
-"""Materialise Food-101 from the Hub into a plain image folder tree."""
-
 from __future__ import annotations
 
 import argparse

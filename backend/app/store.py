@@ -1,5 +1,3 @@
-"""Durable storage for predictions, questions and feedback."""
-
 from __future__ import annotations
 
 import json
@@ -16,20 +14,12 @@ MONGO_URI = os.environ.get("MONGODB_URI", "").strip()
 FIREBASE_CREDENTIALS = os.environ.get("FIREBASE_CREDENTIALS", "").strip()
 DB_NAME = os.environ.get("MONGODB_DB", "foodgenome")
 
-# Bounded: if the database is unreachable the queue must not grow until the container is
-# killed for memory.
 QUEUE_SIZE = 500
 
-# Firestore has no aggregation pipeline, so analytics read documents and group them
-# here.
 SCAN_LIMIT = 5000
 
 
-# ── backends ────────────────────────────────────────────────────────────.
-
-
 class FirestoreBackend:
-    """Google Firestore, via the Admin SDK."""
 
     name = "firestore"
 
@@ -40,8 +30,6 @@ class FirestoreBackend:
         info = json.loads(credentials_json)
         app = firebase_admin.initialize_app(credentials.Certificate(info))
         self.db = firestore.client(app)
-        # A cheap round-trip, so a bad key fails at startup rather than on the first
-        # prediction.
         next(self.db.collection("predictions").limit(1).stream(), None)
 
     def insert(self, collection: str, document: dict) -> None:
@@ -49,7 +37,6 @@ class FirestoreBackend:
 
     def _read(self, collection: str, since: datetime | None = None,
               session: str | None = None, limit: int = SCAN_LIMIT) -> list[dict]:
-        """One filtered read."""
         query = self.db.collection(collection)
         if session:
             rows = [
@@ -79,11 +66,9 @@ class FirestoreBackend:
         query = self.db.collection(collection)
         for field, value in (where or {}).items():
             query = query.where(field, "==", value)
-        # count() is a server-side aggregation and does not read the documents.
         return int(query.count().get()[0][0].value)
 
     def delete_session(self, collection: str, session: str) -> int:
-        # Firestore has no "delete by query"; the documents have to be walked.
         removed = 0
         while True:
             docs = list(
@@ -111,7 +96,6 @@ class MongoBackend:
         client.admin.command("ping")
         self.db = client[DB_NAME]
 
-        # The two read paths that exist: a visitor's own history, and day buckets.
         self.db.predictions.create_index([("session", ASCENDING), ("at", DESCENDING)])
         self.db.predictions.create_index([("at", DESCENDING)])
         self.db.questions.create_index([("session", ASCENDING), ("at", DESCENDING)])
@@ -149,9 +133,6 @@ class MongoBackend:
         return self.db[collection].delete_many({"session": session}).deleted_count
 
 
-# ── the store ───────────────────────────────────────────────────────────.
-
-
 class Store:
     def __init__(self) -> None:
         self.backend: FirestoreBackend | MongoBackend | None = None
@@ -180,8 +161,7 @@ class Store:
             )
             log.info("store connected: %s", self.backend.name)
             threading.Thread(target=self._drain, daemon=True).start()
-        except Exception as exc:  # noqa: BLE001 — any failure means "run without it"
-            # First line only.
+        except Exception as exc:
             self.error = f"{type(exc).__name__}: {str(exc).splitlines()[0][:200]}"
             log.warning("store unavailable, running without persistence: %s", self.error)
 
@@ -190,7 +170,7 @@ class Store:
             collection, document = self.queue.get()
             try:
                 self.backend.insert(collection, document)
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 log.warning("insert failed (%s): %s", collection, exc)
             finally:
                 self.queue.task_done()
@@ -203,7 +183,6 @@ class Store:
         except queue.Full:
             self.dropped += 1
 
-    # ── writes ──────────────────────────────────────────────────────────.
 
     def record_prediction(self, *, session: str | None, email: str | None,
                           food_class: str, title: str,
@@ -229,8 +208,6 @@ class Store:
             "at": datetime.now(timezone.utc),
             "session": session,
             "email": email,
-            # Truncated: the analytics need the shape of what people ask, not a verbatim
-            # log of it.
             "question": question[:200],
             "food_class": food_class,
             "mode": mode,
@@ -251,10 +228,8 @@ class Store:
             "note": (note or "")[:200] or None,
         })
 
-    # ── reads ───────────────────────────────────────────────────────────.
 
     def history(self, session: str, limit: int = 40) -> dict:
-        """One visitor's own record, keyed by the id their browser generated."""
         if not self.enabled:
             return {"enabled": False, "error": self.error}
 
@@ -280,7 +255,6 @@ class Store:
         }
 
     def erase(self, session: str) -> dict:
-        """Delete everything belonging to one account."""
         if not self.enabled:
             return {"enabled": False, "error": self.error}
         return {
@@ -292,7 +266,6 @@ class Store:
         }
 
     def analytics(self, days: int = 14) -> dict:
-        """Aggregates for the admin console: volume, dishes, cost, reliability."""
         if not self.enabled:
             return {"enabled": False, "error": self.error}
 
@@ -301,7 +274,6 @@ class Store:
         questions = [_isoformat(r) for r in self.backend.scan("questions", since)]
         feedback = [_isoformat(r) for r in self.backend.scan("feedback", since)]
 
-        # Day buckets for volume and reliability.
         by_day: dict[str, dict] = {}
         for row in predictions:
             bucket = by_day.setdefault(row["at"][:10], {
@@ -325,8 +297,6 @@ class Store:
                 "mean_ms": round(bucket["ms"] / n),
             })
 
-        # Spend per day, which is the number that decides whether the generator stays on
-        # the hosted model or falls back to templates.
         spend: dict[str, dict] = {}
         for row in questions:
             bucket = spend.setdefault(row["at"][:10], {
@@ -352,7 +322,6 @@ class Store:
         for bucket in top_dishes:
             bucket["mean_confidence"] = round(bucket.pop("confidence") / bucket["count"], 4)
 
-        # Per account.
         people: dict[str, dict] = {}
         for row in predictions:
             uid = row.get("session") or "anonymous"
@@ -402,8 +371,6 @@ class Store:
             "daily": daily,
             "spend": sorted(spend.values(), key=lambda b: b["day"]),
             "top_dishes": top_dishes,
-            # The review queue: what the model declined, and what a person said it got
-            # wrong.
             "review_queue": [r for r in predictions if r.get("abstained")][:20],
             "negative_feedback": [r for r in feedback if not r.get("helpful", True)][:20],
             "dropped_writes": self.dropped,
@@ -411,7 +378,6 @@ class Store:
 
 
 def _isoformat(row: dict) -> dict:
-    """Datetimes out of either driver become ISO strings for JSON."""
     at = row.get("at")
     if isinstance(at, datetime):
         row = {**row, "at": at.astimezone(timezone.utc).isoformat()}

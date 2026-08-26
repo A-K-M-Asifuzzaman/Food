@@ -30,7 +30,6 @@ class Sample:
 def holdout_mask(
     targets: np.ndarray, num_classes: int, val_fraction: float, seed: int = SEED
 ) -> np.ndarray:
-    """Deterministic class-stratified validation mask."""
     rng = np.random.default_rng(seed)
     is_val = np.zeros(len(targets), dtype=bool)
     for label in range(num_classes):
@@ -42,7 +41,6 @@ def holdout_mask(
 
 
 class Food101Folder(Dataset):
-    """Food-101 as an image folder tree."""
 
     def __init__(
         self,

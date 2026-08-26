@@ -1,5 +1,3 @@
-"""Grad-CAM over the frozen-backbone probe, for Vision Transformers."""
-
 from __future__ import annotations
 
 import numpy as np
@@ -11,7 +9,6 @@ from nutrivision.config import DEVICE, NUM_CLASSES
 
 
 class GradCAM:
-    """Class-discriminative spatial attribution for one backbone + probe pair."""
 
     def __init__(self, backbone, probe, layer=None, mode="gradcam", norm_quantile=0.97):
         self.backbone = backbone
@@ -39,7 +36,6 @@ class GradCAM:
     def __call__(
         self, tensor: torch.Tensor, class_index: int | None = None
     ) -> tuple[np.ndarray, int, float]:
-        """Return (heatmap in [0,1] on the patch grid, class index, logit)."""
         self.backbone.zero_grad(set_to_none=True)
         self.probe.zero_grad(set_to_none=True)
 
@@ -59,19 +55,15 @@ class GradCAM:
         grad = gradients[0, prefix:].detach().float()
 
         if self.mode == "gradcam":
-            # Classic Grad-CAM: one importance weight per channel, averaged over
-            # positions.
             weights = grad.mean(dim=0)
             cam = F.relu((act * weights).sum(dim=-1))
         else:
-            # Per-position first-order contribution of each token to the class score.
             cam = F.relu((act * grad).sum(dim=-1))
 
         grid = self.backbone.patch_embed.grid_size
         cam = cam.reshape(grid[0], grid[1])
         cam = cam - cam.min()
 
-        # Normalise against a high percentile, not the maximum.
         flat = cam.flatten()
         scale = float(torch.quantile(flat, self.norm_quantile))
         if scale <= 0:
@@ -83,7 +75,6 @@ class GradCAM:
 
 @torch.no_grad()
 def attention_pool_map(backbone, tensor: torch.Tensor) -> np.ndarray | None:
-    """Attention weights of the pooling head over the patch grid."""
     pool = getattr(backbone, "attn_pool", None)
     if pool is None:
         return None
@@ -106,7 +97,7 @@ def attention_pool_map(backbone, tensor: torch.Tensor) -> np.ndarray | None:
     q, k = pool.q_norm(q), pool.k_norm(k)
 
     attn = (q * pool.scale) @ k.transpose(-2, -1)
-    weights = attn.softmax(dim=-1)[0].mean(dim=0).mean(dim=0)  # heads, then latents
+    weights = attn.softmax(dim=-1)[0].mean(dim=0).mean(dim=0)
 
     grid = backbone.patch_embed.grid_size
     cam = weights.reshape(grid[0], grid[1]).float()
@@ -118,17 +109,14 @@ def attention_pool_map(backbone, tensor: torch.Tensor) -> np.ndarray | None:
 
 
 def overlay(image: Image.Image, cam: np.ndarray, alpha: float = 0.78, gamma: float = 1.8) -> Image.Image:
-    """Composite a heatmap onto the image using the project's ink/red ramp."""
     size = image.size
     heat = Image.fromarray((cam * 255).astype(np.uint8), mode="L").resize(
         size, Image.BICUBIC
     )
     h = np.asarray(heat).astype(np.float32) / 255.0
-    # Gamma above 1 suppresses the mid range.
     h = h ** gamma
 
     base = np.asarray(image.convert("RGB")).astype(np.float32)
-    # newsprint -> comic red, lightness increasing with attribution.
     cold = np.array([11, 11, 15], dtype=np.float32)
     hot = np.array([230, 36, 41], dtype=np.float32)
     ramp = cold + (hot - cold) * h[..., None]
@@ -156,6 +144,5 @@ def explain(
         "class_index": index,
         "logit": score,
         "grid": list(cam.shape),
-        # How concentrated the evidence is.
         "peak_fraction": float((cam > 0.5).mean()),
     }

@@ -1,19 +1,3 @@
-"""The RAG control flow as a LangGraph state machine.
-
-    START     → retrieve
-    retrieve  → gate | relax          is anything relevant enough to answer from?
-    relax     → gate | refuse         retry without the dish, then ask again
-    gate      → generate | fallback   is there a key, and budget left today?
-    generate  → verify
-    verify    → END | fallback        is every number in the answer in a source?
-    refuse    → END
-    fallback  → END
-
-Every branch that used to be an early return in a single function is a node with an
-edge, so the path an answer took is inspectable rather than inferred. Run
-`python -m nutrivision.rag.pipeline --graph` to print the compiled graph.
-"""
-
 from __future__ import annotations
 
 import argparse
@@ -45,7 +29,6 @@ REFUSAL = (
 
 
 class RagState(TypedDict, total=False):
-    """What flows along the edges."""
 
     question: str
     food_class: str | None
@@ -106,11 +89,6 @@ def retrieve(state: RagState) -> dict[str, Any]:
 
 
 def relax(state: RagState) -> dict[str, Any]:
-    """Retry without dish conditioning.
-
-    The question may be general, and the rewritten query can pull retrieval towards
-    a dish the user never asked about.
-    """
     retriever = get_retriever(state.get("reranker"))
     hits = retriever.search(state["question"], food_class=None, k=state["k"])
     relevance = _relevance(hits)
@@ -124,7 +102,6 @@ def refuse(state: RagState) -> dict[str, Any]:
 
 
 def gate(state: RagState) -> dict[str, Any]:
-    """The spend ceiling. Without a key or within budget there is nothing to decide."""
     if not os.environ.get("OPENAI_API_KEY"):
         return {"fallback_reason": "no api key"}
     if spend_today() >= state["budget_usd"]:
@@ -152,7 +129,6 @@ def generate(state: RagState) -> dict[str, Any]:
 
 
 def verify(state: RagState) -> dict[str, Any]:
-    """Every quantity in the answer must appear in the sources it was given."""
     report = ground.check(state["text"], format_sources(state["hits"]))
     if report.grounded:
         return {"grounded": True, "grounding": report.as_dict()}
@@ -164,7 +140,6 @@ def verify(state: RagState) -> dict[str, Any]:
 
 
 def fallback(state: RagState) -> dict[str, Any]:
-    """The retrieved record, served verbatim. Correct by construction."""
     grounding: dict[str, Any] = {"reason": state["fallback_reason"]}
     if state.get("rejected"):
         grounding["rejected"] = state["rejected"]

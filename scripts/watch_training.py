@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-"""Live terminal dashboard for every long-running job in this project."""
 
 from __future__ import annotations
 
@@ -30,7 +29,6 @@ SPLITS = ("train", "test")
 
 SPARK = "▁▂▃▄▅▆▇█"
 
-# tqdm writes "desc: 12%|███ | 165/9469 [04:15<3:49:55, 1.48s/batch, loss=0.9]".
 TQDM = re.compile(
     r"(?P<desc>[^:]+):\s*(?P<pct>\d+)%\|[^|]*\|\s*(?P<cur>\d+)/(?P<total>\d+)\s*"
     r"\[(?P<elapsed>[\d:]+)<(?P<eta>[\d:?]+),\s*(?P<rate>[\d.]+)(?P<unit>s/batch|batch/s|it/s|s/it)"
@@ -45,7 +43,7 @@ FT_EPOCH = re.compile(
     r"val\s+(?P<val>[\d.]+)\s+ema\s+(?P<ema>[\d.]+)"
 )
 
-ACCENT = "#e62429"  # the red this project's UI is themed around
+ACCENT = "#e62429"
 DIM = "grey50"
 
 
@@ -61,7 +59,6 @@ def human_secs(seconds: float) -> str:
 
 
 def sparkline(values: list[float], width: int = 32) -> str:
-    """Render a value series as one line of block characters."""
     if not values:
         return ""
     vals = values[-width:]
@@ -78,7 +75,6 @@ def bar(fraction: float, width: int = 20, filled: str = "█", empty: str = "░
 
 
 def tail_text(path: Path, nbytes: int = 8000) -> str:
-    """Read the end of a log, treating carriage returns as line breaks."""
     try:
         with path.open("rb") as fh:
             fh.seek(0, 2)
@@ -101,7 +97,7 @@ def last_match(text: str, pattern: re.Pattern) -> re.Match | None:
 class ExtractRow:
     backbone: str
     split: str
-    state: str  # done | running | pending | failed
+    state: str
     pct: float = 0.0
     eta: str = "-"
     rate: str = "-"
@@ -109,7 +105,6 @@ class ExtractRow:
 
 
 def read_feature_bank() -> tuple[list[ExtractRow], float]:
-    """Reconstruct extraction state from meta files plus the live log."""
     rows: list[ExtractRow] = []
     done_units = 0.0
     for key in BACKBONES:
@@ -142,7 +137,6 @@ def read_feature_bank() -> tuple[list[ExtractRow], float]:
             if m and m.group("desc").strip() == f"{key}/{split}":
                 rate = float(m.group("rate"))
                 unit = m.group("unit")
-                # tqdm flips to s/batch once a batch takes over a second.
                 ips = (8 / rate) if unit in {"s/batch", "s/it"} else rate * 8
                 pct = int(m.group("pct")) / 100
                 rows.append(
@@ -198,7 +192,6 @@ def feature_panel() -> Panel:
 
 
 def find_active_training() -> tuple[str, Path] | None:
-    """Most recently touched training log, if one is being written."""
     candidates: list[tuple[float, str, Path]] = []
     for path in REPORTS.glob("*.log"):
         if path.name.startswith("extract_"):
@@ -207,7 +200,7 @@ def find_active_training() -> tuple[str, Path] | None:
     if not candidates:
         return None
     mtime, name, path = max(candidates)
-    if time.time() - mtime > 900:  # gone quiet for 15 min - treat as finished
+    if time.time() - mtime > 900:
         return None
     return name, path
 
@@ -314,7 +307,6 @@ def system_panel() -> Panel:
     gib = 1024**3
 
     swap_frac = sw.used / sw.total if sw.total else 0.0
-    # Past 60% swap this machine started dropping the editor's tool channel.
     swap_style = "red bold" if swap_frac > 0.6 else "yellow" if swap_frac > 0.35 else "green"
 
     grid = Table.grid(padding=(0, 2))
@@ -327,8 +319,6 @@ def system_panel() -> Panel:
         Text(bar(swap_frac, 24), style=swap_style),
         Text(f"{sw.used / gib:.1f}/{sw.total / gib:.1f} GB", style=swap_style),
     )
-    # A bare cpu_percent() reports 0.0 until it has a previous call to diff against, so
-    # sample once over a short window and reuse the number.
     cpu = psutil.cpu_percent(interval=0.15)
     grid.add_row("cpu", Text(bar(cpu / 100, 24), style="magenta"), f"{cpu:.0f}%")
     grid.add_row("disk", Text(bar(disk.percent / 100, 24), style="blue"), f"{disk.free / gib:.0f} GB free")
@@ -339,14 +329,10 @@ def system_panel() -> Panel:
             cmd = " ".join(p.info["cmdline"] or [])
         except (psutil.NoSuchProcess, psutil.AccessDenied):
             continue
-        # Both names are matched during the nutrivision -> foodgenome package rename;
-        # the running extraction still uses the old module path.
         if "nutrivision" in cmd or "foodgenome" in cmd:
             stage = next((s for s in ("features", "probe", "finetune") if s in cmd), "python")
             procs.append((stage, p.info["memory_info"].rss / gib))
     if procs:
-        # Dataloader workers share the parent's command line, so sort by resident size
-        # to surface the process actually holding the model.
         procs.sort(key=lambda p: p[1], reverse=True)
         grid.add_row("", Text(""), "")
         for stage, rss in procs[:4]:

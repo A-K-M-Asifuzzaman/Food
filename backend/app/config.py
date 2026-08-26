@@ -1,5 +1,3 @@
-"""Constants the served model depends on."""
-
 from __future__ import annotations
 
 import json
@@ -17,7 +15,6 @@ KB_PATH = Path(os.environ.get("FOODGENOME_KB", REPO_ROOT / "data" / "nutrition" 
 
 MEMBERS = ["siglip_so400m", "eva02_large"]
 
-# Fallbacks, used only when the corresponding report is missing.
 _DEFAULTS = {
     "temperature": 0.7621,
     "conformal_qhat": 0.98712,
@@ -70,6 +67,4 @@ def load_constants() -> dict:
 
 CONSTANTS = load_constants()
 
-# LAC includes every class whose calibrated probability clears this, and the top-1 class
-# unconditionally so a set is never empty.
 SET_THRESHOLD = 1.0 - CONSTANTS["conformal_qhat"]

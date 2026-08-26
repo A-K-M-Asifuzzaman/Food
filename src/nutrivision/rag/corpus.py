@@ -1,5 +1,3 @@
-"""Turn the structured nutrition KB into a retrievable document corpus."""
-
 from __future__ import annotations
 
 import json
@@ -100,7 +98,6 @@ _COMPOUND_HEADS = {"cheese", "oil", "seaweed", "sauce", "vinegar", "flour", "mil
 
 
 def ingredient_name(description: str) -> str:
-    """Shorten a USDA description to its most identifying term."""
     segments = [s.strip() for s in description.split(",") if s.strip()]
     if not segments:
         return description.lower()
@@ -223,7 +220,6 @@ def micro_docs(entry: dict) -> Iterable[Document]:
 
 
 def ingredient_doc(entry: dict) -> Document | None:
-    """Only composites have an ingredient breakdown worth its own document."""
     if entry["method"] != "composite":
         return None
     title = entry["title"]
@@ -270,7 +266,6 @@ def portion_doc(entry: dict) -> Document:
 
 
 def ranking_docs(entries: list[dict], top_n: int = 12) -> Iterable[Document]:
-    """Superlative questions are properties of the whole set, not of any dish."""
     for key, label, unit, digits in RANKED_NUTRIENTS:
         have = [(e, e["nutrients_per_100g"].get(key)) for e in entries]
         have = [(e, v) for e, v in have if v is not None]
