@@ -2,10 +2,7 @@ import { NextResponse } from "next/server";
 
 import { allClasses, getEntry, titleFor } from "@/lib/kb";
 import type { Candidate, PredictResponse } from "@/lib/types";
-import { forwardAuth, relay } from "@/lib/upstream";
-
-// Stage 11 will stand up the FastAPI service.
-const UPSTREAM = process.env.FOODGENOME_API;
+import { forwardAuth, relay, UPSTREAM } from "@/lib/upstream";
 
 const MAX_BYTES = 12 * 1024 * 1024;
 const ACCEPTED = ["image/jpeg", "image/png", "image/webp", "image/heic"];

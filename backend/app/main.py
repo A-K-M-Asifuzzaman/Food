@@ -7,17 +7,16 @@ import logging
 import os
 import threading
 import time
+from contextlib import asynccontextmanager
 
-import numpy as np
-from fastapi import Depends, FastAPI, File, HTTPException, UploadFile
+from fastapi import Depends, FastAPI, File, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from PIL import Image, UnidentifiedImageError
 from pydantic import BaseModel, Field
 
-from fastapi import Request
-
+from . import auth as auth_mode
 from .auth import User, current_user, require_admin, require_user
 from .config import CONSTANTS, KB_PATH, MEMBERS
+from .images import decode
 from .inference import CLASSIFIER, conformal_set
 from .metrics import METRICS
 from .store import STORE
@@ -25,20 +24,43 @@ from .store import STORE
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger("foodgenome")
 
-MAX_BYTES = 12 * 1024 * 1024
 MODEL_NAME = "SigLIP-SO400M + EVA-02-L probability average"
+
+
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    mode = auth_mode.mode()
+    if mode["firebase"]:
+        log.info("auth: firebase token verification active")
+    elif mode["demo_mode"]:
+        log.warning(
+            "auth: FOODGENOME_DEMO_MODE is on and firebase is unavailable (%s); "
+            "every caller shares one demo identity and the admin console stays closed",
+            mode["error"],
+        )
+    else:
+        log.error(
+            "auth: firebase is unavailable (%s) and demo mode is off; "
+            "every authenticated route will answer 401",
+            mode["error"],
+        )
+    if not auth_mode.ADMIN_EMAILS:
+        log.warning("auth: ADMIN_EMAILS is empty, so /stats and /analytics answer nobody")
+    yield
+
 
 app = FastAPI(
     title="FoodGenome AI",
     version="1.0.0",
     description="Food-101 classification with calibrated confidence, conformal "
     "prediction sets and USDA-grounded nutrition.",
+    lifespan=lifespan,
 )
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[o for o in os.environ.get("ALLOWED_ORIGINS", "*").split(",") if o],
-    allow_methods=["GET", "POST"],
+    allow_methods=["GET", "POST", "DELETE"],
     allow_headers=["*"],
 )
 
@@ -75,13 +97,7 @@ async def explain(
     user: User = Depends(require_user),
 ) -> dict:
     started = time.time()
-    raw = await image.read()
-    if len(raw) > MAX_BYTES:
-        raise HTTPException(413, "Image too large.")
-    try:
-        pil = Image.open(io.BytesIO(raw)).convert("RGB")
-    except (UnidentifiedImageError, OSError):
-        raise HTTPException(415, "Could not decode that file as an image.")
+    pil = decode(await image.read())
 
     index = CLASS_ORDER.index(food_class) if food_class in ENTRIES else None
     result = CLASSIFIER.explain(pil, class_index=index)
@@ -141,6 +157,8 @@ def health() -> dict:
         "device": str(CLASSIFIER.device),
         "missing_reports": CONSTANTS["missing_reports"],
         "uptime_seconds": METRICS.snapshot()["uptime_seconds"],
+        "auth": auth_mode.mode(),
+        "store": STORE.status(),
     }
 
 
@@ -233,13 +251,7 @@ async def predict(
 ) -> dict:
     started = time.time()
 
-    raw = await image.read()
-    if len(raw) > MAX_BYTES:
-        raise HTTPException(413, f"Image larger than {MAX_BYTES // 1024 // 1024} MB.")
-    try:
-        pil = Image.open(io.BytesIO(raw)).convert("RGB")
-    except (UnidentifiedImageError, OSError):
-        raise HTTPException(415, "Could not decode that file as an image.")
+    pil = decode(await image.read())
 
     calibrated, raw_probs = CLASSIFIER.probabilities(pil)
 

@@ -1,8 +1,6 @@
 import { NextResponse } from "next/server";
 
-import { forwardAuth, relay } from "@/lib/upstream";
-
-const UPSTREAM = process.env.FOODGENOME_API;
+import { forwardAuth, relay, UPSTREAM } from "@/lib/upstream";
 
 // Counters live in the model service's memory, so they are read on every request rather
 // than cached.

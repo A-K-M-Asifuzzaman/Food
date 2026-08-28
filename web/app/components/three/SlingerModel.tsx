@@ -8,7 +8,6 @@ import { SkeletonUtils } from "three-stdlib";
 
 /** Renders a rigged humanoid from a glTF file, shaded to match the page. */
 
-const INK = "#0b0b0f";
 
 /** Clip names vary by author. */
 const CLIP_PREFERENCE = [/idle/i, /hang/i, /float/i, /breath/i, /stand/i];
@@ -58,7 +57,7 @@ export function SlingerModel({
   // Skinned meshes cannot be shared between renderers by reference — cloning the scene
   // graph normally leaves both copies driven by one skeleton.
   const model = useMemo(() => SkeletonUtils.clone(scene) as THREE.Group, [scene]);
-  const ramp = useMemo(toonRamp, []);
+  const ramp = useMemo(() => toonRamp(), []);
 
   /* Framing is delegated to drei's Resize and Center rather than a bounding
      box computed here. Authors export at wildly different scales, origins and

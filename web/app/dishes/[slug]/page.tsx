@@ -70,6 +70,7 @@ export default async function DishPage({ params }: Params) {
             className="dish-thumb relative w-40 sm:w-full border-3 border-[var(--line)] overflow-hidden bg-[var(--panel)]"
             style={{ boxShadow: "7px 7px 0 var(--line)" }}
           >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={`/dishes/${slug}.webp`}
               alt={`${entry.title}, a representative photograph from the Food-101 dataset`}

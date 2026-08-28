@@ -1,8 +1,6 @@
 import { NextResponse } from "next/server";
 
-import { forwardAuth } from "@/lib/upstream";
-
-const UPSTREAM = process.env.FOODGENOME_API;
+import { forwardAuth, relay, UPSTREAM } from "@/lib/upstream";
 
 export async function POST(request: Request) {
   if (!UPSTREAM) {
@@ -33,13 +31,7 @@ export async function POST(request: Request) {
       headers: forwardAuth(request),
       body: upstreamForm,
     });
-    if (!res.ok) {
-      return NextResponse.json(
-        { error: `Explain service returned ${res.status}.` },
-        { status: 502 },
-      );
-    }
-    return NextResponse.json(await res.json());
+    return relay(res, "Explain service");
   } catch {
     return NextResponse.json({ error: "Explain service unreachable." }, { status: 503 });
   }

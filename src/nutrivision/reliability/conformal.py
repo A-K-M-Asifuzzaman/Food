@@ -90,7 +90,7 @@ def aps_sets(
 def evaluate(sets: np.ndarray, y: np.ndarray) -> dict:
     sizes = sets.sum(axis=1)
     covered = sets[np.arange(len(y)), y]
-    hist = {int(k): int(v) for k, v in zip(*np.unique(sizes, return_counts=True))}
+    hist = {int(k): int(v) for k, v in zip(*np.unique(sizes, return_counts=True), strict=True)}
     return {
         "coverage": round(float(covered.mean()) * 100, 3),
         "avg_set_size": round(float(sizes.mean()), 3),

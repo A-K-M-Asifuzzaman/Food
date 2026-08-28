@@ -8,14 +8,29 @@ let unlocked = false;
 let muted = false;
 let lastPlayed = 0;
 
+const listeners = new Set<() => void>();
+
 export function isMuted(): boolean {
   return muted;
 }
 
-/** Read the stored preference. */
+/** Subscription for the mute control, so it needs no state of its own. */
+export function subscribeMuted(listener: () => void): () => void {
+  listeners.add(listener);
+  return () => {
+    listeners.delete(listener);
+  };
+}
+
+/** Read the stored preference. Silence is the default; sound is opted into. */
 export function loadPreference(): boolean {
   if (typeof window === "undefined") return true;
-  muted = window.localStorage.getItem(STORAGE_KEY) !== "on";
+  try {
+    muted = window.localStorage.getItem(STORAGE_KEY) !== "on";
+  } catch {
+    // Private browsing denies reads.
+    muted = true;
+  }
   return muted;
 }
 
@@ -26,6 +41,7 @@ export function setMuted(next: boolean): void {
   } catch {
     // Private browsing denies writes.
   }
+  listeners.forEach((listener) => listener());
 }
 
 function buildNoise(context: AudioContext): AudioBuffer {

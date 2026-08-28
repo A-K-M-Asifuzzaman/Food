@@ -69,7 +69,7 @@ def main() -> None:
     off = cm.copy()
     np.fill_diagonal(off, 0)
     pairs = []
-    for a, b in zip(*np.unravel_index(np.argsort(-off, axis=None)[:20], off.shape)):
+    for a, b in zip(*np.unravel_index(np.argsort(-off, axis=None)[:20], off.shape), strict=True):
         pairs.append({
             "true": classes[a], "predicted": classes[b],
             "count": int(off[a, b]),

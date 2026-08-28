@@ -46,6 +46,8 @@ type Analytics = {
   negative_feedback: { at: string; food_class: string; note: string | null; email?: string }[];
 };
 
+type Loaded = { data: Analytics | null; error: string | null };
+
 function day(iso: string): string {
   return new Date(iso).toLocaleDateString(undefined, { day: "numeric", month: "short" });
 }
@@ -57,25 +59,35 @@ export default function AdminUsers() {
   const [days, setDays] = useState(14);
   const [error, setError] = useState<string | null>(null);
 
-  const load = useCallback(async () => {
+  // Fetching and applying are split so a reply for the previous window — or for a poll
+  // that outlived the mount — cannot overwrite the current one, and so nothing sets
+  // state before the first await.
+  const fetchAnalytics = useCallback(async (): Promise<Loaded> => {
     try {
       const res = await authFetch(`/api/analytics?days=${days}`, { cache: "no-store" });
       const payload = await res.json();
-      if (!res.ok) setError(payload.error ?? "Could not load analytics.");
-      else {
-        setData(payload as Analytics);
-        setError(null);
-      }
+      if (!res.ok) return { data: null, error: payload.error ?? "Could not load analytics." };
+      return { data: payload as Analytics, error: null };
     } catch {
-      setError("The model service is unreachable.");
+      return { data: null, error: "The model service is unreachable." };
     }
   }, [authFetch, days]);
 
   useEffect(() => {
+    let alive = true;
+    const load = async () => {
+      const next = await fetchAnalytics();
+      if (!alive) return;
+      if (next.data) setData(next.data);
+      setError(next.error);
+    };
     void load();
-    const t = setInterval(load, 30000);
-    return () => clearInterval(t);
-  }, [load]);
+    const t = setInterval(() => void load(), 30000);
+    return () => {
+      alive = false;
+      clearInterval(t);
+    };
+  }, [fetchAnalytics]);
 
   if (error) {
     return (

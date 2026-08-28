@@ -35,7 +35,7 @@ def top5(scores: np.ndarray, y: np.ndarray) -> float:
 
 def combine(members: list[np.ndarray], weights: np.ndarray, space: str) -> np.ndarray:
     parts = [softmax(m, axis=1) if space == "prob" else m for m in members]
-    return sum(w * p for w, p in zip(weights, parts))
+    return sum(w * p for w, p in zip(weights, parts, strict=True))
 
 
 def mcnemar(a_correct: np.ndarray, b_correct: np.ndarray) -> dict:
@@ -152,7 +152,6 @@ def main() -> None:
     full_uniform = [r for r in rows if len(r["members"]) == len(tags) and "uniform" in r["method"]]
     if len(full_uniform) == 2:
         prob_row = next(r for r in full_uniform if r["method"].startswith("prob"))
-        logit_row = next(r for r in full_uniform if r["method"].startswith("logit"))
         w = np.array(prob_row["weights"])
         tests["prob average vs logit average (all members)"] = mcnemar(
             combine([test[t] for t in tags], w, "prob").argmax(1) == test_y,

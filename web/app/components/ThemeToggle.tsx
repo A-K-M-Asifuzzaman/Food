@@ -1,15 +1,22 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 
-type Theme = "light" | "dark";
+import { useHydrated } from "@/lib/client-state";
+import {
+  chooseTheme,
+  serverThemeSnapshot,
+  subscribeTheme,
+  themeSnapshot,
+  THEME_KEY,
+} from "@/lib/theme";
 
 /** Day / night as a spider on a strand. */
 
 export const THEME_INIT_SCRIPT = `
 (function () {
   try {
-    var stored = localStorage.getItem('foodgenome-theme');
+    var stored = localStorage.getItem('${THEME_KEY}');
     if (stored === 'light' || stored === 'dark') {
       document.documentElement.dataset.theme = stored;
     }
@@ -18,32 +25,11 @@ export const THEME_INIT_SCRIPT = `
 `;
 
 export function ThemeToggle() {
-  const [theme, setTheme] = useState<Theme | null>(null);
-
-  useEffect(() => {
-    const stored = localStorage.getItem("foodgenome-theme");
-    if (stored === "light" || stored === "dark") {
-      setTheme(stored);
-      return;
-    }
-    // No explicit choice: mirror the system, and keep mirroring it.
-    const mq = window.matchMedia("(prefers-color-scheme: dark)");
-    setTheme(mq.matches ? "dark" : "light");
-    const onChange = (e: MediaQueryListEvent) => {
-      if (!localStorage.getItem("foodgenome-theme")) setTheme(e.matches ? "dark" : "light");
-    };
-    mq.addEventListener("change", onChange);
-    return () => mq.removeEventListener("change", onChange);
-  }, []);
-
-  function choose(next: Theme) {
-    setTheme(next);
-    document.documentElement.dataset.theme = next;
-    localStorage.setItem("foodgenome-theme", next);
-  }
+  const hydrated = useHydrated();
+  const theme = useSyncExternalStore(subscribeTheme, themeSnapshot, serverThemeSnapshot);
 
   // Render nothing until the client knows which state to show.
-  if (theme === null) {
+  if (!hydrated) {
     return <div className="w-[4.25rem] h-8 shrink-0" aria-hidden="true" />;
   }
 
@@ -56,7 +42,7 @@ export function ThemeToggle() {
       aria-checked={dark}
       aria-label={`Switch to ${dark ? "light" : "dark"} theme`}
       title={`Switch to ${dark ? "light" : "dark"} theme`}
-      onClick={() => choose(dark ? "light" : "dark")}
+      onClick={() => chooseTheme(dark ? "light" : "dark")}
       className="theme-toggle relative w-[4.25rem] h-8 shrink-0 ink-edge overflow-hidden"
       style={{ background: dark ? "var(--color-blue-deep)" : "var(--color-amber)" }}
     >

@@ -1,34 +1,39 @@
 from __future__ import annotations
 
-import json
 import logging
 import os
 import queue
 import threading
-from collections import defaultdict
-from datetime import datetime, timedelta, timezone
+import time
+from collections import defaultdict, deque
+from datetime import UTC, datetime, timedelta
+
+from . import firebase
 
 log = logging.getLogger("foodgenome.store")
 
 MONGO_URI = os.environ.get("MONGODB_URI", "").strip()
-FIREBASE_CREDENTIALS = os.environ.get("FIREBASE_CREDENTIALS", "").strip()
 DB_NAME = os.environ.get("MONGODB_DB", "foodgenome")
 
 QUEUE_SIZE = 500
 
 SCAN_LIMIT = 5000
 
+WRITE_ATTEMPTS = 3
+RETRY_SECONDS = 2.0
+DEAD_LETTER_SIZE = 50
+
 
 class FirestoreBackend:
 
     name = "firestore"
 
-    def __init__(self, credentials_json: str) -> None:
-        import firebase_admin
-        from firebase_admin import credentials, firestore
+    def __init__(self) -> None:
+        from firebase_admin import firestore
 
-        info = json.loads(credentials_json)
-        app = firebase_admin.initialize_app(credentials.Certificate(info))
+        app = firebase.app()
+        if app is None:
+            raise RuntimeError(firebase.error() or "firebase admin unavailable")
         self.db = firestore.client(app)
         next(self.db.collection("predictions").limit(1).stream(), None)
 
@@ -43,7 +48,7 @@ class FirestoreBackend:
                 doc.to_dict()
                 for doc in query.where("session", "==", session).limit(limit).stream()
             ]
-            rows.sort(key=lambda r: r.get("at") or datetime.min.replace(tzinfo=timezone.utc),
+            rows.sort(key=lambda r: r.get("at") or datetime.min.replace(tzinfo=UTC),
                       reverse=True)
             return rows
         if since:
@@ -134,15 +139,21 @@ class MongoBackend:
 
 
 class Store:
-    def __init__(self) -> None:
+    def __init__(self, *, start: bool = True) -> None:
         self.backend: FirestoreBackend | MongoBackend | None = None
         self.error: str | None = None
         self.queue: queue.Queue[tuple[str, dict]] = queue.Queue(maxsize=QUEUE_SIZE)
         self.dropped = 0
-        if FIREBASE_CREDENTIALS or MONGO_URI:
-            threading.Thread(target=self._connect, daemon=True).start()
-        else:
+        self.failed = 0
+        self.dead_letters: deque[dict] = deque(maxlen=DEAD_LETTER_SIZE)
+        self.configured = bool(firebase.configured() or MONGO_URI)
+        self.settled = threading.Event()
+        if not self.configured:
             self.error = "no MONGODB_URI or FIREBASE_CREDENTIALS configured"
+            self.settled.set()
+        elif start:
+            threading.Thread(target=self._connect, daemon=True).start()
+            threading.Thread(target=self._drain, daemon=True).start()
 
     @property
     def enabled(self) -> bool:
@@ -152,31 +163,74 @@ class Store:
     def kind(self) -> str:
         return self.backend.name if self.backend else "none"
 
+    @property
+    def accepting(self) -> bool:
+        return self.configured and (self.backend is not None or not self.settled.is_set())
+
+    def unavailable(self) -> str | None:
+        if self.configured and not self.settled.is_set():
+            return "still connecting to the store"
+        return self.error
+
+    def status(self) -> dict:
+        return {
+            "configured": self.configured,
+            "backend": self.kind,
+            "connected": self.enabled,
+            "error": self.error,
+            "queued": self.queue.qsize(),
+            "dropped_writes": self.dropped,
+            "failed_writes": self.failed,
+        }
+
     def _connect(self) -> None:
         try:
             self.backend = (
-                FirestoreBackend(FIREBASE_CREDENTIALS)
-                if FIREBASE_CREDENTIALS
-                else MongoBackend(MONGO_URI)
+                FirestoreBackend() if firebase.configured() else MongoBackend(MONGO_URI)
             )
             log.info("store connected: %s", self.backend.name)
-            threading.Thread(target=self._drain, daemon=True).start()
         except Exception as exc:
-            self.error = f"{type(exc).__name__}: {str(exc).splitlines()[0][:200]}"
-            log.warning("store unavailable, running without persistence: %s", self.error)
+            self.error = type(exc).__name__
+            log.warning("store unavailable, running without persistence: %s: %s", self.error, exc)
+        finally:
+            self.settled.set()
 
     def _drain(self) -> None:
+        self.settled.wait()
         while True:
             collection, document = self.queue.get()
             try:
-                self.backend.insert(collection, document)
-            except Exception as exc:
-                log.warning("insert failed (%s): %s", collection, exc)
+                if self.backend is None:
+                    self.dropped += 1
+                else:
+                    self._insert(collection, document)
             finally:
                 self.queue.task_done()
 
+    def _insert(self, collection: str, document: dict) -> None:
+        for attempt in range(1, WRITE_ATTEMPTS + 1):
+            try:
+                self.backend.insert(collection, document)
+                return
+            except Exception as exc:
+                if attempt == WRITE_ATTEMPTS:
+                    self.failed += 1
+                    self.dead_letters.append({
+                        "collection": collection,
+                        "at": document.get("at"),
+                        "session": document.get("session"),
+                        "error": type(exc).__name__,
+                    })
+                    log.warning(
+                        "insert into %s failed after %d attempts: %s",
+                        collection, WRITE_ATTEMPTS, exc,
+                    )
+                    return
+                log.info("insert into %s failed (attempt %d): %s", collection, attempt, exc)
+                time.sleep(RETRY_SECONDS * attempt)
+
     def _write(self, collection: str, document: dict) -> None:
-        if not self.enabled:
+        if not self.accepting:
             return
         try:
             self.queue.put_nowait((collection, document))
@@ -189,7 +243,7 @@ class Store:
                           confidence: float, set_size: int, candidates: list[str],
                           abstained: bool, ms: int) -> None:
         self._write("predictions", {
-            "at": datetime.now(timezone.utc),
+            "at": datetime.now(UTC),
             "session": session,
             "email": email,
             "food_class": food_class,
@@ -205,7 +259,7 @@ class Store:
                         food_class: str | None, mode: str, grounded: bool,
                         citations: int, cost_usd: float, ms: int) -> None:
         self._write("questions", {
-            "at": datetime.now(timezone.utc),
+            "at": datetime.now(UTC),
             "session": session,
             "email": email,
             "question": question[:200],
@@ -220,7 +274,7 @@ class Store:
     def record_feedback(self, *, session: str | None, email: str | None, food_class: str,
                         helpful: bool, note: str | None) -> None:
         self._write("feedback", {
-            "at": datetime.now(timezone.utc),
+            "at": datetime.now(UTC),
             "session": session,
             "email": email,
             "food_class": food_class,
@@ -231,7 +285,7 @@ class Store:
 
     def history(self, session: str, limit: int = 40) -> dict:
         if not self.enabled:
-            return {"enabled": False, "error": self.error}
+            return {"enabled": False, "error": self.unavailable()}
 
         predictions, questions = self.backend.history(session, limit)
         predictions = [_isoformat(r) for r in predictions]
@@ -256,7 +310,7 @@ class Store:
 
     def erase(self, session: str) -> dict:
         if not self.enabled:
-            return {"enabled": False, "error": self.error}
+            return {"enabled": False, "error": self.unavailable()}
         return {
             "enabled": True,
             "deleted": {
@@ -267,9 +321,9 @@ class Store:
 
     def analytics(self, days: int = 14) -> dict:
         if not self.enabled:
-            return {"enabled": False, "error": self.error}
+            return {"enabled": False, "error": self.unavailable()}
 
-        since = datetime.now(timezone.utc) - timedelta(days=days)
+        since = datetime.now(UTC) - timedelta(days=days)
         predictions = [_isoformat(r) for r in self.backend.scan("predictions", since)]
         questions = [_isoformat(r) for r in self.backend.scan("questions", since)]
         feedback = [_isoformat(r) for r in self.backend.scan("feedback", since)]
@@ -374,13 +428,16 @@ class Store:
             "review_queue": [r for r in predictions if r.get("abstained")][:20],
             "negative_feedback": [r for r in feedback if not r.get("helpful", True)][:20],
             "dropped_writes": self.dropped,
+            "failed_writes": self.failed,
+            "queued_writes": self.queue.qsize(),
+            "dead_letters": list(self.dead_letters),
         }
 
 
 def _isoformat(row: dict) -> dict:
     at = row.get("at")
     if isinstance(at, datetime):
-        row = {**row, "at": at.astimezone(timezone.utc).isoformat()}
+        row = {**row, "at": at.astimezone(UTC).isoformat()}
     row.pop("_id", None)
     return row
 

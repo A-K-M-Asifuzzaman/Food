@@ -72,6 +72,7 @@ export function RouteTransition() {
     return () => clearTimeout(t);
     // `active` is deliberately not a dependency: this must run on navigation, not when
     // the overlay's own state settles.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname]);
 
   // The animation itself.

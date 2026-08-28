@@ -12,6 +12,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Vendored, generated, and not ours to fix: the Draco decoder ships as minified
+    // Emscripten output, and linting it buries the application's own findings.
+    "public/**",
   ]),
 ]);
 

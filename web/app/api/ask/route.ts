@@ -1,9 +1,8 @@
 import { NextResponse } from "next/server";
 
-import { forwardAuth } from "@/lib/upstream";
+import { forwardAuth, relay, UPSTREAM } from "@/lib/upstream";
 
 // Grounded answers require the model service.
-const UPSTREAM = process.env.FOODGENOME_API;
 
 export async function POST(request: Request) {
   if (!UPSTREAM) {
@@ -32,13 +31,7 @@ export async function POST(request: Request) {
       headers: forwardAuth(request, { "Content-Type": "application/json" }),
       body: JSON.stringify({ question, food_class: body?.food_class ?? null }),
     });
-    if (!res.ok) {
-      return NextResponse.json(
-        { error: `Answer service returned ${res.status}.` },
-        { status: 502 },
-      );
-    }
-    return NextResponse.json(await res.json());
+    return relay(res, "Answer service");
   } catch {
     return NextResponse.json({ error: "Answer service unreachable." }, { status: 503 });
   }

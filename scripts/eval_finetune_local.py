@@ -43,7 +43,7 @@ def build_lists(classes: list[str], val_fraction: float):
 
     train_labels = np.array(train_labels)
     is_val = holdout_mask(train_labels, len(classes), val_fraction, SEED)
-    val_paths = [p for p, v in zip(train_paths, is_val) if v]
+    val_paths = [p for p, v in zip(train_paths, is_val, strict=True) if v]
     return val_paths, train_labels[is_val], test_paths, np.array(test_labels)
 
 

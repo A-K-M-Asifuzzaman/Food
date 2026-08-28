@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 import { useAuth } from "./AuthProvider";
 import { SpiderBar } from "./SpiderBar";

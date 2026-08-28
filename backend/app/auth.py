@@ -5,6 +5,8 @@ import os
 
 from fastapi import HTTPException, Request
 
+from . import firebase
+
 log = logging.getLogger("foodgenome.auth")
 
 ADMIN_EMAILS = {
@@ -12,7 +14,13 @@ ADMIN_EMAILS = {
     for e in os.environ.get("ADMIN_EMAILS", "zasif855@gmail.com").split(",")
     if e.strip()
 }
-REQUIRE_AUTH = os.environ.get("REQUIRE_AUTH", "").strip() not in ("", "0", "false")
+
+DEMO_MODE = os.environ.get("FOODGENOME_DEMO_MODE", "").strip().lower() in (
+    "1",
+    "true",
+    "yes",
+    "on",
+)
 
 
 class User:
@@ -36,13 +44,16 @@ class User:
         }
 
 
-def _available() -> bool:
-    try:
-        import firebase_admin
+def demo_user() -> User:
+    return User(uid="demo", email=None, name="Demo visitor", picture=None)
 
-        return bool(firebase_admin._apps)
-    except Exception:
-        return False
+
+def mode() -> dict:
+    return {
+        "firebase": firebase.available(),
+        "demo_mode": DEMO_MODE,
+        "error": firebase.error(),
+    }
 
 
 def current_user(request: Request) -> User | None:
@@ -50,13 +61,18 @@ def current_user(request: Request) -> User | None:
     if not header.lower().startswith("bearer "):
         return None
     token = header[7:].strip()
-    if not token or not _available():
+    if not token:
+        return None
+
+    fb_app = firebase.app()
+    if fb_app is None:
+        log.warning("bearer token presented but firebase admin is unavailable: %s", firebase.error())
         return None
 
     try:
         from firebase_admin import auth as fb_auth
 
-        claims = fb_auth.verify_id_token(token)
+        claims = fb_auth.verify_id_token(token, app=fb_app)
     except Exception as exc:
         log.info("token rejected: %s", type(exc).__name__)
         return None
@@ -73,13 +89,15 @@ def require_user(request: Request) -> User:
     user = current_user(request)
     if user:
         return user
-    if REQUIRE_AUTH or _available():
-        raise HTTPException(401, "Sign in to use this endpoint.")
-    return User(uid="anonymous", email=None, name="Anonymous", picture=None)
+    if DEMO_MODE:
+        return demo_user()
+    raise HTTPException(401, "Sign in to use this endpoint.")
 
 
 def require_admin(request: Request) -> User:
-    user = require_user(request)
-    if _available() and not user.is_admin:
+    user = current_user(request)
+    if user is None:
+        raise HTTPException(401, "Sign in to use this endpoint.")
+    if not user.is_admin:
         raise HTTPException(403, "This console is restricted.")
     return user

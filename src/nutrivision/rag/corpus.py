@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Iterable
 from dataclasses import dataclass, field
-from typing import Any, Iterable
+from typing import Any
 
 from nutrivision.config import DATA_DIR
 
@@ -207,7 +208,7 @@ def micro_docs(entry: dict) -> Iterable[Document]:
         text = (
             f"{group.capitalize()} in {title}, per 100 g and per serving of "
             f"{serving_label}: " + "; ".join(parts) + ". "
-            f"These figures are sourced from USDA SR Legacy."
+            "These figures are sourced from USDA SR Legacy."
         )
         yield Document(
             doc_id=f"{entry['class']}::{group}",

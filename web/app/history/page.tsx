@@ -40,6 +40,8 @@ type History = {
   };
 };
 
+type Loaded = { data: History | null; error: string | null };
+
 function when(iso: string): string {
   const d = new Date(iso);
   const mins = Math.round((Date.now() - d.getTime()) / 60000);
@@ -57,29 +59,41 @@ export default function HistoryPage() {
   const [erasing, setErasing] = useState(false);
   const [confirming, setConfirming] = useState(false);
 
-  const load = useCallback(async () => {
+  // Fetching and applying are split so the effect can drop a reply that arrived after
+  // the component moved on, and so nothing sets state before the first await.
+  const fetchHistory = useCallback(async (): Promise<Loaded> => {
     try {
       const res = await authFetch("/api/history", { cache: "no-store" });
       const payload = await res.json();
-      if (!res.ok) setError(payload.error ?? "Could not load your history.");
-      else {
-        setData(payload as History);
-        setError(null);
-      }
+      if (!res.ok) return { data: null, error: payload.error ?? "Could not load your history." };
+      return { data: payload as History, error: null };
     } catch {
-      setError("Could not reach the service.");
+      return { data: null, error: "Could not reach the service." };
     }
   }, [authFetch]);
 
+  const apply = useCallback((next: Loaded) => {
+    if (next.data) setData(next.data);
+    setError(next.error);
+  }, []);
+
   useEffect(() => {
-    if (user) void load();
-  }, [user, load]);
+    if (!user) return;
+    let alive = true;
+    void (async () => {
+      const next = await fetchHistory();
+      if (alive) apply(next);
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [user, fetchHistory, apply]);
 
   const erase = async () => {
     setErasing(true);
     try {
       await authFetch("/api/history", { method: "DELETE" });
-      await load();
+      apply(await fetchHistory());
       setConfirming(false);
     } finally {
       setErasing(false);

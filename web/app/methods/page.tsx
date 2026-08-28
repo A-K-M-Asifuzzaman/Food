@@ -5,7 +5,7 @@ import { Reveal } from "../components/Reveal";
 import { Spider3D } from "../components/Spider3D";
 import { WebShot } from "../components/WebShot";
 import { Beat, Caption, GutterRule, Panel } from "../components/comic";
-import { calibration, ensembleReport } from "@/lib/reports";
+import { ensembleReport } from "@/lib/reports";
 
 export const metadata: Metadata = {
   title: "How it decides — FoodGenome AI",
@@ -66,7 +66,6 @@ const LIMITS = [
 ];
 
 export default function MethodsPage() {
-  const cal = calibration.ensemble;
   return (
     <main className="flex-1 w-full">
       <Reveal>

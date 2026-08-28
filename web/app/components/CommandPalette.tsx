@@ -30,6 +30,15 @@ export function CommandPalette({ index }: { index: SearchItem[] }) {
 
   const results = useMemo(() => search(index, query), [index, query]);
 
+  // Retyping puts the highlight back on the first hit. Adjusted during render rather
+  // than in an effect: React re-runs this pass before painting, so the list is never
+  // shown with the cursor still on a row from the previous query.
+  const [lastQuery, setLastQuery] = useState(query);
+  if (query !== lastQuery) {
+    setLastQuery(query);
+    setCursor(0);
+  }
+
   const close = useCallback(() => {
     setOpen(false);
     setQuery("");
@@ -65,8 +74,6 @@ export function CommandPalette({ index }: { index: SearchItem[] }) {
       return () => clearTimeout(t);
     }
   }, [open]);
-
-  useEffect(() => setCursor(0), [query]);
 
   useEffect(() => {
     listRef.current?.children[cursor]?.scrollIntoView({ block: "nearest" });

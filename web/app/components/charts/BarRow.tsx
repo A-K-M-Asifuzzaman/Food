@@ -24,7 +24,7 @@ export function BarRow({
 }) {
   const [hover, setHover] = useState<string | null>(null);
 
-  const colourFor = (d: BarDatum, i: number) => {
+  const colourFor = (d: BarDatum) => {
     if (emphasis) return d.label === emphasis ? CATEGORICAL[0] : "color-mix(in oklab, var(--line) 22%, transparent)";
     // More-is-darker within the sequential ramp, by rank rather than raw value so a
     // cluster of similar numbers still separates visually.
@@ -36,7 +36,7 @@ export function BarRow({
   return (
     <div>
       <ul className="space-y-2">
-        {data.map((d, i) => {
+        {data.map((d) => {
           const pct = Math.max(0, Math.min(1, d.value / max));
           const lit = hover === d.label;
           return (
@@ -60,7 +60,7 @@ export function BarRow({
                   style={{
                     width: `${pct * 100}%`,
                     height: "100%",
-                    background: colourFor(d, i),
+                    background: colourFor(d),
                     // Rounded at the data end, square at the baseline.
                     borderRadius: "0 4px 4px 0",
                     transition: "filter 120ms",

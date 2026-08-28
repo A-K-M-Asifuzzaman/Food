@@ -125,6 +125,7 @@ export function DishBrowser({ dishes }: { dishes: Dish[] }) {
                     and encoded at build time, so the optimiser would bill us
                     per request to redo work that is finished. */}
                 <div className="dish-thumb relative mb-3 -mx-1 -mt-1 border-2 border-[var(--line)] overflow-hidden bg-[var(--panel)]">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={`/dishes/${d.slug}.webp`}
                     alt=""

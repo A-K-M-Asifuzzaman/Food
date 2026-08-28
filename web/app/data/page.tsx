@@ -146,6 +146,10 @@ export default function DataPage() {
               <p className="mt-2 max-w-3xl text-[var(--text-dim)]">{s.lede}</p>
 
               <Panel raised className="mt-5 p-3 sm:p-5">
+                {/* Figures rendered at build time by the EDA notebook, already sized
+                    and encoded: the optimiser would bill per request to redo finished
+                    work. */}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={s.img}
                   alt={s.alt}
@@ -218,6 +222,7 @@ export default function DataPage() {
           </Caption>
 
           <Panel raised className="mt-6 p-4 sm:p-5">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/eda/eda_pca.png"
               alt="PCA projection of the 101 class centroids, labelled"

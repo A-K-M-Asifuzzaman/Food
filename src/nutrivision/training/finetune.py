@@ -7,13 +7,12 @@ import math
 import signal
 import time
 from dataclasses import asdict
-from pathlib import Path
 
 import numpy as np
 import timm
 import torch
 import torch.nn as nn
-from timm.data import Mixup, create_transform, resolve_data_config
+from timm.data import Mixup, create_transform
 from timm.layers import resample_abs_pos_embed
 from timm.loss import SoftTargetCrossEntropy
 from timm.utils import ModelEmaV3

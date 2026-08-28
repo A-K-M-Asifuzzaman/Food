@@ -93,8 +93,8 @@ export function Analyzer() {
             </p>
 
             {preview ? (
-              // eslint-disable-next-line @next/next/no-img-element -- blob: preview,
-              // not an optimisable asset.
+              // A blob: URL, not an optimisable asset.
+              // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={preview}
                 alt="The dish you uploaded"

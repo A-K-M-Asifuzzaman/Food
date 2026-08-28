@@ -22,8 +22,6 @@ export function Mermaid({ chart, className = "" }: { chart: string; className?: 
       const ink = v("--line", "#0b0b0f");
       const panel = v("--panel", "#ffffff");
       const text = v("--text", "#0b0b0f");
-      const red = v("--color-red", "#e62429");
-      const blue = v("--color-blue", "#1b4ce0");
 
       mermaid.initialize({
         startOnLoad: false,

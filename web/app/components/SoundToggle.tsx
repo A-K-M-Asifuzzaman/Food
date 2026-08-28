@@ -1,29 +1,25 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 
-import { armAudio, isMuted, loadPreference, setMuted, thwip } from "@/lib/sfx";
+import { useHydrated } from "@/lib/client-state";
+import { armAudio, loadPreference, setMuted, subscribeMuted, thwip } from "@/lib/sfx";
 
 /** Mute control for the web-shot sound. */
 export function SoundToggle() {
-  const [ready, setReady] = useState(false);
-  const [off, setOff] = useState(false);
+  const hydrated = useHydrated();
+  const off = useSyncExternalStore(subscribeMuted, loadPreference, () => true);
 
-  useEffect(() => {
-    setOff(loadPreference());
-    setReady(true);
-    return armAudio();
-  }, []);
+  useEffect(() => armAudio(), []);
 
   // Same reasoning as the theme control: a button that renders one state on the server
   // and flips on hydration is worse than a held space for one frame.
-  if (!ready) {
+  if (!hydrated) {
     return <div className="w-8 h-8 shrink-0" aria-hidden="true" />;
   }
 
   const toggle = () => {
     const next = !off;
-    setOff(next);
     setMuted(next);
     if (!next) thwip(0.8);
   };

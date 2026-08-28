@@ -33,12 +33,10 @@ function Strands({
   links,
   index,
   active,
-  neighbours,
 }: {
   links: GraphLink[];
   index: Map<string, GraphNode>;
   active: string | null;
-  neighbours: Set<string>;
 }) {
   return (
     <>
@@ -168,7 +166,7 @@ function Scene({
       <pointLight position={[14, 14, 14]} intensity={1.1} />
       <pointLight position={[-14, -8, -10]} intensity={0.5} color={INGREDIENT} />
       <group ref={group}>
-        <Strands links={data.links} index={index} active={active} neighbours={neighbours} />
+        <Strands links={data.links} index={index} active={active} />
         {data.nodes.map((n) => (
           <Node
             key={n.id}

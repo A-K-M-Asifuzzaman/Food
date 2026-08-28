@@ -347,20 +347,51 @@ python -m venv .venv && .venv/bin/pip install -e .
 cd web && npm install && FOODGENOME_API=http://127.0.0.1:8000 npm run dev
 ```
 
+Without a Firebase service-account credential the API cannot verify tokens and answers
+401 on every authenticated route. To work on the app without one, start it with
+`FOODGENOME_DEMO_MODE=1`, which opens the user routes to unauthenticated callers and
+leaves the admin console shut.
+
+### Tests and linting
+
+```bash
+.venv/bin/python -m pip install -e ".[dev]"
+.venv/bin/python -m pytest            # authorisation, storage, conformal sets, API validation, grounding
+.venv/bin/python -m ruff check src backend scripts tests
+
+cd web && npm run lint && npm test    # proxy status propagation
+```
+
 Copy `.env.example` to `.env` for the OpenAI key. Without it the RAG pipeline serves deterministic template answers assembled from the same records — correct by construction, and free. `COHERE_API_KEY` with `RAG_RERANKER=cohere` switches the rerank stage to Cohere; leave it unset and the local cross-encoder runs instead, which needs no network and no key.
 
 #### Optional services
 
-Both degrade rather than fail, so a fresh clone serves predictions with neither configured.
-
 | Variable | On | Effect when unset |
 |---|---|---|
 | `OPENAI_API_KEY` | model service | answers come from deterministic templates over the same records |
-| `FIREBASE_CREDENTIALS` | model service | predictions are answered but not kept; history and analytics report themselves off |
+| `FIREBASE_CREDENTIALS` | model service | no token can be verified, so every authenticated route answers 401 |
 | `MONGODB_URI` | model service | the alternative store, used only if no Firebase credential is present |
-| `REQUIRE_AUTH` | model service | unset, the service serves unauthenticated callers; set to `1` in deployment |
+| `FOODGENOME_DEMO_MODE` | model service | unset, the service is closed; set to `1` only to open the user routes without sign-in |
 | `ADMIN_EMAILS` | model service | comma-separated; the only accounts `/analytics` and `/stats` will answer |
 | `FOODGENOME_API` | frontend | the frontend serves clearly-labelled demo responses instead of predictions |
+
+The service-account credential may be pasted inline as `FIREBASE_CREDENTIALS` or
+`FIREBASE_SERVICE_ACCOUNT_JSON`, or given as a path in
+`GOOGLE_APPLICATION_CREDENTIALS`. It powers both token verification and Firestore.
+
+#### Authentication fails closed
+
+Storage degrades rather than failing: without a database, predictions are still
+answered, and history and analytics report themselves off. Authentication does not
+degrade. If the credential is missing, malformed, or has not initialised yet, no token
+can be verified and every authenticated route answers 401 rather than falling back to a
+shared anonymous identity. `GET /health` reports which of the two is the case.
+
+`FOODGENOME_DEMO_MODE=1` is the only way to serve the user routes without a signed-in
+caller, and it is deliberately separate from "Firebase happens to be unavailable": it has
+to be asked for. Even then it opens only the user routes. `/stats` and `/analytics`
+require a verified token whose email is in `ADMIN_EMAILS` in every configuration, so a
+misconfigured deployment closes the console rather than publishing it.
 
 `firestore.rules` denies every client read and write. No browser in this system
 talks to Firestore — the web app uses Firebase only to sign a user in, and all
